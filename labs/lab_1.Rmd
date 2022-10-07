@@ -8,7 +8,7 @@ date: "2022-09-30"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Linear Least Squares Estimation on Prostate Cancer Dataset
+# Lab 1: Linear Least Squares Estimation on Prostate Cancer Dataset
 In this code we will investigate the "Prostate cancer dataset". We will produce a linear Least Squares (LS) solver to produce a model for the dataset that predicts the outcome given the predictor variables. We will then calculate the cross validation error of our model and then analyse the importance of each predictor variable in our model. From this analysis we find that the lcavol, lweight and svi predictor variables do not impact performance when removed from the model and therefore suggest that we can reduce the dimensionality of our problem by removing said predictor variables from our model.
 
 Throughout this document we will make sure to keep the code reproducible and will be conducting literate programming in order to make the code easily readable and understandable.

@@ -1,0 +1,43 @@
+---
+title: "lab_2"
+output: html_document
+date: "2022-10-06"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Lab 2: Normalized Regression and Decision making
+We install my package containing all the functions needed to carry out the statistical methods in this lab.
+```{r}
+library(devtools)
+devtools::install_github("h-aze/compass_yr1", subdir = "/labs/stattools")
+```
+
+# Regularised Least Squares
+
+```{r}
+x <- sample(0:2, 200, replace=TRUE)
+x <- seq(-1, 1, length.out=200)
+e <- rnorm(200, mean=0, sd=0.64)
+y <- exp(1.5*x -1) + e 
+```
+
+
+```{r}
+lambdas <- seq(10**-4, 20, length.out = 1000);
+err <- c();
+for(i in 1:length(lambdas)) {
+  err[i] <- stattools::regr_cross_val(x, y, RM=stattools::LLS_R, k=100, lambdas[i]);
+}
+```
+
+```{r}
+plot(lambdas, err)
+```
+```{r}
+plot(x,y)
+```
+
+
