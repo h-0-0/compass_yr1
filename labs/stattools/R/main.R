@@ -98,12 +98,8 @@ regr_cross_val <- function(D, y, RM=LLS, k=10, ...){
       D.train <- D_dash[-testIndexes]
     }
     else{
-      print(testIndexes)
-      print(D_dash[1, ])
-      D.test <- D_dash[testIndexes, ]
-      print(dim(D.test))
-      D.train <- D_dash[-testIndexes, ]
-      print(dim(D.train))
+      D.test <- D_dash[testIndexes, ,drop=FALSE]
+      D.train <- D_dash[-testIndexes, ,drop=FALSE]
     }
 
     # We get the model matrix and predictor variables for the training data
@@ -126,3 +122,4 @@ regr_cross_val <- function(D, y, RM=LLS, k=10, ...){
   error.CV <- sum(errors)/k
   error.CV
 }
+

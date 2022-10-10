@@ -15,7 +15,7 @@ library(devtools)
 devtools::install_github("h-aze/compass_yr1", subdir = "/labs/stattools")
 ```
 
-# Regularised Least Squares
+## Regularised Least Squares
 In this section of the homework we will be generating a dataset to experiment with regularized linear least squares, including an investigation into how our choice of regularization constant lamba affects our model and trying to find a lambda which minimizes the cross-validation error obtained by the model fitted.
 
 We start by generating the dataset we will be using in this lab.
@@ -27,7 +27,7 @@ e <- rnorm(200, mean=0, sd=0.64)
 y <- exp(1.5*x -1) + e 
 ```
 
-We now plot the data generated (black circles) and the underlying function (in red), can see .
+We can visualize the dataset by plotting the data generated (black circles) and the underlying function (in red).
 ```{r}
 plot(x,y)
 par(new=TRUE)
@@ -35,28 +35,86 @@ eq = function(x){exp(1.5*x -1)}
 lines(seq(x_start, x_end, length.out=500), eq(seq(x_start, x_end, length.out=500)), type='l',col="red")
 ```
 
-We then perform a feature transform on x, so we can fit a non-linear model using (regularised) linear least squares 
+We now begin our model fitting by first performing a feature transform on x, so we can fit a more complex non-linear model but still use (regularised) linear least squares (LS-R).
 ```{r}
-x_ft <- stattools::feat_trans(x,7); x_ft
+x_ft <- stattools::feat_trans(x,7)
 ```
 
-Next we select a sequence of lambda values in a set range and using the "regr_cross_val" function fit a model using LS-R and compute the cross-validation error for each value of lambda.
+Next we select a sequence of lambda values in a set range and using the "regr_cross_val" function fit a model using LS-R and compute the Cross-Validation (CV) error for each value of lambda. Here we perform CV using k=200 (leave-one-out validation) and use as our error function the euclidean norm.
 ```{r}
-lambda <- seq(10**-3, 20, length.out = 20);
+lambda <- seq(10**-3, 20, length.out = 50);
 CV_error <- c();
 for(i in 1:length(lambda)) {
   CV_error[i] <- stattools::regr_cross_val(x_ft, y, RM=stattools::LLS_R, k=200, lambda[i]);
 }
 ```
 
-We now plot the cross-validation errors obtained for each value of lambda.
+We now plot the CV errors obtained for each value of lambda.
 ```{r}
 plot(lambda, CV_error)
+err_min <- which.min(CV_error)
+abline(v=lambda[err_min] ,col="red")
 ```
-From the plot we can see that as lambda increases so does the cross validation error obtained
+From the plot we can see that as lambda increases the CV error initially decreases, after the red line we then observe the CV error begin to increase. What is happening here is that as lambda initially increases it is scaling the regularization term to make it larger, this in turn puts more pressure on LS-R to keep the parameters of its solution small in order to keep the regularization term smaller whilst still minimizing the loss obtained by the model on the data. This leads to a model that is more general as it can't have wildly large parameters which leads to overfitting of the data and hence better CV performance on the test data. However, as lambda gets even larger the model has to prioritize minimizing the regularization term to a larger and larger degree, leading to decreased performance of the model on the data as it can only fit an increasingly less complex model.
 
+We now repeat the above but over a smaller range to find an optimal value of lambda.
 ```{r}
+lambda <- seq(1, 4, length.out = 1000);
+CV_error <- c();
+for(i in 1:length(lambda)) {
+  CV_error[i] <- stattools::regr_cross_val(x_ft, y, RM=stattools::LLS_R, k=200, lambda[i]);
+}
+lambda.hat <- lambda[which.min(CV_error)]; lambda.hat
+```
+Our optimal value of lambda is printed above.
 
+## Probabalistic model
+Now we would like to find the predictive probability distribution,$p(\hat{y}|\textbf{x})$, which we will do using the "marginalization trick".
+
+Note that we can write $P(\hat{y}|x,Dw) = \int P(\hat{y}|x,w) \cdot P(w|D) dw$ and we know that this is distributed normally with mean $f(x;w_{LS-R})$. Hence, we can directly calculate the mean of $\hat{y}$ using the following function:
+```{r}
+# We get the feature transformed model matrix
+X <- stattools::model_matrix(x_ft)
+# We calculate the parameters using LS-R and our data (with lambda set to the optimal value we found in previous section)
+w.LS_R <- stattools::LLS_R(X, y, lambda.hat)
+
+mu.predictor <- function(x){ 
+  X <- model_matrix(stattools::feat_trans(x,7))
+  X %*% w.LS_R
+  }
 ```
 
+Now all we have to do is estimate the sd, we can infer $\hat{\sigma}$ by calculating $\hat{\sigma} = \frac{RSS}{n-1}$.
+```{r}
+X <- model_matrix(stattools::feat_trans(x,7))
+y_hat <- X %*% w.LS_R
+sigma.predictor <- sqrt( (t(y - y_hat) %*% (y - y_hat) * (1/(length(y)-1)))[1]) ; sigma.predictor
+```
 
+Now we have the predictive probability distribution we can plot the expected value of $\hat{y}$ given $\textbf{x}$, along with its sd.
+```{r}
+xs <- seq(-2, 2, length.out=200)
+ys <- mu.predictor(xs)
+ys_lower <- ys - sigma.predictor 
+ys_upper <- ys + sigma.predictor 
+
+plot(xs, ys_lower, type='l',col="red",lty=2)
+lines(xs,ys, type='l')
+lines(xs, ys_upper, type='l',col="red",lty=2)
+points(x,y)
+```
+Above you can see plotted the expected value of x (in black) along with the tube of values within one standard deviation (red dotted lines), we also plot the sampled points used to train the model within the range of x for this plot (we plot for a smaller range of x to better see the tube).
+
+Lastly, we will calculate the percentage of our samples found within one standard deviation of our expected value of $\hat{y}$.
+```{r}
+y_lower <- mu.predictor(x)-sigma.predictor
+y_upper <- mu.predictor(x)+sigma.predictor
+cov <- 0
+for (i in 1:length(y)){
+  if (y[i]>=y_lower[i] & y[i]<=y_upper[i]){
+    cov <- cov +1
+  }
+}
+(cov/length(y)) *100
+```
+So 66.5% of the time our samples are within one standard deviation of our expected value.
