@@ -26,6 +26,17 @@ model_matrix <- function(D,r) {
   X
 }
 
+# This function performs a feature transform
+#TODO: add case for if D is an array or dataframe
+feat_trans <- function(D,b){
+  if(is.vector(D)){
+    x_ft <- matrix(NA, nrow=length(D), ncol=b)
+    for(i in 1:b){
+      x_ft[,i] <- D^i
+    }
+  }
+  x_ft
+}
 
 # This function computes and returns the Linear Least Squares (LSS) solution, w, given the model matrix, X, and the target variables y.
 LLS <- function(X, y) {
@@ -41,7 +52,7 @@ LLS_R <- function(X, y, lambda) {
   }
 
 
-# This function given a dataset D performs 10-fold cross validation
+# This function given a dataset (either as a dataframe or vector), D, and target variable, y, performs k-fold cross validation using a specified Regression Method, RM.
 #TODO: change so we can pass RM functions with all arguments pre-determined except X and y
 #TODO: add ability to change error function
 regr_cross_val <- function(D, y, RM=LLS, k=10, ...){
@@ -50,6 +61,11 @@ regr_cross_val <- function(D, y, RM=LLS, k=10, ...){
   if(is.vector(D)){
     ind <- sample(length(D))
     D_dash <- D[ind]
+    y_dash <- y[ind]
+  }
+  else if(is.array(D)){
+    ind <- sample(nrow(D))
+    D_dash <- D[ind,]
     y_dash <- y[ind]
   }
   else{
@@ -61,7 +77,6 @@ regr_cross_val <- function(D, y, RM=LLS, k=10, ...){
   # We now create a list which indexes the rows in our dataset, we will use this to select groups of certain rows from the dataset.
   #   Hence what we have effectively done here is partition the dataset (randomly - as we shuffled the dataset previously) into groups.
   #   We split the dataset into 10 groups as we will be performing 10-fold cross validation.
-  print(k)
   if(is.vector(D)){
     subsets <- cut(seq(1,length(D)), breaks = k, labels = FALSE)
   }
@@ -83,8 +98,12 @@ regr_cross_val <- function(D, y, RM=LLS, k=10, ...){
       D.train <- D_dash[-testIndexes]
     }
     else{
+      print(testIndexes)
+      print(D_dash[1, ])
       D.test <- D_dash[testIndexes, ]
+      print(dim(D.test))
       D.train <- D_dash[-testIndexes, ]
+      print(dim(D.train))
     }
 
     # We get the model matrix and predictor variables for the training data

@@ -16,28 +16,47 @@ devtools::install_github("h-aze/compass_yr1", subdir = "/labs/stattools")
 ```
 
 # Regularised Least Squares
+In this section of the homework we will be generating a dataset to experiment with regularized linear least squares, including an investigation into how our choice of regularization constant lamba affects our model and trying to find a lambda which minimizes the cross-validation error obtained by the model fitted.
 
+We start by generating the dataset we will be using in this lab.
 ```{r}
-x <- sample(0:2, 200, replace=TRUE)
-x <- seq(-1, 1, length.out=200)
+x_start <- -4
+x_end <- 4
+x <- seq(x_start, x_end, length.out=200)
 e <- rnorm(200, mean=0, sd=0.64)
 y <- exp(1.5*x -1) + e 
 ```
 
-
+We now plot the data generated (black circles) and the underlying function (in red), can see .
 ```{r}
-lambdas <- seq(10**-4, 20, length.out = 1000);
-err <- c();
-for(i in 1:length(lambdas)) {
-  err[i] <- stattools::regr_cross_val(x, y, RM=stattools::LLS_R, k=100, lambdas[i]);
+plot(x,y)
+par(new=TRUE)
+eq = function(x){exp(1.5*x -1)}
+lines(seq(x_start, x_end, length.out=500), eq(seq(x_start, x_end, length.out=500)), type='l',col="red")
+```
+
+We then perform a feature transform on x, so we can fit a non-linear model using (regularised) linear least squares 
+```{r}
+x_ft <- stattools::feat_trans(x,7); x_ft
+```
+
+Next we select a sequence of lambda values in a set range and using the "regr_cross_val" function fit a model using LS-R and compute the cross-validation error for each value of lambda.
+```{r}
+lambda <- seq(10**-3, 20, length.out = 20);
+CV_error <- c();
+for(i in 1:length(lambda)) {
+  CV_error[i] <- stattools::regr_cross_val(x_ft, y, RM=stattools::LLS_R, k=200, lambda[i]);
 }
 ```
 
+We now plot the cross-validation errors obtained for each value of lambda.
 ```{r}
-plot(lambdas, err)
+plot(lambda, CV_error)
 ```
+From the plot we can see that as lambda increases so does the cross validation error obtained
+
 ```{r}
-plot(x,y)
+
 ```
 
 
