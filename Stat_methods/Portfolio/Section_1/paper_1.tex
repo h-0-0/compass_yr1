@@ -1,0 +1,40 @@
+\section{Introduction to Decision-Making}
+
+Computers are often used to answer complex questions, however, these methods are often a "black-box". We would like to have methods which let us conduct \textbf{rational decision-making}:
+\begin{enumerate}
+    \item Predictions should be precise (no gibberish)
+    \item They should be data driven
+    \item They should take cost (of making the wrong decision) into consideration
+    \item They should take the random nature of data into consideration
+\end{enumerate}
+
+In a \textbf{regression problem} we want to predict an outcome given some known inputs. We can use the following as an objective function:
+\begin{definition}
+    \textbf{Least Squares (LS)}: \\
+    \begin{equation}
+        \min_{f} \sum_{i \in D_{0}}  (y_{i} - f(x_{i}))  ^{2}
+    \end{equation}
+    where $f$ is the function that gives our prediction for $x$, where $x_{i}$ is the i-th input, $y_{i}$ is the i-th (observed) output and $D_{0} \subseteq D$ is the training dataset.
+\end{definition}
+By minimizing this objective function wrt. f, we obtain a function f that minimizes the squared difference between its predictions and our observed values of the target variable.
+
+Let $\bm{w}$ be a vector parameterising f \footnote{In the case of linear LS we have: $f(\bm{x};\bm{w}) := \langle \bm{w_{1}} ,\bm{x} \rangle + w_{0}$.}, then the LS solution is $\bm{w}_{LS} := \argmin_{\bm{w}} \sum_{i \in D_{0}} (y_{i}-f(\bm{x}_{i}; \bm{w}))^{2}$. We can prove that:
+\begin{equation}\label{eqn:wLS solution}
+    \bm{w}_{LS} = (\bm{X}^{T} \bm{X})^{-1} \bm{X}^{T} \bm{y} 
+\end{equation}
+The proof can be found in the appendix (CITE). 
+
+Alternatively we can find $\bm{w}$ in another data-driven way but also whilst taking the randomness of the data into account by using a probabilistic approach. We define a new objective function:
+\begin{definition}
+    \textbf{Maximum likelihood estimation:} \\
+    \begin{equation}
+        \max_{\bm{w}} \log \mathbb{P}(D| \bm{w})
+    \end{equation}
+    we denote the parameters that maximize this as $\bm{w}_{ML}$, this is called the \textbf{Maximum Likelihood Estimator (MLE)}, we can write,
+    \begin{equation}
+        \bm{w}_{ML} := \argmax_{\bm{w}} \log \mathbb{P}(D|\bm{w}) 
+    \end{equation}
+    where $D$ is the dataset and $\mathbb{P}(D|\bm{w})$ is called the \textbf{likelihood}. 
+\end{definition}
+
+Note that we can show $\bm{w}_{ML}=\bm{w}_{LS}$\footnote{This is true in cases where the underlying data-generating process is normal, ie. error terms Gaussian and iid.}. We can also show that $\sigma_{ML}^{2} = \frac{1}{n} || \bm{y}-f(\bm{x};\bm{w}_{ML})||^{2}$

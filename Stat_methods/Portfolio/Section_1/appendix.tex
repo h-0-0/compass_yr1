@@ -1,0 +1,38 @@
+\begin{appendices}
+\section{Proofs}
+\subsection{Proof of \Cref{eqn:wLS solution}}
+Let $\bm{X}$ be,
+\begin{equation}
+    \begin{pmatrix}
+        1 & x_{1}\\
+        \vdots & \vdots \\
+        1 & x_{n}
+    \end{pmatrix}
+\end{equation}
+we can write our linear model in matrix form,
+\begin{equation}
+    \bm{y} = \bm{Xw} + \bm{\epsilon}
+\end{equation}
+note that,
+\begin{equation}
+    \sum_{i \in D_{0}} (y_{i} - f(\bm{x}_{i};\bm{w}))^{2}
+    = || \bm{y} - \bm{Xw}||^{2}
+\end{equation}
+we can find the minimum by differentiating wrt. $\bm{w}$ and finding the solution when the gradient equals zero. However, first we expand our expression,
+\begin{align}
+    || \bm{y} - \bm{Xw}||^{2} 
+    {}& = (\bm{y} - \bm{Xw})^{T} (\bm{y}-\bm{Xw}) \\ 
+    & = \bm{y}^{T}\bm{y} - \bm{w}^{T} \bm{X}^{T} \bm{y} - \bm{y}^{T}\bm{Xw} + \bm{w}^{T} \bm{X}^{T} \bm{Xw}
+\end{align}
+we now can find the derivative wrt. $\bm{w}$,
+\begin{align}
+    \frac{\partial}{\partial \bm{w}} ||\bm{y} - \bm{Xw}||^{2} = -2 \bm{X}^{T} \bm{y} + 2 \bm{X}^{T} \bm{X} \bm{w}
+\end{align}
+now setting this to zero and solving,
+\begin{align}
+    {}&\Rightarrow \bm{X}^{T} \bm{X} \bm{w} = \bm{X}^{T} \bm{y} \\
+    & \Rightarrow \bm{w} = \bm{X}^{-1} \bm{X}^{-T} \bm{X}^{T} \bm{y} \\
+    & \Rightarrow \bm{w} = (\bm{X}^{T} \bm{X})^{-1} \bm{X}^{T} \bm{y}
+\end{align}
+hence proven.
+\end{appendices}
