@@ -1,0 +1,40 @@
+\section{Overfitting and the curse of dimensionality}
+In previous section we introduced the feature transform. By increasing the value of b we can fit increasingly complex models (models with terms with higher powers of x). We note that when we increase b our model can "bend" to better fit our data-points, however there reaches a point where if it can bend too much then our resultant model is going to be too specific to our training dataset and not generalize well when tested on more data.
+
+\subsection{Overfitting}
+Let's split our data into disjoint sets $D_{0}$ and $D_{1}$ \footnote{We assume D contains iid. data-points}. We'll use LS as our error function and denote it, $E_{LS}$, so $E_{LS}(D, \bm{w}) := \sum_{i \in D} (y_{i} - f(\bm{x}_{i}; \bm{w}))^{2}$. The error function quantifies how well our model fits a dataset. We will use our partitioned datasets such that the \textbf{training error} is $E(D_{0}, \bm{w}_{LS})$ and the \textbf{testing error} is $E(D_{1}, \bm{w}_{LS})$.
+
+The testing error tells us how well the model fits data it hasn't seen; how well it \textbf{generalizes}. Again if we consider fitting models with different values of b what we will see is that as we initially increase b the testing and training error decrease. However, at a certain point the testing error will begin to increase as the training error continues decreasing. What is happening here is called:
+\begin{definition}
+    \textbf{Overfitting:} \\
+    Phenomenon where $f(\bm{x};\bm{w}_{LS})$ fits too well on the training set, $D_{0}$, while under-performing on unseen (testing) datasets, $D_{1}$.
+\end{definition}
+
+\subsection{Cross-Validation}
+Consider the problem of how best to test the performance of our model given a dataset, $D$. We would like to both train our dataset on as much data as possible, but also evaluate its performance on unseen (testing) data such that the score quantifies well the model's ability to generalize. With our scenario earlier where we partitioned the dataset into $D_{0}$ (training) and $D_{1}$ (testing) datasets we can identify some shortcomings:
+\begin{enumerate}
+    \item We have wasted $D_{1}$ for validation (testing), what if $D_{1}$ contains useful information for fitting a good model?
+    \item The selection of $D_{0}$ and $D_{1}$ is random, perhaps $D_{1}$ is better for training, or perhaps a different selection altogether would be better.
+\end{enumerate}
+We now introduce a method which aims to solve these shortcomings:
+\begin{definition}
+    \textbf{K-fold Cross-Validation (CV)} \\
+    Split $D$ into disjoint $D_{0},..., D_{k}$, \\
+    for $i=0,...,k$: \\
+    \indent fit $f^{(i)}$ on all subsets but $D_{i}$ \\
+    \indent for all b compute: $E(D_{i}, f^{(i)})$ \\
+    select b which minimizes: $\frac{\sum_{i} E(D_{i},f^{(i)})}{k+1}$ \\
+    Note: the $k$ picked must be $leq n-1$ and if $k=n-1$ then we call this \textbf{leave-one-out-validation}. 
+\end{definition}
+Although CV solves the problems stated earlier it does have its problems of its own:
+\begin{enumerate}
+    \item Computational cost is high, as $f^{(i)}$ must be fitted and validated for all splits
+    \item The effectiveness of CV depends on the assumption that the data is iid. and often this assumption doesn't hold (eg. time series data)
+\end{enumerate}
+
+\subsection{Curse of dimensionality}
+Let's consider carrying out polynomial transform on higher dimensional datasets. When our input $\bm{x} \in \mathbb{R}^{d}$ then $\phi(\bm{x}) \in \mathbb{R}^{d \times b}$ and $\bm{w} \in \mathbb{R}^{b+1}$. And this is without considering pairwise cross-dimensional polynomials (eg. $x^{(1)}x^{(2)}$ or $x^{(1)}x^{(2)}x^{(3)}$). We can implement this by redesigning $\phi$. Let $\phi(\bm{x}) := (h(x^{(1)}),...,h(x^{(d)}), \forall_{u<v} x^{(u)}x^{(v)})$, where $h(t):=(t^{1}, ..., t^{b})$, then $\phi(\bm{x}) \in \mathbb{R}^{d \times (b+ {d \choose 2})}$. We can do the same for cross terms all the way up to d-plets and we know $ {d \choose 1} + {d \choose 2} + ... + {d \choose d} = 2^{d}$. The output dimension of $\phi(\bm{x})$ can grow exponentially with dimensionality\footnote{We could also include even more complex terms such as $(x^{(u)})^{2} x^{(v)}$ for example} and the number of observations much at least match the dimensionality, otherwise we cannot obtain $\bm{w}_{LS}$.
+\begin{definition}
+    \textbf{The Curse of Dimensionality:} \\
+    A phenomenon where the number of observations needed to solve a problem grows exponentially with d, it 'forbids' us from solving high-dimensional problems.
+\end{definition}

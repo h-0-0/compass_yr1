@@ -36,5 +36,13 @@ Alternatively we can find $\bm{w}$ in another data-driven way but also whilst ta
     \end{equation}
     where $D$ is the dataset and $\mathbb{P}(D|\bm{w})$ is called the \textbf{likelihood}. 
 \end{definition}
+% TODO: add proof of below paragraph?
+Note that we can show $\bm{w}_{ML}=\bm{w}_{LS}$\footnote{This is true in cases where the underlying data-generating process is normal, ie. error terms Gaussian and iid.}. We can also show that $\sigma_{ML}^{2} = \frac{1}{n} || \bm{y}-f(\bm{x};\bm{w}_{ML})||^{2}$.
 
-Note that we can show $\bm{w}_{ML}=\bm{w}_{LS}$\footnote{This is true in cases where the underlying data-generating process is normal, ie. error terms Gaussian and iid.}. We can also show that $\sigma_{ML}^{2} = \frac{1}{n} || \bm{y}-f(\bm{x};\bm{w}_{ML})||^{2}$
+\subsection{LS with Feature Transform}
+It is possible to fit non-linear curves to our data using linear LS. All we do is augment our predictor variable, $\bm{x}$, using a function $\phi(\bm{x}): \mathbb{R}^{d} \to \mathbb{R}^{d \times b}$, where:
+\begin{equation}
+    \phi(\bm{x}) := (\bm{x}, \bm{x}^{2}, ..., \bm{x}^{b})^{T}
+\end{equation}
+With a feature transform we have $\bm{w}_{LS} = (\phi(\bm{X})^{T} \phi(\bm{X}))^{-1} \phi(\bm{X})^{T} \bm{y} $. A feature transform can let us fit more complex models for our data, however, it can lead to problems...
+

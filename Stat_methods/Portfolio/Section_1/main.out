@@ -1,4 +1,12 @@
 \BOOKMARK [1][-]{section.1}{Introduction to Decision-Making}{}% 1
-\BOOKMARK [1][-]{section*.1}{Appendices}{}% 2
-\BOOKMARK [1][-]{appendix.a.A}{Proofs}{}% 3
-\BOOKMARK [2][-]{subsection.a.A.1}{Proof of eqn:wLS solution}{appendix.a.A}% 4
+\BOOKMARK [2][-]{subsection.1.1}{LS with Feature Transform}{section.1}% 2
+\BOOKMARK [1][-]{section.2}{Overfitting and the curse of dimensionality}{}% 3
+\BOOKMARK [2][-]{subsection.2.1}{Overfitting}{section.2}% 4
+\BOOKMARK [2][-]{subsection.2.2}{Cross-Validation}{section.2}% 5
+\BOOKMARK [2][-]{subsection.2.3}{Curse of dimensionality}{section.2}% 6
+\BOOKMARK [1][-]{section*.1}{Appendices}{}% 7
+\BOOKMARK [1][-]{appendix.a.A}{Proofs}{}% 8
+\BOOKMARK [2][-]{subsection.a.A.1}{Proof of eqn:wLS solution}{appendix.a.A}% 9
+\BOOKMARK [1][-]{appendix.a.B}{Homeworks}{}% 10
+\BOOKMARK [2][-]{subsection.a.B.1}{For Section 1}{appendix.a.B}% 11
+\BOOKMARK [2][-]{subsection.a.B.2}{For Section 2}{appendix.a.B}% 12

@@ -1,6 +1,6 @@
 \begin{appendices}
 \section{Proofs}
-\subsection{Proof of \Cref{eqn:wLS solution}}
+\subsection{Proof of \Cref{eqn:wLS solution}} \label{proof:wLS solution}
 Let $\bm{X}$ be,
 \begin{equation}
     \begin{pmatrix}
@@ -35,4 +35,45 @@ now setting this to zero and solving,
     & \Rightarrow \bm{w} = (\bm{X}^{T} \bm{X})^{-1} \bm{X}^{T} \bm{y}
 \end{align}
 hence proven.
+
+\section{Homeworks}
+\subsection{For Section 1}
+\begin{question}
+    Prove $\bm{w}_{LS} = (\bm{X}^{T} \bm{X})^{-1} \bm{X}^{T} \bm{y}$. \\
+    Answer is \cref{proof:wLS solution}
+\end{question}
+
+\begin{question}
+    Why is the solution of $w_{LS}$ useless if n<d? \\
+    If $n<d$ then the columns of the model matrix don't have full rank, we know that for a matrix $A \in \mathbb{R}^{n \times d} $, $\text{rank}(\bm{A}) \leq \min(n,d)$. Therefore, for model matrix X with n, d we have $\text{rank}(X) \leq n < d$ and so X is not full rank. Since X is not full rank we have that $\bm{X}^{T} \bm{X}$ is not invertible.
+\end{question}
+
+\begin{question}
+    In what scenarios is the use of the Normal dist. to model $\mathbb{P}(y|\bm{x},\bm{w},\sigma)$ a bad idea? \\
+    When the errors aren't normally distributed, which could arise when the predictor or target variables are non-normal or when outliers disrupt the model prediction. 
+    When this is the case it can cause lots of problems as we often use this assumption of normality when computing confidence intervals and to carry out hypothesis testing for example. So when our assumption of normality is incorrect it can lead to incorrect analyses. 
+\end{question}
+
+\begin{question}\label{q:b4}
+    Prove $\bm{w}_{LS} = (\phi(\bm{X}))^{-1} \bm{y}$. \\
+    We have,
+    \begin{align}
+        \bm{w}_{LS} {}& = (\phi(\bm{X})^{T} \phi(\bm{X}))^{-1} \phi(\bm{X})^{T} \bm{y} \\
+        & = \phi(\bm{X})^{-1} \phi(\bm{X})^{-T} \phi(\bm{X})^{T} \bm{y} \\
+        & = \phi(\bm{X})^{-1} \bm{y}
+    \end{align}
+\end{question}
+
+\begin{question}
+    If we increase b of $\phi(\bm{x})$ by 2-fold, by how many folds will the computation time of $\bm{w}_{LS}$ increase? \\
+    Let's consider computing the solution of $\bm{w}_{LS}$ using the shortened form we found in \cref{q:b4}.
+    Increasing b by 2-fold will increase the number of rows in the model matrix by 2-fold, finding the inverse of a matrix is $O(n^{3})$ (if using Gaussian elimination), so this would lead to a $2^{3}$-fold increase in computation of the inverse. We also will have a 2-fold increase in the number of computations during the matrix multiplication.
+\end{question}
+
+\subsection{For Section 2}
+\begin{question}
+    Why do machine learning algorithms still work on high-dimensional datasets (such as images), despite the curse of dimensionality telling us that the number of observations needed for solving high dimensional problems should grow exponentially with dimensionality? \\
+    This is down to machine learning algorithms being able to learn something about the underlying structure of the data. In learning about the underlying structure it reduces the dimensionality of the problem, as it can use features within the data. For example in convolutional neural networks it's been shown that the network uses sets of features built up hierarchically in order to help it classify images. Instead of having to directly learn what every combination of pixels contained within an image should be classified as it simply learns that certain low level-patterns of pixels are important for classification, it then learns that these low-level patterns put together in different ways create other larger features which are important and so on...
+\end{question}
+
 \end{appendices}
