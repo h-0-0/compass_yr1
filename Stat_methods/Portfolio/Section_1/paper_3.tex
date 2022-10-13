@@ -1,0 +1,45 @@
+\section{Regularization and a Probabilistic View of Regression}
+
+\subsection{Regularization}
+A trick for avoiding overfitting is regularization. Let's consider letting our regularization term be $\lambda \bm{w}^{T} \bm{w}$, where $\lambda >0$. Note that $ \bm{w}^{T} \bm{w}$ is the magnitude of $\bm{w}$, so by including this term in our objective function we are dissuading $\bm{w}$ taking large values and hence reduces the chance of overfitting. Let $\bm{w}_{LS-R}$ denote our regularized linear LS solution for the parameters, then:
+\begin{equation}
+    \bm{w}_{LS-R} := \argmin_{\bm{w}} \sum_{i \in D} (y_{i}-f(\bm{x}_{i};\bm{w}))^{2} \color{red} + \lambda \bm{w}^{T} \bm{w} \color{black}
+\end{equation}
+We can prove that if we are using regularization term $\lambda \bm{w}^{T} \bm{w}$ then:
+\begin{equation}\label{eqn:w-LS-R solution}
+    \bm{w}_{LS-R} := (\phi(\bm{X})^{T} \phi(\bm{X}) + \lambda \bm{I})^{-1} \phi(\bm{X})^{T} \bm{y}
+\end{equation}
+The proof is in \cref{proof:wLSR solution}.
+
+When we increase $\lambda$ the regularization term gets larger which means the coefficients of $\bm{w}_{LS-R}$ must get smaller in order to decrease the value of the objective function, this in turn leads to a reduction in complexity of $f(\bm{x};\bm{w}_{LS-R})$ and vice-versa. When we increase $\lambda$ we expect to see at first a decrease in testing error (if the model was overfitted), but after a certain point the testing error to rise again. This is because increasing $\lambda$ increases the generalization of the model which will reduce overfitting, however, there will reach a point where it begins to over generalize. We can also use different regularization terms, usually we use norms:
+\begin{definition}
+    \textbf{Norm:} \\
+    To be a norm  a positive function t must satisfy:
+    \begin{enumerate}
+        \item If $t(\bm{x}) = 0$ then $\bm{x}=0$
+        \item $t(\bm{x}) + t(\bm{y}) \geq t(\bm{x} + \bm{y})$ (Triangle inequality)
+        \item $t(a \cdot \bm{x}) = |a| \cdot t(\bm(x))$
+    \end{enumerate}
+\end{definition}
+A special class of norm is the $\bm{L}^{p}$ \textbf{norm} which for a real $p \geq 1$ is $||\bm{x}||_{p} := (|x_{1}|^{p} + ... + |x_{d}|^{p})^{\frac{1}{p}}$. 
+
+\subsection{A Probabilistic View of Regression}
+We are often faced with inverse problems. An \textbf{inverse problem} is where we have a dataset, $D$, of noisy observations, and we want to identify some latent unobserved data generating mechanism. Let's denote our latent function $g$, then the key to solving an inverse problem is inferring the posterior distribution $\mathbb{P}(g|D)$. If we let $\bm{w}$ parameterize our latent function then all we must do is infer $\mathbb{P}(\bm{w}|D)$ or the:
+\begin{definition}
+    \textbf{Maximum A Posteriori (MAP)} \\
+    The $\bm{w}$ that maximizes $\mathbb{P}(\bm{w}|D)$, we denote the MAP estimator as:
+    \begin{align}
+        \bm{w}_{MAP} &{} := \argmax_{w} \mathbb{P}(\bm{w}|D) \\
+        & = \argmax_{w} \prod_{i \in D} N_{y_{i}}(f(\bm{x}_{i} ; \bm{w}), \sigma^{2}) \cdot N_{\bm{w}}(0, \sigma_{\bm{w}}^{2} \bm{I})
+    \end{align}
+\end{definition}
+In \cref{proof:w-MAP equals w-LS-R} we prove that $\bm{w}_{MAP} = \bm{w}_{LS-R}$ using $\lambda = \frac{\sigma^{2}}{\sigma_{\bm{w}}^{2}}$.
+
+This approach of estimating $\bm{w}$ is probabilistic, but we can go further, we can go fully probabilistic. What we can do is consider finding the distribution of $\mathbb{P}(\hat{y}|\bm{x},D)$, of our target variable, the \textbf{predictive distribution}. We know that $\mathbb{P}(\hat{y}|\bm{x},D) = \int \mathbb{P}(\hat{y}|\bm{x},\bm{w}) \cdot \mathbb{P}(\bm{w}|D) d \bm{w}$. We can assume $\mathbb{P}(\hat{y}|\bm{x},\bm{w})$ is distributed $N(f(\bm{x};\bm{w}),\sigma^{2})$, and we have that $\mathbb{P}(\bm{w}|D) \propto \prod_{i \in D} N_{y_{i}}(f(\bm{x}_{i};\bm{w}), \sigma^{2}) \cdot N_{\bm{w}} (0, \sigma_{\bm{w}}^{2} \bm{I})$. In \cref{proof:complicated-integral} we prove:
+\begin{equation} \label{eqn:complicated-integral}
+    \begin{aligned}
+    &{} \text{Suppose} \; f(\bm{x};\bm{w}) = \langle \bm{w}, \phi(\bm{X}) \rangle \text{, prove the following,} \\
+    & \int \mathbb{P} (\hat{y}|\bm{x},\bm{w}) \cdot \mathbb{P}(\bm{w}|D) d \bm{w} = N_{\hat{y}}(f(\bm{x};\bm{w}_{LS-R}), \sigma^{2} + \bm{\phi}^{T}(\bm{x}) \sigma^{2} (\bm{\phi} \bm{\phi}^{T} + \frac{\sigma^{2}}{\sigma_{\bm{w}}^{2}} \bm{I}) \bm{\phi}(\bm{x})) \\
+    & \text{where} \; \bm{\phi} \; \; \text{is short for} \; \; \phi(\bm{X}) \; \; \text{and} \; \; \bm{w}_{LS-R} \; \; \text{is the LS-R solution with} \; \; \lambda = \frac{\sigma^{2}}{\sigma_{\bm{w}}^{2}}
+    \end{aligned}
+\end{equation}
