@@ -1,2 +1,23 @@
 \section{Risk and Bayes Optimal Prediction}
-Sometimes we need to make decisions, this is where classification comes into play. 
+Sometimes we need to make decisions, this is where classification comes into play. In \textbf{binary classification}  we have an input, $\bm{x} \in \mathbb{R}^{d}$, an output, $y \in \{+1,-1\}$\footnote{Where $ \{+1,-1\}$ are the class labels.}, and a task where given $\bm{x}$ we make a prediction $y$. In classification our aim is to find a \textbf{decision boundary}, which carves the input space into areas belonging to a certain prediction (or class). In binary classification we can define the kind of error we make: a \textbf{False Positive (FP)} is where a $\bm{x}$ should be labelled ``-1'' but is labelled ``+1'', a \textbf{False Negative (FN)} on the other hand is where $\bm{x}$ is wrongly labelled ``-1'', similarly we can define \textbf{True Positive (TP)} and \textbf{True Negative (TN)}. Let $f$ be our \textbf{level-set function}, that is the value of $f(\bm{x})$ determines whether our prediction of $\bm{x}$ is $+1$ or $-1$. The optimal level set function is:
+\begin{definition}
+    \textbf{Bayes Optimal Classifier} \\
+    $f(\bm{x}) = \mathbb{P}(\bm{x}, y=+1) - \mathbb{P}(\bm{x}, y=-1)$
+\end{definition} 
+As $\mathbb{P}( \text{FP or FN} |f)$ is minimized when $f$ defined as above (proof in \cref{proof:bayes-optimal-classifier}). However, this only serves as an ideal optimal classifier, in reality we don't have access to  $\mathbb{P}(\bm{x},y)$, we only have some data-points. 
+
+Sometimes wrong decisions may have different losses associated with them, we can define a \textbf{loss matrix}, $\bm{L}$, where entry $i,j$ of the loss matrix is the loss associated with predicting j instead of the target i. To make an optimal decision whilst taking the risk into account we would like to minimize the expected loss of making a wrong decision: $\argmin_{y_{0}} \mathbb{E}_{\mathbb{P}(y| \bm{x})} (L(y,y_{0}) | \bm{x}) = \sum_{y \in \{+1,-1\}} \mathbb{P}(y|\bm{x}) L(y,y_{0})$, where $y_{0}$ is the decision we make (our prediction). Note, we don't know $\mathbb{P}(y|\bm{x})$.
+
+\subsection{Inference of \texorpdfstring{$\mathbb{P}(y| \bm{x})$}{TEXT}}
+Instead of $\mathbb{P}(y| \bm{x})$ we can infer $\mathbb{P}(y| \bm{x},D)$. There are two main approaches to doing this:
+\begin{definition}
+    \textbf{Discriminative Approach:} \\
+    Model $\mathbb{P}(y| \bm{x})$ with $\mathbb{P}(y| \bm{x}; \bm{w})$. Note that with this method we cannot simulate a new $\bm{x}$ given a class y, only tells us the difference between $+1$ and $-1$. 
+\end{definition}
+\begin{definition}
+    \textbf{Generative Approach:} \\
+    Note that $\mathbb{P}(y|\bm{x},D) \propto \mathbb{P}(\bm{x}|y,D) \mathbb{P}(y)$. So we can model $\mathbb{P}(\bm{x}|y)$ with $\mathbb{P}(\bm{x}|y;\bm{w})$. With this approach we can generate a new input $\bm{x}$ given an output $\bm{y}$. 
+\end{definition}
+
+\subsection{Risk in Regression}
+The output value in regression is a continuous variable, so we cannot have a loss matrix anymore. Instead, we have a loss function, such as squared loss. When we use squared-loss the optimal prediction is $\hat{y} = \mathbb{E}_{\mathbb{P}(y|\bm{x})} (y)$ (proved in \cref{proof:squared-loss-optimal-classifier}). If we use the absolute loss then the optimal prediction is the median of $\mathbb{P}(y| \bm{x})$ (proved in \cref{proof:absolute-loss-optimal-classifier}).

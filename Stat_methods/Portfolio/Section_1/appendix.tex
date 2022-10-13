@@ -92,6 +92,63 @@ therefore, with the help of 2.115 in PRML, we have,
     & = N_{\hat{y}}(f(\bm{x};\bm{w}_{LS-R}), \sigma^{2} + \bm{\phi}^{T}(\bm{x}) \sigma^{2} (\bm{\phi} \bm{\phi}^{T} + \frac{\sigma^{2}}{\sigma_{\bm{w}}^{2}} \bm{I}) \bm{\phi}(\bm{x}))
 \end{align}
 
+\subsection{\texorpdfstring{$\mathbb{P}( \text{FP or FN} |f)$}{TEXT} minimized when \texorpdfstring{$f(\bm{x}) = \mathbb{P}(\bm{x},y=+1) - \mathbb{P}(\bm{x},y=-1)$}{TEXT} } \label{proof:bayes-optimal-classifier}
+We can write our objective as,
+\begin{equation}
+    \int_{\{\bm{x} : f(\bm{x}) \geq 0\}} \mathbb{P}(\bm{x},y=-1) d\bm{x} + \int_{\{\bm{x} : f(\bm{x}) \leq 0\}} \mathbb{P}(\bm{x},y=+1) d\bm{x}
+\end{equation}
+We want to pick $f(\bm{x})$ that minimizes the above, the $f(\bm{x})$ that minimizes the above objective is the one such that,
+\begin{equation}
+    f(\bm{x}) \geq 0 \; \; \text{if} \; \; \mathbb{P}(\bm{x},y=-1) \leq \mathbb{P}(\bm{x},y=+1) 
+\end{equation}
+and
+\begin{equation}
+    f(\bm{x}) \leq 0 \; \; \text{if} \; \; \mathbb{P}(\bm{x},y=+1) \leq \mathbb{P}(\bm{x},y=-1) 
+\end{equation}
+an $f(\bm{x})$ that satisfies these statements is,
+\begin{equation}
+    f(\bm{x}) = \mathbb{P}(\bm{x},y=+1) - \mathbb{P}(\bm{x},y=-1)
+\end{equation}
+if $f(\bm{x}) \geq 0$, then $\mathbb{P}(\bm{x},y=+1) \geq \mathbb{P}(\bm{x},y=-1)$, \\
+if $f(\bm{x}) \leq 0$, then $\mathbb{P}(\bm{x},y=+1) \leq \mathbb{P}(\bm{x},y=-1)$. Hence, proven.
+
+\subsection{The optimal prediction using squared loss is \texorpdfstring{$\hat{y} = \mathbb{E}_{\mathbb{P}(y| \bm{x})} (y)$}{TEXT}} \label{proof:squared-loss-optimal-classifier}
+We can rewrite the objective function as,
+\begin{align}
+    \int \mathbb{P} (y| \bm{x}) L(y,y_{0}) dy &{} = \int \mathbb{P} (y| \bm{x}) (y - y_{0})^{2} dy \\
+    & = \int \mathbb{P} (y| \bm{x}) (y^{2} +y_{0}^{2} -2yy_{0}) dy
+\end{align}
+taking the derivative of $\frac{\partial}{\partial y_{0}}$ and setting to 0 we get,
+\begin{align}
+    &{} 0 = \int \mathbb{P}(y| \bm{x}) (2y_{0} - 2y) dy \\
+    & \Rightarrow 0 = 2y_{0} \int \mathbb{P}(y|\bm{x}) dy - 2 \int \mathbb{P}(y| \bm{x}) y dy \\
+    & \Rightarrow 0 = 2y_{0} - 2 \mathbb{E}_{\mathbb{P}(y|\bm{x})} (y) \\
+    & \Rightarrow y_{0} = \mathbb{E}_{\mathbb{P}(y| \bm{x})} (y)
+\end{align}
+so $\hat{y} = \mathbb{E}_{\mathbb{P}(y| \bm{x})} (y)$.
+
+\subsection{The optimal prediction using absolute loss is the median of \texorpdfstring{$\mathbb{P}(y| \bm{x})$}{TEXT}} \label{proof:absolute-loss-optimal-classifier}
+The objective function is,
+\begin{equation}
+    \int \mathbb{P}(y| \bm{x})|y-y_{0}| dy
+\end{equation}
+taking the derivative of $\frac{\partial}{\partial y_{0}}$ and setting to 0 we get,
+\begin{equation}
+    \int - \frac{\mathbb{P}(y| \bm{x}) (y-y_{0})}{|y-y_{0}|} dy = 0
+\end{equation}
+note that,
+\begin{equation}
+    \frac{y-y_{0}}{|y-y_{0}|} = \begin{cases} \mbox{1,} & y > y_{0} \\ \mbox{-1,} & y<y_{0} \end{cases}
+\end{equation}
+so we have,
+\begin{align}
+    &{} \Rightarrow \int_{y>y_{0}} \mathbb{P}(y|\bm{x}) dy - \int_{y<y_{0}} \mathbb{P}(y|\bm{x}) dy = 0 \\
+    & \Rightarrow \int_{y_{0}}^{\infty} \mathbb{P}(y|\bm{x}) dy = \int_{- \infty}^{y_{0}} \mathbb{P}(y|\bm{x}) dy
+\end{align}
+so $\hat{y}=m$ where $m$ is the medium of $\mathbb{P}(y|\bm{x})$
+
+
+\newpage
 \section{Homeworks}
 \subsection{For Section 1}
 \begin{question}

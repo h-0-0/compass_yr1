@@ -7,7 +7,6 @@ Computers are often used to answer complex questions, however, these methods are
     \item They should take cost (of making the wrong decision) into consideration
     \item They should take the random nature of data into consideration
 \end{enumerate}
-
 In a \textbf{regression problem} we want to predict an outcome given some known inputs. We can use the following as an objective function:
 \begin{definition}
     \textbf{Least Squares (LS)}: \\
@@ -22,7 +21,7 @@ Let $\bm{w}$ be a vector parameterising f \footnote{In the case of linear LS we 
 \begin{equation}\label{eqn:wLS solution}
     \bm{w}_{LS} = (\bm{X}^{T} \bm{X})^{-1} \bm{X}^{T} \bm{y} 
 \end{equation}
-The proof can be found in the appendix (CITE). 
+The proof can be found in \cref{proof:wLS solution}. 
 
 Alternatively we can find $\bm{w}$ in another data-driven way but also whilst taking the randomness of the data into account by using a probabilistic approach. We define a new objective function:
 \begin{definition}
