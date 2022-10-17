@@ -1,0 +1,14 @@
+---
+title: "Statistical Computing Chapter_2"
+author: "Henry Bourne"
+date: "2022-10-17"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 60), tidy = TRUE)
+```
+
+# Version Control 
+In the last section we mentioned version control, here we dive into exactly what version control is and how to use it. In the next 
+

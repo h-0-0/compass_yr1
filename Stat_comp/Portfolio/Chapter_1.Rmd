@@ -1,0 +1,175 @@
+---
+title: "Statistical Computing Chapter_1"
+author: "Henry Bourne"
+output: pdf_document
+date: "2022-10-17"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 60), tidy = TRUE)
+```
+
+# Reproducibility 
+In science it is important to conduct **reproducible research**: where we are able to reproduce the analysis and conclusions of a particular investigation given the same raw data. In most science reproducible research is seen as very important and as a result most scientific research is done in such a way that it is reproducible. However, scientific research involving computation for the most part is not reproducible. The reason for this is probably that historically carrying out reproducible research with computers was very hard as it used to be very difficult to create code that works on many different computer systems. Another reason could be that computer research can often be very interactive making it hard to track the final set of steps that were used for the finished product. However, increasingly we see computational scientific research becoming more reproducible, for example now we often see code being supplied alongside the research.
+
+To carry out reproducible computing the following is important:  
+1. Readable code.  
+2. Accessible data.  
+3. Ability for the code to run on any machine (Or a guide on what is needed in order to run the code).  
+4. Version control.  
+
+Some of the above may or may not be possible depending on the research. For example, if you are working with sensitive data you may not be able to make the data accessible and if you are working with unique hardware for which your code is optimized then it will be difficult to create a guide for how to implement the code and may not even be worthwhile. However, wherever possible we should strive to implement the above. Having readable code is very important for reproducibility (one must be able to decipher what the code is doing if they are to use it) and there are a number of ways one can go about this, we will explore how to do this shortly. Making your data accessible usually is done by uploading it to an online repository and often fields will have specific online repositories that they use. Making your code able to run on any machine often involves writing it in high-level languages and specifying system pre-requisites such as which packages are needed in order to run the code. Version control is usually implemented using the git version control software and an online repository such as Github.com, we will visit this in more depth in the next chapter. Version control is important as it allows someone to follow how the code was built and therefore deduce the steps that where taken to create the code. By fulfilling the above we get closer to truly reproducible computing. 
+
+## Readable Code and Literate Programming
+There are a number of ways to help facilitate the creation of easily understandable code. One such way of doing this is by **including comments** withing the code itself. By including comments within code we can in-situ give explanation to what we are trying to do with specific pieces of code. Including comments in your code allows you to give context to the human reader as to what the code you have written is instructing the computer to do, and clearly is very important when trying to write code that is easily parseable by the reader. Another step that can be taken to make code more easily useable is through creating **documentation**. Documenting our code is where we create a separate document (to our code) where we describe what it is that our code does. There also exist tools out there which help you to create good documentation such as "Doxygen" which lets you create documentation straight from your source code, the advantage of this being that it is easier to keep your documentation up to date with your source code.
+
+The last way we will discuss of creating readable reproducible code is **Literate Programming**: involves writing source code that can be processed to produce:  
+1. A document explaining what the program does.  
+2. A program that can be executed.  
+RMarkdown for example is a use of literate programming, so is Jupyter Notebook, also note that automated forms of documentation creation can also be considered literate programming (such as using Doxygen). The advantages of literate programming are:  
+- Code and documentation are consistent with each other (as both are in the same file).  
+- One can focus on readability of the output document.  
+- Can emphasize the thought process behind the code more clearly.  
+Specifically in R there are three main ways of doing this. One way is through writing an R script with specially delimited Markdown chunks that are ignored by R as comments as they are parsed, but can optionally be converted into a literate programming document using "knitr::spin". Another way would be to incorporate R code into LaTeX. Lastly we can also write in RMarkdown, in fact, this document and the rest of the documents for the statistical computing unit shall be written in RMarkdown. We will now give an example of Literate programming in action.
+
+## Literate Programming example
+In this section we will investigate the "Prostate cancer dataset". We will produce a linear Least Squares (LS) solver to produce a model for the dataset that predicts the outcome given the predictor variables. We will then calculate the cross validation error of our model and then analyse the importance of each predictor variable in our model. From this analysis we find that the lcavol, lweight and svi predictor variables do not impact performance when removed from the model and therefore suggest that we can reduce the dimensionality of our problem by removing said predictor variables from our model.
+
+Throughout this document we will make sure to keep the code reproducible and will be conducting literate programming in order to make the code easily readable and understandable. We also will not be using any special packages outside of the default packages needed for R such that this code can be ran on any computer. Except, do make sure that you have the formatR package installed so the comments in the chunks are wrapped when this file is knitted. 
+
+
+### Finding the Least squares estimator
+We begin by loading in the dataset directly from the URL so this can be run on any computer without first downloading the file. We also print out the first 6 rows to check the structure of the data.
+```{r cars}
+D <- read.table(url("https://hastie.su.domains/ElemStatLearn/datasets/prostate.data")); head(D)
+```
+
+We extract the predictor variable y from the dataset and print it to check it has the correct structure.
+```{r}
+y <- D$lpsa; y
+```
+
+We now create a function which given the dataset, D, will return the model matrix X.
+```{r}
+mm <- function(D) {
+  X <- as.matrix(D[ 1:(ncol(D)-2) ])
+  ones <- rep(1, nrow(D))
+  X <- cbind(ones, X)
+  X
+}
+```
+
+And we now use that function to obtain the model matrix, X, from the dataset, D.
+```{r}
+X <- mm(D); head(X)
+```
+
+Now we have the model matrix, X, and predictor variable, y, we have everything we need to find the LS estimate. We now write a function that takes in the model matrix and target variable and returns the LS solution.
+```{r}
+LLS <- function(X, y) {
+  w <- solve(t(X) %*% X) %*% t(X)  %*% y
+  w
+}
+```
+
+And we now call that function using our X and y to give us the LS estimator. We also print our solution.
+```{r}
+w_LS <- LLS(X, y); w_LS
+```
+
+### Cross Validation
+We now are going to assess the performance of our estimator by calculating the cross-validation error.
+
+We begin by randomly shuffling our data and denoting this shuffled data by D_dash
+```{r}
+D_dash <- D[sample(nrow(D)),] ; head(D_dash)
+```
+We now create a list which indexes the rows in our dataset, we will use this to select groups of certain rows from the dataset, hence what we have effectively done here is partition the dataset (randomly - as we shuffled the dataset previously) into groups. We split the dataset into 10 groups as we will be performing 10-fold cross validation.
+```{r}
+subsets <- cut(seq(1,nrow(D)), breaks = 10, labels = FALSE) ; subsets
+```
+We now write a function that will carry out 10-fold cross validation given the dataset, D, and the predictor variable, y. Note that within this function we include comments to assist the reader in understanding what exactly is happening in this larger function.
+```{r}
+cross_val <- function(D, y){
+ 
+  # We randomly shuffle the indices of the rows and using these randomized indices shuffle the rows of the dataset and the target variable (in the same order)
+  ind <- sample(nrow(D))
+  D_dash <- D[paste(ind),]
+  y_dash <- y[ind]
+  
+  # We now create a list which indexes the rows in our dataset, we will use this to select groups of certain rows from the dataset, hence what we have effectively done here is partition the dataset (randomly - as we shuffled the dataset previously) into groups. We split the dataset into 10 groups as we will be performing 10-fold cross validation.
+  subsets <- cut(seq(1,nrow(D)), breaks = 10, labels = FALSE)
+  
+  
+  # We create a vector to store our cross-val errors
+  errors <- c()
+  
+  # Loop for carrying out 10-fold cross-val
+  for(i in 1:10){
+    
+    # We segment our data into testing, D.test, and training, D.train, datasets
+    testIndexes <- which(subsets==i,arr.ind=TRUE)
+    D.test <- D_dash[testIndexes, ]
+    D.train <- D_dash[-testIndexes, ]
+    
+    # We get the model matrix and predictor variables for the training data and then we find the LS estimator
+    X.train <- mm(D.train) 
+    y.train <- y_dash[-testIndexes]
+    w <- LLS(X.train, y.train) 
+    
+    # We get the model matrix and predictor variables for the testing data and then we calculate the least squares testing error
+    X.test <- mm(D.test)
+    y.test <- y_dash[testIndexes]
+    test.error <- norm(y.test - X.test %*% w, type="2")**2
+    
+    # We add the testing error to our error vector
+    errors[i] <- test.error
+    
+  }
+  
+  # We find and return the cross-val error
+  error.CV <- sum(errors)/10
+  error.CV
+}
+```
+
+Finally, we carry out cross validation by passing our data to the function we just wrote and find the cross-validation error.
+```{r}
+cross_val(D,y)
+```
+
+
+### Dimensionality reduction
+Now we would like to see if all the predictor variables are important, to check this for each predictor variable we will remove it from the dataset and calculate the cross-validation error. Examining the cross-validation errors we can then check to see if removing certain features corresponds to obtaining larger errors and therefore if certain features are more crucial to keep in the model than others. 
+
+Here we loop through the dataset 8 times, each time removing a different column (predictor variable) and then calculating and storing the error in a vector. We do this 100 times and return the average cross-validation error.
+```{r}
+total_error <- rep(0, 8)
+for(j in 1:100){
+  errors_j <- c()
+  for(i in 1:8){
+    D_drop <- D[-i]
+    errors_j[i] <-  cross_val(D_drop,y)
+  }
+  total_error <- total_error + errors_j
+}
+total_error/100
+```
+From our results we see that removing column 1 leads to a large increase in the cross-validation error. However, removing any of the other columns leads to more minor changes in the error. This may suggest that the other features may not be needed in the model. To test this we will calculate the cross validation error obtained by the LS estimator by just using column 1 (lcavol).
+```{r}
+D_drop <- D[-c(2,3,4,5,6,7,8)]
+cross_val(D_drop,y)
+```
+We notice that the cross-validation error produced is higher than when we had all the features present in our model. Looking back at the errors found when dropping features we notice that column 2 (lweight) and column 5 (svi) have larger errors. So lets do the same as before but now also dropping these features. 
+```{r}
+D_drop <- D[-c(3,4,6,7,8)]
+cross_val(D_drop,y)
+```
+We see that the error we obtain is around the value we got when using all the features. This suggests that the lcavol, lweight and svi predictor variables are potentially not needed in our model for us to have good predictions for the outcome. Hence we can reduce the dimensionality of our problem (and need less observations/ produce a better model on the number of observations) whilst being able to produce just as good a model (than with all the features still present).
+
+The source file for this should run on any computer with R and its main packages installed, the data is easily accessible and does not even need to be downloaded prior to running the file, is written using literate programming for ease of readability and has been written using version control and is available on Github. 
+
+
+
+
+
