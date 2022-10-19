@@ -4,10 +4,14 @@
 #   Check Package:             'Ctrl + Shift + E'
 #   Test Package:              'Ctrl + Shift + T'
 
+#TODO: add automatic documentation
+#TODO: add testing
+#TODO: check that functions can take array, dataframe, vector, etc, also check if you actually need to type check and change computation for type
 
 # This function returns model matrix given the predictor variable (as a data frame or vector), D, and a vector of column indices which to leave omitted from the model matrix
 model_matrix <- function(D,r) {
   #TODO: check matrix is full rank and if not make it so
+  #TODO: deal with factor variables
   if(!missing(r)){
     X <- as.matrix(D[ -r ])
   }
@@ -27,13 +31,10 @@ model_matrix <- function(D,r) {
 }
 
 # This function performs a feature transform
-#TODO: add case for if D is an array or dataframe
 feat_trans <- function(D,b){
-  if(is.vector(D)){
-    x_ft <- matrix(NA, nrow=length(D), ncol=b)
-    for(i in 1:b){
-      x_ft[,i] <- D^i
-    }
+  x_ft <- matrix(D, nrow=length(D), ncol=b, byrow=FALSE)
+  for(i in 1:b){
+    x_ft[,i] <- x_ft[,i]^i
   }
   x_ft
 }
