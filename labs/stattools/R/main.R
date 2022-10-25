@@ -4,16 +4,22 @@
 #   Check Package:             'Ctrl + Shift + E'
 #   Test Package:              'Ctrl + Shift + T'
 
-#TODO: add automatic documentation
-#TODO: add testing
-#TODO: check that functions can take array, dataframe, vector, etc, also check if you actually need to type check and change computation for type
-
-# This function returns model matrix given the predictor variable (as a data frame or vector), D, and a vector of column indices which to leave omitted from the model matrix
+#' Create a model matrix
+#'
+#'Given data, D, and columns to leave out, r, creates the corresponding model matrix.
+#'Note: doesn't notify you or make the model matrix full rank if its not.
+#' @param D, data in the form of a data frame, matrix or vector
+#' @param r, optional vector of column indices to omit from the model matrix
+#' @return The corresponding model matrix X
+#' @export
+#' @examples
+#' model_matrix(c(1,2,3,4))
+#' model_matrix(cars)
+#TODO: check matrix is full rank and if not make it so
 model_matrix <- function(D,r) {
-  #TODO: check matrix is full rank and if not make it so
-  #TODO: deal with factor variables
   if(!missing(r)){
-    X <- as.matrix(D[ -r ])
+    X <- data.matrix( D[, -r ] )
+    colnames(X) <- rep(NULL, ncol(D))
   }
   else{
     X <- as.matrix(D)
@@ -26,33 +32,66 @@ model_matrix <- function(D,r) {
     ones <- rep(1, nrow(D))
   }
 
-  X <- cbind(ones, X)
+  X <- cbind(ones, X, deparse.level=0)
   X
 }
 
-# This function performs a feature transform
-feat_trans <- function(D,b){
-  x_ft <- matrix(D, nrow=length(D), ncol=b, byrow=FALSE)
+#' Performs a polynomial feature transform
+#'
+#' Given data, x, and degree of polynomial transform to perform, b, computes and returns the polynomial feature transform of degree b on x, x_ft.
+#' @param x, a numeric or vector
+#' @param b, a numeric
+#' @return x_ft, an array (either 1 or 2 dimensional)
+#' @export
+#' @examples
+#' feat_trans(5,3)
+#' feat_trans(c(1,2,3,4), 4)
+#TODO: can you give this a matrix or dataframe?
+feat_trans <- function(x,b){
+  x_ft <- matrix(x, nrow=length(x), ncol=b, byrow=FALSE)
   for(i in 1:b){
     x_ft[,i] <- x_ft[,i]^i
   }
   x_ft
 }
 
-# This function computes and returns the Linear Least Squares (LSS) solution, w, given the model matrix, X, and the target variables y.
+#' Linear Least Squares (LLS) estimator
+#'
+#' Given model matrix, X, and targets, y, returns the LLS estimator
+#' @param X, a matrix
+#' @param y, a numeric or vector
+#' @return w, a numeric or vector
+#' @export
+#' @examples
+#' X <- model_matrix(c(1,2,3,4))
+#' y <- c(1,4,9,16)
+#' LLS(X,y)
 LLS <- function(X, y) {
   w <- solve(t(X) %*% X) %*% t(X)  %*% y
   w
 }
 
-# This function computes and returns the Regularized Linear Least Squares (LSS) solution, w, given the model matrix, X, the target variables y and scalar lambda.
-#   Where we use regularization term: lambda * t(w) %*% w
+#' Regularized Linear Least Squares (LLS-R) estimator
+#'
+#' Given model matrix, X, targets, y, and regularization rate, lambda, returns the LLS-R estimator.
+#' Where our regularization term is "\eqn{\text{lambda} \cdot \mathbf{w}^{T} \mathbf{w}}"
+#' @param X, a matrix
+#' @param y, a numeric or vector
+#' @param lambda, a numeric
+#' @return w, a numeric or vector
+#' @export
+#' @examples
+#' X <- model_matrix(c(1,2,3,4))
+#' y <- c(1,4,9,16)
+#' LLS_R(X,y, 1)
 LLS_R <- function(X, y, lambda) {
     w <- solve(t(X) %*% X + lambda*diag(ncol(X))) %*% t(X)  %*% y
     w
   }
 
-
+#' Cross validation
+#'
+#' This function is still under construction
 # This function given a dataset (either as a dataframe or vector), D, and target variable, y, performs k-fold cross validation using a specified Regression Method, RM.
 #TODO: change so we can pass RM functions with all arguments pre-determined except X and y
 #TODO: add ability to change error function

@@ -7,7 +7,7 @@
 model_matrix(D, r)
 }
 \arguments{
-\item{D, }{data in the form of a data frame or vector}
+\item{D, }{data in the form of a data frame, matrix or vector}
 
 \item{r, }{optional vector of column indices to omit from the model matrix}
 }

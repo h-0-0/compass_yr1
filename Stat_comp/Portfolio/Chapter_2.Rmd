@@ -86,12 +86,41 @@ We can check which code is and isn't being run by tests by installing the **covr
 Finally we can also test a package using "Github Actions". To tests defined in a package on Windows, macOS and Linux with the latest release of R, type: **usethis::use_github_action_check_standard()**. To run package tests on macOS and check which lines of source code have been run, then upload results to "Codecov.io", type: **usethis::use_github_action("test-coverage")**. 
 
 # My package
-To implement what I've learnt about packages I have written (and will continue to write over the course of the statistical computing module) a package containing functions to complete all the labs in the statistical methods module. The package can be found at "https://github.com/h-aze/compass_yr1/tree/master/labs/stattools", where you can observe the R package structure i mentioned earlier alongside the various files needed for the package including the DESCRIPTION, LICENSE.md files, documentation and R code. Over the course of the rest of the module I will be using methods learnt in the statistical computing lectures to implement solutions (from scratch, eg. not using existing r functions for creating model matrices etc.) for the labs in the statistical methods lectures (where possible). Most of this code I will write into the R package I have created so that this package can be used to quickly get solutions to all the statistical methods labs. For future portfolio chapters in statistical computing I will in most cases copy code from the package to show how I've implemented certain ideas that were discussed in the lectures related to the portfolio chapter. For the most part I will most likely include these copied functions in the context of a lab from the statistical methods course which utilizes those functions. 
+To implement what I've learnt about packages I have written (and may continue to contribute to over the course of the statistical computing module) a package containing functions to help in the completing of the labs in the statistical methods module. The package can be found at "https://github.com/h-aze/compass_yr1/tree/master/labs/stattools", where you can observe the R package directory structure I mentioned earlier alongside the various files needed for the package including the DESCRIPTION, LICENSE.md files, documentation and R code. Note that some of the functions perform the same or similar functions as those found in base r and other aren't. I may refer to this package in future statistical computing portfolio chapters as I try use knowledge learnt in statistical computing to better implement functions in the package and expand it. 
 
-We do exactly this here where we utilize my package to perform the second statistical methods lab.
+In the package we also will be using automatic documentation creation using roxygen2. We now install the package so we can check out some of the documentation.
+```{r}
+library(devtools)
+devtools::install_github("h-aze/compass_yr1", subdir = "/labs/stattools")
+```
+Using the "?" we can view documentation for specific functions, for example typing ?model_matrix will return:
+-------------------------------------------------------
+model_matrix {stattools}	R Documentation
+Create a model matrix
+Description
+Given data, D, and columns to leave out, r, creates the corresponding model matrix. Note: doesn't notify you or make the model matrix full rank if its not.
 
-# Lab 2: Normalized Regression and Decision making
-We install my package containing all the functions needed to carry out the statistical methods in this lab (note in the spirit of reproducible programming we download the package from github (as opposed to using it locally) and we make sure the devtools package is installed).
+Usage
+model_matrix(D, r)
+Arguments
+D,	
+data in the form of a data frame or vector
+
+r,	
+optional vector of column indices to omit from the model matrix
+
+Value
+The corresponding model matrix X
+
+Examples
+model_matrix(c(1,2,3,4))
+model_matrix(cars)
+[Package stattools version 0.1.0 ]
+-------------------------------------------------------
+I have also implemented testing to some functions, and I can type "devtools::test()" to run all my tests or "testthat::test_file("tests/testthat/test-model/matrix.R")" to run the tests just for the model_matrix function for example. 
+
+# My package in action
+Here we will use my package to do Lab 2 on "Normalized Regression and Decision making" from statistical methods. We first install my package containing all the functions needed to carry out the statistical methods in this lab (note in the spirit of reproducible programming we download the package from github (as opposed to using it locally) and we make sure the devtools package is installed).
 ```{r}
 library(devtools)
 devtools::install_github("h-aze/compass_yr1", subdir = "/labs/stattools")
