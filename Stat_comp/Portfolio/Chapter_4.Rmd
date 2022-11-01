@@ -17,7 +17,7 @@ R supports many functional programming features, perhaps the most important is t
 
 When functional programming it is good to avoid writing functions that modify the global programme state. A **pure function** is a function which given the same arguments returns the same output and has no side affects. Although it is unrealistic that all your functions will be pure, for example functions that generate pseudo-random numbers will not be pure. 
 
-In R we have that functions only have access to variables defined in their enviroment. If in the enviroment that a function is declared there are free variables (variables used in the function that haven't been asigned a value), then the enviroment binds the free variables and the function is a **closure**. So if there are free variables we get back a function and we can then pass to the function the arguments which we would like it to use for the free variables. For example:
+In R we have that functions only have access to variables defined in their environment. If in the environment that a function is declared there are free variables (variables used in the function that haven't been assigned a value), then the environment binds the free variables and the function is a **closure**. So if there are free variables we get back a function and we can then pass to the function the arguments which we would like it to use for the free variables. For example:
 ```{r}
 f <- function(x){
   add_y <- function(y){
@@ -35,7 +35,135 @@ Now we will look at how to do OOP in R. Note that in R this isn't very straightf
 In base R there are three ways of carrying out OOP. The first is S3 which is the least rigorous and can be thought of as functional OOP. Second is S4 which requires formal definitions. And lastly we have Reference Classes which implement properly encapsulated OOP, Reference Classes are also **mutable** (can be modified in-place). We start by describing S3...
 
 ### S3
-An **S3 object** is a base object with attribute class set to the class name. A **base object** 
+An **S3 object** is a base object with attribute class set to the class name. Everything in R is an object, however not all of these objects are object-oriented (OO) objects, **base objects** are objects that don't have a class attribute (and hence aren't OO objects). An **S3 object** is simply a base object but with a class attribute (set to the class name). We use the *class()* function to set the class attribute of an object and hence create an S3 object, we can also use the *unclass()* function to strip the class name attribute and turn it back into a non OO object. It is good practice to have a **constructor** function that a user can call to initialize an object correctly and then return it, like how you would create an object in other languages such as python. It's also recommended to include a **helper** function which is there to correct common mistakes on the fly. 
+
+We can add a method to an S3 object by assigning a function to the following name *<method_name>.<class_name>*, note that this is only for implementing methods for which there exists a generic function of the same name such as plot or print. Also note that the method must take the same arguments as the generic. If we want to we can create a new generic function using *<new_generic_name> <- function( <args_for_generic_method> ){ UseMethod( "<new_generic_name>" ) }* then assign a method with the new generic method name to our S3 class. We can also inherit in S3 by setting the class attribute to a vector of class names, to do this the child class will have a vector containing the names of it and its parent classes. 
 
 
+### S4
+Compared to S3, S4 has a more formal approach to OOP. In S4 we have to define classes in a more formal way, the advantage of this is that it makes working with S3 more clear and allows for build-in integrity checks. To use S4 we need to make sure we have the "methods" package installed, after we've done this we can then define a class as follows:
+```{r}
+library(methods)
+setClass("class_name",
+   slots = c(
+     slot_1  = "numeric",
+     slot_2 = "logical",
+     slot_3  = "character"
+     )
+)
+```
+Here we have defined a class with the name "class_name" and three attributes labelled slot_1, slot_2, slot_3 with types numeric, logical and character, ie. to create a class we call *setClass()*, passing it two arguments, the first being the class name and the second a vector of **slots** (same as fields or methods in other OOP languages). After defining the slots we need to define the methods, we will now show an example of a special method for a class which is the initialization method (the method we call to create an object from the class):
+```{r}
+setMethod("initialize", "class_name",
+  function(.Object, slot_1, slot_2) {
+    .Object@slot_1  <- slot_1
+    .Object@slot_2 <- slot_2
+  
+    if(slot_2){
+      x <- as.character(slot_1)
+    }
+    else{
+      x <- "no number"
+    }
+    .Object@slot_3 <- x
+    return(.Object)
+  }
+)
+```
+To create a method therefore, we call *setMethod*. The first argument we pass to it is the name of the generic function we want to implement a method for, here we use "initialize" which is a non-standard generic function which is called within the function *new()* (which constructs a new object of the class corresponding to the class name for which it is a method). The second argument is the *signature*, which is the classes that the arguments of the function need for this implementation of the function to be able to run. The third argument is the function for the method, here the function has .Object as the first argument, this is because to create a new object we call *new() * with the first argument set to the class name, this then calls initialize, passing the object prototype for the class to the .Object argument. The next two arguments specify that only two more arguments are to be given to *new()* when we are creating an object, here we say that two arguments slot_1 and slot_2 should be given. An example of how we would create an object is:
+```{r}
+new("class_name", 1, TRUE)
+```
+In the function itself we can set the values of slots by writing *.Object@<slot_name> <- <value>*, to achieve proper encapsulation the @ operator should only be used within method definitions. To allow the user to change or fetch slot values we should create getter and setter methods. An example of how we would define a getter and setter method for slot_1 is:
+```{r}
+setGeneric("slot_1", function(x) standardGeneric("slot_1"))
+setGeneric("slot_1<-", function(x, value) standardGeneric("slot_1<-"))
+
+setMethod("slot_1", "class_name", function(x) x@regressor)
+setMethod("slot_1<-", "class_name",
+  function(x, value) {
+    x <- initialize(x, slot_1 = value, slot_2 = x@slot_2)
+    validObject(x)
+    return(x)
+  }
+)
+```
+In the final line of the function we return the object, hence when we call *new()* we get given back an instantitation of the class with all its slots set appropriately. Note that again in S4 methods must be implementations of a generic function, to create a new generic function we can use the command *setGeneric(<generic_name>)*. It is often useful to check in our methods that we have a valid object, to do this we can use the command *validObject(<object>)*, this is one of the build-in mechanisms we mentioned earlier. By default it checks that all slots are present and of the correct type, we can also add validity check by using the function *setValidity()* and passing it the class name for which we want to add a validity check and a method which carries out the validity check. 
+
+We can also have relationships between objects in S4. For example two individual objects can be related to each other, to model this relation we create a slot in each of the classes for which their objects will be related and make the type of the slot the class of the related object. When all the objects of one class are related to all of the objects of another class (ie. one class inherits or is a more general version of another class) then we can model this by adding the *contains* argument to the call of setClass and setting it to a vector of the classes from which it should inherit. This then means that the child class will have all the slots the parent class has and methods. In regards to methods if for a particular method the child class has an implementation of this method then this will be called, if it doesn't then the parent class will be checked for this method and used if it has it, if not then the grandparent class will be checked and so on.
+
+### Reference Classes 
+The final way of doing OOP in R that we will discuss is reference classes. Reference classes provide a way of conducting OOP in R with a higher degree of encapsulation than with S3 and S4, it also allows for modify-in-place (memory changed directly) as opposed to copy-on-modify (creates a copy in memory with modification) which is used most of the time in R. We will explain how reference classes work within the context of an example, what we will do is create a class that can carry out cross-validation for the "stattools" package. 
+
+Curently the cross_validation function in "stattools" is implemented as so:
+```{r}
+regr_cross_val <- function(D, y, RM=LLS, k=10, ...){
+
+  # We randomly shuffle the indices of the rows and using these randomized indices shuffle the rows of the dataset and the target variable (in the same order)
+  if(is.vector(D)){
+    ind <- sample(length(D))
+    D_dash <- D[ind]
+    y_dash <- y[ind]
+  }
+  else if(is.array(D)){
+    ind <- sample(nrow(D))
+    D_dash <- D[ind,]
+    y_dash <- y[ind]
+  }
+  else{
+    ind <- sample(nrow(D))
+    D_dash <- D[paste(ind),]
+    y_dash <- y[ind]
+  }
+
+  # We now create a list which indexes the rows in our dataset, we will use this to select groups of certain rows from the dataset.
+  #   Hence what we have effectively done here is partition the dataset (randomly - as we shuffled the dataset previously) into groups.
+  #   We split the dataset into 10 groups as we will be performing 10-fold cross validation.
+  if(is.vector(D)){
+    subsets <- cut(seq(1,length(D)), breaks = k, labels = FALSE)
+  }
+  else{
+    subsets <- cut(seq(1,nrow(D)), breaks = k, labels = FALSE)
+  }
+
+  # We create a vector to store our cross-val errors
+  errors <- c()
+
+  # Loop for carrying out 10-fold cross-val
+  #TODO: be able to adjust the number of folds
+  for(i in 1:k){
+
+    # We segment our data into testing, D.test, and training, D.train, datasets
+    testIndexes <- which(subsets==i,arr.ind=TRUE)
+    if(is.vector(D)){
+      D.test <- D_dash[testIndexes]
+      D.train <- D_dash[-testIndexes]
+    }
+    else{
+      D.test <- D_dash[testIndexes, ,drop=FALSE]
+      D.train <- D_dash[-testIndexes, ,drop=FALSE]
+    }
+
+    # We get the model matrix and predictor variables for the training data
+    # and then we find the LS estimator
+    X.train <- model_matrix(D.train)
+    y.train <- y_dash[-testIndexes]
+    w <- RM(X.train, y.train,...)
+
+    # We get the model matrix and predictor variables for the testing data
+    # and then we calculate the least squares testing error
+    X.test <- model_matrix(D.test)
+    y.test <- y_dash[testIndexes]
+    test.error <- norm(y.test - X.test %*% w, type="2")**2
+    # We add the testing error to our error vector
+    errors[i] <- test.error
+
+  }
+
+  # We find and return the cross-val error
+  error.CV <- sum(errors)/k
+  error.CV
+}
+```
+The problem with this function is that it can be a hastle to use. In order to carry out cross-validation with this function using a 
 
