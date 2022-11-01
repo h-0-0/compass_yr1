@@ -1,0 +1,122 @@
+\section*{Question 0}
+
+\subsection*{0.1}
+Our prior knowledge says that the temperature changes periodically with time, we would like to to add this behavior to our model. The trigonometric transform is good for approximating a generating function which has a temporal input, the resulting transform also consists of sinusoidal functions which would allow us to model the periodic behavior of temperature with time. Hence for $\phi^{(1)}$ we choose the trigonometric transform.
+
+From our prior knowledge we know that latitude changes linearly with temperature, to be able to model this behavior and incorporate it into our predictive function we should therefore choose a linear transform for $\phi^{(3)}$. 
+
+Finally, we have no prior knowledge on how CO2 emissions should affect temperature, this means we would like to select a basis function which isn't restrictive as it could lead to a highly inaccurate model being fit. We would therefore like to choose a very flexible basis function, so a good choice of basis function for $\phi^{(4)}$ is the RBF. 
+
+\subsection*{0.2}
+B
+
+\section*{Question 1}
+
+\subsection*{1.1}
+We have,
+\begin{align}
+    &{} p(\f | \K , \sigma) = N_{\f} (\bm{0}, \K), \\
+    & p(\y | \f , \K, \sigma) = N_{\y} (\f, \sigma^{2} \bm{I})
+\end{align}
+By 2.115 in PRML we have,
+\begin{equation}
+    p(\y | \sigma, \K) = N_{\y} (\bm{0}, \sigma^{2} \bm{I} + \K)
+\end{equation}
+
+\subsection*{1.2}
+Let us partition $\y$ as follows,
+\begin{equation}
+    \y = \begin{bmatrix}
+        y_{1} \\
+        \y' 
+      \end{bmatrix}
+\end{equation} 
+Similarly we will partition,
+\begin{equation}
+    \bm{0} = \begin{bmatrix}
+        0 \\
+        \bm{0} 
+      \end{bmatrix}
+      \quad \text{and} \quad 
+      \sigma^{2} \bm{I} + \K = \begin{bmatrix}
+        \sigma^{2} \K_{11} & \K_{12} \\
+        \K_{21} & \sigma^{2} \bm{I} + \K_{22}
+      \end{bmatrix}
+\end{equation}
+Where we have partitioned $\K$ such that $\K_{11}=\K^{(1,1)}$, $\K_{21}=\K^{(2:,1)}$, $\K_{12}= \K^{(1,2:)}$ and $\K_{2,2} = \K^{(2:,2:)}$. By 2.81/2.82 in PRML we have that $p(y_{1} | \y',\K,\sigma)$ has the following probability density function:
+\begin{align}
+    p(y_{1} | \y',\K,\sigma) &{} = N_{y_{1}}(0 + \K_{12}(\sigma^{2} \bm{I} + \K_{22})^{-1} (\y' - \bm{0}), \sigma^{2} \K_{11} - \K_{12} (\sigma^{2} \bm{I} + \K_{22})^{-1} \K_{22}) \\
+    &= N_{y_{1}}( \K_{12}(\sigma^{2} \bm{I} + \K_{22})^{-1} \y' , \sigma^{2} \K_{11} - \K_{12} (\sigma^{2} \bm{I} + \K_{22})^{-1} \K_{22})
+\end{align}
+
+\subsection*{1.3}
+Our prediction for $\bm{x}_{1}$ is,
+\begin{align}
+    f(\x_{1} ; \wls) &{} := \K_{21} (\K_{22} + \lambda \bm{I}) \y'^{T} \\
+    & = \K_{12} (\K_{22} + \lambda \bm{I}) \y'
+\end{align}
+As $\K$ is a covariance matrix. Notice that this is exactly the mean of the distribution for $y_{1} | \y' , \sigma, \K$, if we set the regularization parameter $\lambda=\sigma^{2}$, hence performing the kernel regression with $\lambda$ equal to the variance we have that our prediction for a given $\xui$ will be equal to the expected value of the target variable $y_{i}$ given the rest of our target variables, $\K$ and $\sigma$. 
+
+\subsection*{1.4}
+We don't assume the data points are independent. If we don't need to assume that the datapoints are independent then it opens us up to be able to work on other types of data such as time series data. 
+
+\section*{Question 2}
+\subsection*{2.1}
+Let $\bm{h} := \phi(\xi)^{T} (\pX \pXt)^{-1} \pX$, then we have,
+\begin{align}
+    \V(f(\xui ; \wls) | \xui) &{} = \E(f(\xui ; \wls)^{2} |\xui) - \E(f(\xui;\wls) | \xui )^{2} \\
+    &= \E(\langle \h , \y \rangle^{2} | \xui) - \E(\langle \h, \y \rangle | \xui)^{2} \\
+    &= \E(\langle \h , g(\x) + \bm{\epsilon} \rangle^{2} | \xui ) - \E(\langle \h, g(\x) + \bm{\epsilon} \rangle | \xui)^{2} \\
+    &= \langle \h, g(\x) \rangle^{2} + \E(\langle \h, \bm{\epsilon} \rangle^{2}) - \E(\langle \h,g(\x))^{2} \\
+    &= \E(\langle \h, \epsilon \rangle^{2}) \\
+    &= \E(\h^{T} \bm{\epsilon} \bm{\epsilon}^{T} \h) \\
+    &= \h \E(\bm{\epsilon} \bm{\epsilon}^{T}) \h \\
+    &= \h^{T} \h \dot \sigma^{2} \\
+    &= \langle \h , \h \rangle \cdot \sigma^{2}
+\end{align}
+Therefore,
+\begin{equation}
+    \frac{1}{n} \sum_{i=1}^{n} \V(f(\xui;\wls)| \xui) = \frac{1}{n} \sum_{i=1}^{n} \langle \h, \h \rangle \cdot \sigma^{2}
+\end{equation}
+Note that, 
+\begin{align}
+    \langle \h, \h \rangle &{} = \tr(\h \h^{T}) \\
+    &= \tr(\pxui^{T} (\pX \pXt)^{-T} \pxui) \\
+    &= \tr(\pxui^{T} (\pX \pXt)^{-1} \pxui) 
+\end{align}
+Hence,
+\begin{align}
+    \frac{1}{n} \sum_{i=1}^{n} \langle \h, \h \rangle \cdot \sigma^{2} &{} = \tr( \sum_{i=1}^{n} \pxui^{T} (\pX \pXt)^{-1} \pxui) \cdot \frac{\sigma^{2}}{n} \\
+    &= \tr( (\pX \pXt) (\pX \pXt)^{-1} ) \cdot \frac{\sigma^{2}}{n} \\
+    &= \frac{b \sigma^{2}}{n}
+\end{align}
+Hence, as b increases $\frac{1}{n} \sum_{i=1}^{n} \V(f(\xui;\wls)| \xui)$ grows. 
+
+\subsection*{2.2}
+The in-sample error is,
+\begin{equation}
+    \frac{1}{n} \sum_{i=1}^{n} \E((y_{i} - f_{LS}(\xui))^{2} | \xui)
+\end{equation}
+Using bias-variance decomposition we know this equals,
+\begin{equation}
+    \frac{1}{n} \sum_{i=1}^{n} \V(\epsilon_{i}) + [g(\xui) - \E(f_{LS}(\xui) | \xui)]^{2} + \V(f_{LS}(\xui) | \xui)
+\end{equation} 
+Looking at the bias we have that its equal to,
+\begin{align}
+    &{} g(\xui)^{2} - 2g(\xui) \cdot \E(f_{LS}(\xui) | \xui) + \E(f_{LS}(\xui)|\xui)^{2} \\
+    &= g(\xui)^{2} -2g(\xui) \cdot \E(\pxui^{T} (\pX \pXt)^{-1} \pX (g(\x) + \epsilon_{i}) | \xui)  \\
+    & \quad + \E(\pxui^{T} (\pX \pXt)^{-1} \pX (g(\x) + \epsilon_{i}) | \xui)^{2} \\
+    &= g(\xui)^{2} -2g(\xui) \cdot \E(\pxui^{T} \ws) + \E(\pxui^{T} \ws)^{2} \\
+    &= g(\xui)^{2} - 2g(\xui) \cdot \E(g(\xui)) + \E(g(\xui))^{2} \\
+    &= 0
+\end{align}
+We also have that $\V(\epsilon_{i})$ is constant as n increases, finally we have from the previous question that,
+\begin{equation}
+    \frac{1}{n} \sum_{i=1}^{n} \V(f(\xui;\wls)| \xui) = \frac{b \sigma^{2}}{n}
+\end{equation}
+Hence as n increases, this above decreases and the in-sample error decreases 
+
+\subsection*{2.3}
+Because the least squares estimator is unbiased if we reduce the variance associated with our prediction we obtain an estimate closer to the true data generating function. Therefore, if we increase n (by question 2.1/2.2) we have that the average variance of the prediction function given the dataset decreases, this means that we are less likely to overfit as our prediction is likely to stray from the expected value of the prediction function which is the data generating function. Conversely if we decrease n then we are more likely to overfit the data as the variance of our prediction given our dataset increases.
+
+If we increase b, then the variance increases and using the same argument as before we are more likely to overfit, conversely if we decrease b the variance is more likely to decrease and we are less likely to overfit. 

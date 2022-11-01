@@ -1,0 +1,60 @@
+\section{Feature Transforms and Kernel Methods}
+We will start by discussing different types of feature transforms before diving into kernel methods.
+
+\subsection{Feature transforms}
+We've already seen polynomial feature transforms, but why do they work? Let's get some intuition from the the 1-dimensional case. The taylor series of the data generating function, g, at zero is: $g(x) = g(0) (x-0)^{0} +g'(0)(x-0)^{1} + \frac{g''(0)}{2!}(x-0)^{2} + ...$. The taylor series tells us that we can approximate a smooth function using polynomial terms (at some cost), this gives some intuition for how a polynomial transform could allow us to create a good model of the data generating function. Another way we can decompose g is using the \textbf{Fourier series}: $g(x) = a_{0} + \sum_{i=1}^{\infty} [a_{i} \sin(ix) + b_{i} \cos(ix)]$. We can use the fourier series as intuition for another type of transform:
+\begin{definition}
+    \textbf{Trigonometric transform:} \\
+    Used to approximate g(x) over the time domain, defined as follows,
+    \begin{equation}
+        \phi(\x) := [\sin(\x), \cos(\x), sin(2\x), cos(2\x), ..., \sin(b\x), \cos(b\x)]
+    \end{equation}
+\end{definition}
+polynomial and trigonometric transforms are based on the idea a function can be approximated by a:
+\begin{definition}
+    \textbf{Linear basis expansion:} \\
+    A linear basis expansion of $g(\x)$ is,
+    \begin{equation}
+        g(\x) \approx f(\x; \bm{w}) = \langle \bm{w} , \phi(\x) \rangle = \sum_{i=1}^{b} w^{(i)} \phi^{(i)} (\x)
+    \end{equation}
+    where $\phi^{(i)}$ are called \textbf{basis functions}
+\end{definition}
+A widely used basis function for regression tasks is the,
+\begin{definition}
+    \textbf{Radial Basis Function (RBF):}
+    \begin{equation}
+        \phi^{(i)}(\x) := \exp(- \frac{|| \x - \xui ||^{2}}{2 \sigma^{2}})
+    \end{equation}
+    where $\sigma >0$ is called the \textbf{bandwidth}. Note that $\sigma$ is determined before fitting, a common practice is setting it equal to the median of all pairwise distances of $\x$ in your dataset. \\
+    $\xui$ are called \textbf{RBF centroids} (often chosen randomly from dataset). We will use $\bm{\phi}(\x)$ to denote $[\phi^{(1)}(\x),...,\phi^{(b)}(\x)]$
+\end{definition}
+If we imagine the prediction function starting as a flat line, if $w^{(i)}>0$ then the RBF at at $\xui$ lifts up the value of the prediction function around $\xui$, we have the converse is true if $w^{(i)}<0$. Each RBF defines a ball on which the prediction function is supported (with radius $\sigma$), if $g(\x)$ has a wide support then the prediction function must be supported almost everywhere and need many centroids. The packing number (of the number of balls) $b=O(c^{d})$, where $d$ is dimension of $\x$. 
+
+\subsection{Kernel methods}
+The larger the value of b, the higher the dimensionality of the feature space and the more flexible our prediction function is. Can we have an $\infty$-dimensional feature space? 
+
+Suppose $\phi(\x)$ maps $\x$ to an $\infty$-dim. feature space, we will have that $\w$ will be $\infty$ly long. However, we can show that $\wlsr := (\F \F^{T} + \lambda \I)^{-1} \F \y^{T} = \F ( \F^{T} \F + \lambda \I)^{-1} \y^{T}$, where $\F$ is short for $\phi(\X)$ (proof in \cref{proof:wlsr-woodbury}). We now no longer need to compute $\F \F^{T}$ (intractable), we instead can compute $\F^{T} \F \in \mathbb{R}^{n*n}$.
+
+Is there a way we can compute the inner-product without computing $\phi(\cdot)$? Define $k(\bm{a},\bm{b}) := \langle \phi(\bm{a}), \phi(\bm{b}) \rangle$, denote $\K := \F^{T} \F $. We have that $K^{(i,j)} = \langle \phi(\xui), \phi(\bm{x}_{j}) \rangle = k(\xui, \bm{x}_{j})$. Going back to our prediction function we have that, $f(\x ; \wlsr) = \langle \wlsr , \phi(\x) \rangle = \langle \F(\K + \lambda I)^{-1} \y^{T} , \phi(\x) \rangle = \langle (\K+\lambda \I)^{-1} \y^{T}, \phi(\x)^{T} \F \rangle $. Let's denote $\bm{k} := \phi(\x)^{T} \F$, where $k^{(i)} = \langle \phi(\x), \phi(\xui) \rangle = k(\x, \xui)$. We can then rewrite our prediction functions as $f(\x ; \wlsr) := \bm{k} (\K + \lambda \I)^{-1} \y^{T}$, note that $\phi(\x)$ only appears in inner products! \footnote{$\K=O(n^{2})$ and $(\K + \lambda \I)^{-1}$ is usually $O(n^{3})$, so computational cost gets very large for a large n}
+
+All we need now is a function, k, that mimics the behavior of the inner product (without actually having to compute the inner product) and if our $k(\bm{a}, \bm{b})$ is positive definite $\exists \phi$ such that $k(\bm{a}, \bm{b}) = \langle \phi(\bm{a}), \phi(\bm{b}) \rangle$. Such a function is called a:
+\begin{definition}
+    \textbf{Kernel function:} \\
+    Function $k(\bm{a}, \bm{b})$ that mimics the inner product, if explicit $\phi(\x)$ can be derived from k we say k induces feature transform $\phi(\x)$. Many known choices of k exist.
+\end{definition}
+
+\subsection{Choosing a kernel function, k}
+First we give some examples of kernel functions,
+\begin{definition}
+    \textbf{Linear Kernel Function:} \\
+    $k(\bm{a}, \bm{b}) := \langle \bm{a}, \bm{b} \rangle$, induces feature transform $\phi(\x) = \x$
+\end{definition}
+\begin{definition}
+    \textbf{Polynomial Kernel Function with Degree b:} \\
+    $k(\bm{a}, \bm{b}) := (\langle \bm{a} , \bm{b} \rangle +1)^{b}$, this induces feature transform $\phi(\x) = [\bm{x}, ..., \bm{x}^{b}]$.
+\end{definition}
+\begin{definition}
+    \textbf{RBF (or Gaussian) Kernel} \footnote{Note: RBF basis function and the RBF kernel are \textbf{not} the same thing.} \textbf{:} \\
+    $k(\bm{a}, \bm{b}) := \exp(- \frac{|| \bm{a} - \bm{b} ||^{2}}{2 \sigma^{2}})$, induces feature transform $\phi(\x)$ that is infinite-dimensional, $\sigma$ is chosen before fitting (often as the median of the pairwise distances of all inputs).
+\end{definition}
+How do we choose an appropriate kernel function? it depends on the learning task and dataset. The RBF kernel is a good all-round choice for $\x \in \mathbb{R}^{d}$.

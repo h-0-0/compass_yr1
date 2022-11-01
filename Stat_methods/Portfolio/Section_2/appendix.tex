@@ -1,0 +1,111 @@
+\newpage
+\begin{appendices}
+
+
+\section{Proofs}
+
+\subsection{Proof of Bias-Variance Decomposition} \label{proof:bv-decomp}
+By our data-generating assumption:
+\begin{align}
+    \E_{D}([\yi - \prls]^{2} | \xui) &{} = \E_{D}([\gxi + \ei - \prls]^{2} | \xui) \\
+    &= \E_{D}([\gxi + \ei - \prls]^{2} + \E(\prls | \xui) \\ & \quad - \E(\prls | \xui)) \\
+    &= \E_{D}(\ei^{2}) + \E_{D}(\ei (\gxi - \prls ) + \E(\prls | \xui) \\ & \quad - \E(\prls | \xui)) + \E_{D}( (\gxi - \prls \\ & \quad +\E(\prls | \xui) - \E(\prls | \xui)) ) \\
+    &= \E_{D}(\ei^{2}) + \E_{D}( (\gxi - \prls + \E(\prls | \xui) \\ & \quad - \E(\prls | \xui) )^{2}  ) \\ 
+    &= \V(\ei) + \E_{D}( (\gxi - \E(\prls | \xui))^{2} ) \\ & \quad + \E_{D}( (\E(\prls | \xui) - \prls)^{2} ) \\ & \quad + 2 \cdot \E_{D}( (\gxi - \E(\prls | \xui)) \cdot (\E(\prls | \xui) \\ & \quad - \prls) )
+\end{align}
+note that,
+\begin{equation}
+    \E(\prls | \xui) - \prls = \prls - \prls = 0
+\end{equation}
+so,
+\begin{equation}
+    \E_{D}([\yi - \prls]^{2} | \xui) = \V(\ei) + (\gxi - \E(\prls | \xui) )^{2} + \V(\prls | \xui)
+\end{equation}
+hence, proven. 
+
+\subsection{Proof of \texorpdfstring{$\wlsr = \F ( \F^{T} \F + \lambda \I)^{-1} \y^{T}$}{TEXT}} \label{proof:wlsr-woodbury}
+Let $\phi(\X)$ be denoted by $\F$, recall that,
+\begin{equation}
+    \wlsr := (\F \F^{T} + \lambda \I)^{-1} \F \y^{T}
+\end{equation}
+the Woodbury identity says,
+\begin{equation}
+    (\bm{P}^{-1} + \bm{B}^{T} \bm{B})^{-1} \bm{B}^{T} = \bm{P} \bm{B}^{T} (\bm{B} \bm{P} \bm{B}^{T} + \bm{I})^{-1}
+\end{equation}
+let $\bm{P} = \frac{1}{\lambda} \bm{I}$ and $ \bm{B} = \F^{T}$, then,
+\begin{align}
+    (\F \F^{T} + \lambda \I)^{-1} \F \y^{T} &{} = \frac{1}{\lambda} \I \F (\F^{T} \frac{1}{\lambda} \I \F + \I)^{-1} \\
+    &= \F (\F^{T} \F + \lambda \I)^{-1}
+\end{align} 
+hence, proven. 
+
+\subsection{Proof that \texorpdfstring{$\log p(D|m) \approx \log p(D| \wmap , m) + b \log \frac{\dpost}{\dprior}, \\ \text{assuming that} \: \frac{\dpost}{\dprior} \: \text{same} \: \forall w_{i} \: \text{and} \: w_{i} \: \text{independent} $}{TEXT}} \label{proof:log-model-evidence-b}
+We have that,
+\begin{equation}
+    p(D|m) = \int p(D|\w,m) \cdot p(\w|m) d\w
+\end{equation}
+Note that for all i,
+\begin{equation}
+    p(w^{(i)}|m) \approx \frac{\dpost}{\dprior}
+\end{equation}
+so we have,
+\begin{equation}
+    p(\w |m) = \prod_{i} p(w_{i} |m) \approx (\frac{\dpost}{\dprior})^{b}
+\end{equation}
+so,
+\begin{equation}
+    p(D|m) \approx p(D| \wmap , m) \cdot (\frac{\dpost}{\dprior})^{b}
+\end{equation}
+Taking the log,
+\begin{equation}
+    \log p(D|m) \approx \log p(D| \wmap , m) + b \log \frac{\dpost}{\dprior}
+\end{equation}
+hence, proven. 
+
+\newpage
+\section{Homeworks}
+\subsection{For Section 1}
+\begin{question}
+    \textbf{Prove the bias-variance decomposition (\cref{definition:bv-decomp}):} \\
+    Proof in \cref{proof:bv-decomp}
+\end{question}
+
+\subsection{For Section 2}
+\begin{question}
+    \textbf{Prove that $\wlsr = \F ( \F^{T} \F + \lambda \I)^{-1} \y^{T}$:} \\
+    Proof in \cref{proof:wlsr-woodbury}
+\end{question}
+
+\subsection{For Section 3}
+\begin{question}
+    \textbf{Prove that $\log p(D|m) \approx \log p(D| \wmap , m) + b \log \frac{\dpost}{\dprior}$ , assuming $\dpost / \dprior$ the same for all $w_{i}$ and that the $w_{i}$ are independent.} \\
+    Proof in \cref{proof:log-model-evidence-b}.
+\end{question}
+
+\begin{question}
+    \textbf{Example of using marginalized likelihood maximization/ evidence approximation in linear regression:} \\
+    Suppose we have a likelihood model:
+    \begin{align}
+        &{} p(\y_{1} \cdots \y_{n} | \x_{1} \cdots \x_{n} ; \w, b) := \prod_{i \in D} N_{y_{i}} ( \langle \w, \phi(\xui) \rangle, \sigma^{2}) \\
+        & p(\w ; \sigma_{w} ,b) := N_{\w}(\bm{0},\sigma_{w}^{2} \I)
+    \end{align}
+    we would like to find an expression for: 
+    \begin{equation}
+        p(\y_{1} \cdots \y_{n} | \x_{1} \cdots \x_{n} ; b, \sigma, \sigma_{\w})
+    \end{equation}
+    We have that,
+    \begin{equation}
+        p(\y_{1} \cdots \y_{n} | \x_{1} \cdots \x_{n} ; b, \sigma, \sigma_{\w}) = \int p(\y_{1} \cdots \y_{n} | \x_{1} \cdots \x_{n} ; \w, b, \sigma, \sigma_{\w}) \cdot p(\w) d\w
+    \end{equation}
+    We can also rewrite,
+    \begin{equation}
+        \prod_{i \in D} N_{y_{i}} ( \langle \w, \phi(\xui) \rangle, \sigma^{2}) = N_{\y} (\phi(\X)^{T} \w, \sigma^{2} \I)
+    \end{equation}
+    By 2.115 in PRML we have,
+    \begin{align}
+        p(\y_{1} \cdots \y_{n} | \x_{1} \cdots \x_{n} ; b, \sigma, \sigma_{\w}) &{} = N_{\y}(\phi(\X)^{T} \bm{0} + 0, \sigma^{2} \I + \phi(\X)^{T} \sigma_{\w}^{2} \I \phi(\X)) \\
+        &= N_{\y}(\bm{0}, \sigma^{2} \I + \sigma_{\w}^{2} \phi(\X)^{T} \phi(\X))
+    \end{align}
+\end{question}
+
+\end{appendices}

@@ -1,0 +1,31 @@
+\section{Probabilistic Model Selection in Regression}
+In frequentist model selection we wanted to minimize the expected squared error, however, this couldn't be done in practice, so we used an approximation called the out-sample error (\cref{def:out-sample-error}). This approach, however, requires us to hold out part of our sample during training meaning:
+\begin{enumerate}
+    \item We loose information (the data held out for testing).
+    \item Cross-validation helps combat the above point, however, leads to heavy calculation.
+    \item Our dataset may not be iid.
+\end{enumerate}
+What about a probabilistic approach? In probabilistic model selection we model the uncertainty of a model, $m\in \{m_{1},...,m_{k}\}$, using a prior, $p(m)$, over the possible models. Then we can write the posterior of the model using Bayes rule: $p(m|D) \propto p(D|m) p(m)$. This expresses the preference over all models, $\{m_{1},...,m_{k}\}$, given the data, D. 
+
+But now that we have a model of preference over all models, how do we select a model? As Bayesians always do we marginalize! Our prediction function is $p(\yh | D) = \sum_{m \in \{m_{1},...,m_{k}\}} p(\yh | D,m) \cdot p(m|D)$, which is a weighted sum of the prediction functions for each model, where the weights are the model posteriors. Note that using Bayes rule we can write: $p(m|D) \propto p(D|m) p(m)$, where $p(D|m)$ is called the \textbf{Model Evidence}. 
+
+Now, how do we calculate $p(m|D)$? We have the model priors so we need to calculate $p(D|m)$. Suppose our model is parameterized by $\w$, then, $p(D|m) = \int p(D|\w,m) \cdot p(\w|m) d\w$. Note that we can write,
+\begin{equation}
+    p(\w |D,m) = \frac{p(D|\w,m) p(\w|m)}{p(D|m)}
+\end{equation}
+We notice that the model evidence ($p(D|m)$) normalizes the posterior of the parameters ($p(\w |D,m)$).
+
+Is there a way of approximating the model evidence? Let's consider the case where we have only one parameter and suppose that $p(w|D,m) \propto p(D|w,m) \cdot p(w|m)$ plateaus at $w_{MAP}$. Then, $\int p(D|w,m) \cdot p(w|m) dw \approx p(D| w_{MAP} , m) \cdot p(w_{MAP} |m) \cdot \dpost$ \footnote{As $\int f(x) dx \approx f(x_{0}) \cdot \Delta x$, if f can be approximated by a step function with length $\Delta x$ that peaks at $x_{0}$.}. If the prior of the parameters is flat as well: $p(w |m) = \frac{1}{\dprior}$, then, 
+\begin{equation}
+    p(D|m) \approx p(D| w_{MAP} , m) \frac{\dpost}{\dprior}
+\end{equation}
+To further analyze the above lets consider its log, $\log p(D|m) \approx \log p(D| w_{MAP} , m) + \log \frac{\dpost}{\dprior}$. Note that $\dpost / \dprior < 1$ \footnote{As the posterior is almost always sharper than the prior.} therefore the second term is always negative and it increases in magnitude as the ratio gets smaller. So if parameters are finely tuned to the data in the posterior distribution the second term (the \textbf{penalty term}) gets large. The first term corresponds to the log likelihood (because the prior is flat).
+
+Furthermore, for a model with b parameters we have: $\log p(D|m) \approx \log p(D| \wmap , m) + b \log \frac{\dpost}{\dprior}$, assuming $\dpost / \dprior$ the same for all $w_{i}$ and that the $w_{i}$ are independent (proof in \cref{proof:log-model-evidence-b}). If we increase b the second term increases in magnitude (gets more negative), however, the first term will increase as a more complex model can better fit the data. So we have a trade-off where the model-evidence is optimal for some intermediate model-complexity. 
+
+\subsection{Tuning hyper-parameters}
+In most scenarios we normally have that before trying to fit a model we must first parameterize the model such as choosing the regularization parameter or the degree (b) of the polynomial transform, these parameters are called \textbf{hyper parameters}. Can we use probabilistic model selection to help us determine a hyper-parameter? With hyper parameters we write the predictive distribution as: 
+\begin{equation}
+    p(\yh |D) = \int p(\yh |D ,\alpha)\cdot p(\alpha|D) d\alpha = \int \int p(\yh | \w \alpha) \cdot p(\w | D,\alpha) \cdot p(\alpha|D) \; d\w \; d\alpha
+\end{equation}
+However, the integral wrt. $\alpha$ is intractable. If $p(\alpha | D)$ is very sharp and centred on $\hat{\alpha}$ then $\int \int p(\yh | \w \alpha) \cdot p(\w | D,\alpha) \cdot p(\alpha|D) \; d\w \; d\alpha \approx \int p(\yh | \w, \hat{\alpha}) \cdot p(\w | D, \hat{\alpha}) d\w$. However, to find $\hat{\alpha}$ we need to maximize $p(\alpha|D)$. Note that $p(\alpha|D) \propto p(D|\alpha) p(\alpha) = p(\alpha) \int p(D| \w, \alpha) p(\w | \alpha) d\w$. If $p(\alpha)$ is relatively flat then we just set $\hat{\alpha} := \argmax_{\alpha} \int p(D|\w,\alpha) \cdot p(\w | \alpha) d\w$, this is called \textbf{Marginalized Likelihood Maximization} or \textbf{Evidence Approximation}.

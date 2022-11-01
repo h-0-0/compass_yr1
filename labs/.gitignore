@@ -1,0 +1,7 @@
+# Ignore the files containing data as they are too large  
+labs/Ashrae_tidyverse/building_metadata.csv
+labs/Ashrae_tidyverse/sample_submission.csv
+labs/Ashrae_tidyverse/test.csv
+labs/Ashrae_tidyverse/train.csv
+labs/Ashrae_tidyverse/weather_test.csv
+labs/Ashrae_tidyverse/weather_train.csv

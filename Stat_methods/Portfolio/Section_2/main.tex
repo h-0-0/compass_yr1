@@ -1,0 +1,81 @@
+% !TEX root = /home/jd18380/Documents/compass_yr1/Stat_methods/Portfolio/Section_2/main.tex
+\documentclass[a4paper]{article}
+
+%% Language and font encodings
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+
+\usepackage{booktabs}
+\usepackage{tabu}
+\usepackage[T1]{fontenc}
+\usepackage{subfig}
+
+%% Sets page size and margins
+\usepackage[a4paper,top=2cm,bottom=3cm,left=3cm,right=3cm,marginparwidth=2.75cm]{geometry}
+%% Useful packages
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{bm}
+\usepackage{xcolor}
+\DeclareMathOperator*{\argmax}{arg\!\max}
+\DeclareMathOperator*{\argmin}{arg\!\min}
+\usepackage[toc,page]{appendix}
+\usepackage{graphicx}
+%\usepackage{apacite}
+\usepackage[colorinlistoftodos]{todonotes}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+\usepackage{cleveref}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{corollary}{Corollary}[theorem]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{question}{Question}[subsection]
+
+\newcommand{\yi}{y_{i}}
+\newcommand{\gxi}{g_{\bm{x}_{i}}}
+\newcommand{\gx}{g_{\bm{x}}}
+\newcommand{\ei}{\epsilon_{i}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\wls}{\bm{w}_{LS}}
+\newcommand{\wlsr}{\bm{w}_{LS-R}}
+\newcommand{\wmap}{\bm{w}_{MAP}}
+\newcommand{\xui}{\bm{x}_{i}}
+\newcommand{\prls}{f(\xui ; \wls)}
+\newcommand{\prlsv}{f(\bm{x} ; \wls)}
+\newcommand{\V}{\text{Var}}
+\newcommand{\y}{\bm{y}}
+\newcommand{\x}{\bm{x}}
+\newcommand{\w}{\bm{w}}
+\newcommand{\F}{\bm{\phi}}
+\newcommand{\I}{\bm{I}}
+\newcommand{\X}{\bm{X}}
+\newcommand{\K}{\bm{K}}
+\newcommand{\yh}{\hat{y}}
+\newcommand{\dpost}{\Delta \textit{posterior}}
+\newcommand{\dprior}{\Delta \textit{prior}}
+
+
+\title{Statistical Methods: Portfolio 2}
+\author{By Henry Bourne}
+\date{}
+
+\begin{document}
+\maketitle
+
+
+% \begin{abstract}
+%     In this document we will summarize content from the first 4 lectures from the Statistical methods course (at Compass, University of Bristol). These lectures cover content on using statistical methods for decision-making.
+% \end{abstract}
+
+\input{paper_1}
+\input{paper_2}
+\input{paper_3}
+\input{appendix}
+
+% \small
+% \bibliographystyle{plain}
+% \bibliography{refs}
+
+\end{document}

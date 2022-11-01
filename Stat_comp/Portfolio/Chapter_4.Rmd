@@ -35,7 +35,7 @@ Now we will look at how to do OOP in R. Note that in R this isn't very straightf
 In base R there are three ways of carrying out OOP. The first is S3 which is the least rigorous and can be thought of as functional OOP. Second is S4 which requires formal definitions. And lastly we have Reference Classes which implement properly encapsulated OOP, Reference Classes are also **mutable** (can be modified in-place). We start by describing S3...
 
 ### S3
-
+An **S3 object** is a base object with attribute class set to the class name. A **base object** 
 
 
 
