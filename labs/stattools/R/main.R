@@ -15,7 +15,7 @@
 #' @examples
 #' model_matrix(c(1,2,3,4))
 #' model_matrix(cars)
-#TODO: check matrix is full rank and if not make it so
+#TODO: check matrix is full rank and if not make it so IMPORTANT
 model_matrix <- function(D,r) {
   if(!missing(r)){
     X <- data.matrix( D[, -r ] )
@@ -39,20 +39,37 @@ model_matrix <- function(D,r) {
 #' Performs a polynomial feature transform
 #'
 #' Given data, x, and degree of polynomial transform to perform, b, computes and returns the polynomial feature transform of degree b on x, x_ft.
-#' @param x, a numeric or vector
+#' If no x is given then it returns a function that will compute polynomial feature transform for x with degree set to b.
+#' @param x, a numeric or vector (Optional)
 #' @param b, a numeric
 #' @return x_ft, an array (either 1 or 2 dimensional)
 #' @export
 #' @examples
-#' feat_trans(5,3)
-#' feat_trans(c(1,2,3,4), 4)
+#' poly_feat_trans(3,5)
+#' # The following two are equivalent:
+#' poly_feat_trans(4, c(1,2,3,4))
+#' ---------------
+#' pft <- poly_feat_trans(4)
+#' pft(c(1,2,3,4))
 #TODO: can you give this a matrix or dataframe?
-feat_trans <- function(x,b){
-  x_ft <- matrix(x, nrow=length(x), ncol=b, byrow=FALSE)
-  for(i in 1:b){
-    x_ft[,i] <- x_ft[,i]^i
+poly_feat_trans <- function(b, x=NULL){
+  if(is.null(x)){
+    f <- function(x){
+      x_ft <- matrix(x, nrow=length(x), ncol=b, byrow=FALSE)
+      for(i in 1:b){
+        x_ft[,i] <- x_ft[,i]^i
+      }
+      x_ft
+    }
+    f
   }
-  x_ft
+  else{
+    x_ft <- matrix(x, nrow=length(x), ncol=b, byrow=FALSE)
+    for(i in 1:b){
+      x_ft[,i] <- x_ft[,i]^i
+    }
+    x_ft
+  }
 }
 
 #' Linear Least Squares (LLS) estimator
@@ -71,22 +88,37 @@ LLS <- function(X, y) {
   w
 }
 
+
 #' Regularized Linear Least Squares (LLS-R) estimator
 #'
 #' Given model matrix, X, targets, y, and regularization rate, lambda, returns the LLS-R estimator.
+#' If only the regularization rate is given will return function that computes LLS-R for the given regularization rate.
 #' Where our regularization term is "\eqn{\text{lambda} \cdot \mathbf{w}^{T} \mathbf{w}}"
-#' @param X, a matrix
-#' @param y, a numeric or vector
+#' @param X, a matrix (Optional)
+#' @param y, a numeric or vector (Optional)
 #' @param lambda, a numeric
 #' @return w, a numeric or vector
 #' @export
 #' @examples
 #' X <- model_matrix(c(1,2,3,4))
 #' y <- c(1,4,9,16)
-#' LLS_R(X,y, 1)
-LLS_R <- function(X, y, lambda) {
-    w <- solve(t(X) %*% X + lambda*diag(ncol(X))) %*% t(X)  %*% y
+#' # The following are equivalent
+#' --------
+#' f <- LLS_R(1)
+#' f(X,y)
+#' --------
+#' LLS_R(1,X,y)
+LLS_R <- function(lambda, X=NULL, y=NULL) {
+  f <- function(A, b){
+    w <- solve(t(A) %*% A + lambda*diag(ncol(A))) %*% t(A)  %*% b
     w
+  }
+  if(is.null(X) || is.null(y)){
+    return(f)
+  }
+  else{
+    return(f(X,y))
+  }
 }
 
 #' L2 Norm Error

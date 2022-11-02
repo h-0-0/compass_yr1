@@ -3,6 +3,9 @@ title: "Chapter_4"
 author: "Henry Bourne"
 date: "2022-10-24"
 output: pdf_document
+header-includes:
+  \usepackage{fvextra}
+  \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
 ---
 
 ```{r setup, include=FALSE}
@@ -170,7 +173,7 @@ regr_cross_val <- function(D, y, RM=LLS, k=10, ...){
   error.CV
 }
 ```
-The problem with this function is that it can be a hastle to use. If we want to carry out cross-validation multiple times with a specific regression method we must specify it each time and if the regression method has hyper-parameters then we must first specify the regression method, RM, we want to use and the k we want to use, even if we are happy with the default values. Further we may sometimes want more information from this function, such as the estimates it found, or we may want to change the cost function being used. By writing a class for this function we will be able to solve all of the above problems and add extra functionality, whilst making it easier for the user.
+The problem with this function is that it can be a hastle to use. If we want to carry out cross-validation multiple times with a specific regression method we must specify it each time and if the regression method has hyper-parameters then we must first specify the regression method, RM, we want to use and the k we want to use, even if we are happy with the default values. Further we may sometimes want more information from this function, for example we may want a list of all the estimators found and their corresponding errors so we can find the estimator that produced the minimal error. We may also want to add further functionality such as the ability to change the cost function. By writing a class for this function we will be able to solve all of the above problems and add extra functionality, whilst making it easier for the end user.
 
 We have already made sure that we have the methods package in this RMarkdown script, so now we can create the class:
 ```{r}
@@ -181,27 +184,39 @@ CrossValidation <- setRefClass("CrossValidation",
                                          Regr_method="ANY", 
                                          Regr_method.name="character",
                                          E_fun = "ANY",
-                                         E_fun.name = "character"
+                                         E_fun.name = "character",
+                                         Feat_trans = "ANY",
+                                         Feat_trans.name = "character",
+                                         k_test_errors = "numeric",
+                                         estimators = "list",
+                                         cv_error = "numeric",
+                                         flag = "logical"
                                          )
                                )
 ```
 Here we have created a class called CrossValidation and defined the fields it will have along with their names. Note that in reference classes they are called fields and not slots like in S4. Now we would like to define some methods for the class:
 ```{r}
-#need to do functional closure regr_methods
 CrossValidation$methods(
   initialize = function(data, target, k=as.integer(10), Regr_method=LLS, E_fun=E_l2 ) {
     .self$data <- data
     .self$target <- target
     .self$k <- k
-    .self$Regr_method <- Regr_method
-    .self$Regr_method.name <- as.character(substitute(Regr_method))
-    .self$E_fun <- E_fun
-    .self$E_fun.name <-as.character(substitute(E_fun))
+    
+    .self$setRegr_method(Regr_method)
+    .self$Regr_method.name <- as.character(substitute(Regr_method)) # We set the name again when initializing otherwise will use argument name
+    .self$setE_fun(E_fun)
+    .self$E_fun.name <-as.character(substitute(E_fun)) # We set the name again when initializing otherwise will use argument name
+    .self$Feat_trans <- NULL
+    .self$Feat_trans.name <- ""
+    .self$k_test_errors <- numeric(0)
+    .self$estimators <- vector(mode = "list", length = 0)
+    .self$cv_error <- numeric(0)
+    .self$flag <- FALSE
   },
   
-  #TODO: track certain things
   # Carries out k-fold cross-validation for a regression problem
   regr_cv = function(){
+    .self$flag <- TRUE
     # We randomly shuffle the indices of the rows and using these randomized indices shuffle the rows of the dataset and the target variable (in the same order)
     if(is.vector(.self$data)){
       ind <- sample(length(.self$data))
@@ -227,8 +242,9 @@ CrossValidation$methods(
       subsets <- cut(seq(1,nrow(.self$data)), breaks = .self$k, labels = FALSE)
     }
   
-    # We create a vector to store our cross-val errors
-    errors <- c()
+    # We assign empty vectors to fields k_test_errors and estimators so that we can assign them values in the upcoming for loop
+    .self$k_test_errors <- vector(mode="numeric", length=.self$k)
+    .self$estimators <- vector("list", length = .self$k)
   
     # Loop for carrying out k-fold cross-val
     for(i in 1:.self$k){
@@ -244,43 +260,130 @@ CrossValidation$methods(
       }
   
       # We get the model matrix and predictor variables for the training data and then we find the estimator using our regression method
-      X.train <- model_matrix(D.train)
+      if(is.null(.self$Feat_trans)){
+        X.train <- model_matrix(D.train)
+      }
+      else{
+        X.train <-model_matrix(.self$Feat_trans(D.train))
+      }
       y.train <- y_dash[-testIndexes]
       w <- .self$Regr_method(X.train, y.train)
+      .self$estimators[[i]] <- w
   
       # We get the model matrix and predictor variables for the testing data and then we calculate the error using our error function
-      X.test <- model_matrix(D.test)
+      if(is.null(.self$Feat_trans)){
+        X.test <- model_matrix(D.test)
+      }
+      else{
+        X.test <-model_matrix(.self$Feat_trans(D.test))
+      }
       y.test <- y_dash[testIndexes]
       test.error <- .self$E_fun(y.test, X.test %*% w)
       
       # We add the testing error to our error vector
-      errors[i] <- test.error
+      .self$k_test_errors[i] <- test.error
   
     }
-  
+    
     # We find and return the cross-val error
-    error.CV <- sum(errors)/.self$k
-    error.CV
+    .self$cv_error <- sum(.self$k_test_errors)/.self$k
+    .self$cv_error
   },
   
   show = function() {
-    cat("head(data)   =", head(.self$data), "\n", sep=" ")
-    cat("head(target) =", head(.self$target), "\n", sep=" ")
-    cat("k =", .self$k, "\n", sep=" ")
-    cat("Regr_method =", .self$Regr_method.name, "\n", sep=" ")
-    cat("E_fun =", .self$E_fun.name, "\n", sep=" ")
-  },
-  getResult = function() {
-    if (!flag) {
-      .self$doComputation()
+    cat("head(data)    =", head(.self$data), "\n", sep=" ")
+    cat("head(target)  =", head(.self$target), "\n", sep=" ")
+    cat("k             =", .self$k, "\n", sep=" ")
+    cat("Regr_method   =", .self$Regr_method.name, "\n", sep=" ")
+    cat("E_fun         =", .self$E_fun.name, "\n", sep=" ")
+    if(.self$flag){
+      cat("k_test_errors =", head(.self$k_test_errors), "\n", sep=" ")
+      for (v in 1:length(head(.self$estimators))) {
+        cat(paste("estimators[",as.character(v), "] =", sep=""), head(.self$estimators)[[v]], "\n", sep=" ")
+      }
+      cat("cv_error      =", .self$cv_error, "\n", sep=" ")
     }
-    return(result)
   },
-  setData = function(value) {
-    .self$initialize(data = value)
+  
+  # When called with problem type (at the moment only support regression:"r") computes the cv error and returns it
+  getCv_error = function(t="r") {
+    if (t == "r"){
+      .self$regr_cv()
+      return(.self$cv_error)
+    }
+    else{
+      stop("Not given valid problem type")
+    }
+  },
+
+  getEstimators = function() {
+    return(.self$estimators)
+  },
+
+  getK_test_errors = function() {
+    return(.self$k_test_errors)
+  },
+  
+  # Allows user to change the data that cv will be performed on (user must give both data and targets)
+  setData = function(data, target) {
+    .self$data <- data
+    .self$target <- target
+  },
+  
+  # Checks that the function passed to it has closure
+  check_closure = function(f){
+    if (typeof(f) == "closure"){
+      return(TRUE)
+    }
+    else{
+      return(FALSE)
+    }
+  },
+  
+  # Sets the regression method passed to it to Regr_method if function is of type "closure"
+  setRegr_method = function(Regr_method){
+    if (.self$check_closure(Regr_method)){
+      .self$Regr_method <- Regr_method
+      .self$Regr_method.name <- as.character(substitute(Regr_method))
+    }
+    else{
+      stop("Regr_method doesnt have type: closure")
+    }
+  },
+
+  # Sets the error function passed to it to E_fun if function is of type "closure"
+  setE_fun = function(E_fun){
+    if (.self$check_closure(E_fun)){
+      .self$E_fun <- E_fun
+      .self$E_fun.name <-as.character(substitute(E_fun))
+    }
+    else{
+      stop("E_fun doesnt have type: closure")
+    }
+  },
+  
+  # Sets the value of k and makes sure its an integer
+  setk = function(i){
+    if (is.integer(i)){
+      .self$k <- i
+    }
+    else{
+      stop("setk was not given an integer")
+    }
+  },
+  
+  setFeat_trans = function(Feat_trans){
+    if (.self$check_closure(Feat_trans)){
+      .self$Feat_trans <- Feat_trans
+      .self$Feat_trans.name <-as.character(substitute(Feat_trans))
+    }
+    else{
+      stop("Feat_trans doesnt have type: closure")
+    }
   }
 )
 ```
+The first function above is the *initialize function*, it initializes all the fields in the correct manner. We then have *regr_cv* which carries out cross validation for a regression problem (note we have set up the class such that we could add the ability to do classification at a later stage) using information from the objects fields. We then have multiple setter function such as *setRegr_method* which checks what we are trying to set the new regression method to is of type closure and *setData* which allows the user to set the predictor and target variables to be worked on. Note that through encapsulation the user is only allowed to set **both** the predictor and target variables, this is on purpose so that a user doesn't accidentally update one and then forget to update the other (usually new predictor variables will correspond to new target variables or vice-versa). We also have multiple getter methods such as *getCv_error*, this computes and returns the cross-validation error according to what the objects fields are set to. Finally, we have a *show* method which when called prints information about all the fields of the class in a nice easy to read format so the user may see clearly the current state of the object.
 
 Now we will test out this class, first we create some data to test it on and initialize the class,
 ```{r}
@@ -291,8 +394,28 @@ cv <- CrossValidation$new(data=x,  target=y) ;cv
 
 Now we run cross validation on our toy data:
 ```{r}
-cv$regr_cv()
+cv$regr_cv();
+cv
 ```
+How about if we want to change the regression method and k that we are using? let's do that now:
+```{r}
+cv$setRegr_method(LLS_R(2))
+cv$setk(as.integer(5))
+cv$getCv_error("r")
+```
+Here we set the regression method with the LLS_R function from stattools with the lambda parameter set to 2, also note we are actually doing some functional programming here, we only pass the hyper-parameter for the regression method so it returns a function (which will use the hyper-parameter we set) and give this as the regression method to be used by the object.
 
-
-means we can also add a classification method later
+What about if we want to change the data? let's do that:
+```{r}
+x <- women$height
+y <- women$weight
+cv$setData(x,y)
+cv$getCv_error("r")
+```
+We have successfully changed the data and then carried out cross-validation again, however, our cv error has gone up alot! perhaps doing a polynomial feature transform will help us better model this new dataset:
+```{r}
+ft <- poly_feat_trans(2)
+cv$setFeat_trans(ft)
+cv$getCv_error("r")
+```
+We see that now we are getting a much lower cv error. We now will implement this class in the stattools package, this concludes the section on reference classes and this chapter of the portfolio.

@@ -4,24 +4,30 @@
 \alias{LLS_R}
 \title{Regularized Linear Least Squares (LLS-R) estimator}
 \usage{
-LLS_R(X, y, lambda)
+LLS_R(lambda, X = NULL, y = NULL)
 }
 \arguments{
-\item{X, }{a matrix}
-
-\item{y, }{a numeric or vector}
-
 \item{lambda, }{a numeric}
+
+\item{X, }{a matrix (Optional)}
+
+\item{y, }{a numeric or vector (Optional)}
 }
 \value{
 w, a numeric or vector
 }
 \description{
 Given model matrix, X, targets, y, and regularization rate, lambda, returns the LLS-R estimator.
+If only the regularization rate is given will return function that computes LLS-R for the given regularization rate.
 Where our regularization term is "\eqn{\text{lambda} \cdot \mathbf{w}^{T} \mathbf{w}}"
 }
 \examples{
 X <- model_matrix(c(1,2,3,4))
 y <- c(1,4,9,16)
-LLS_R(X,y, 1)
+# The following are equivalent
+--------
+f <- LLS_R(1)
+f(X,y)
+--------
+LLS_R(1,X,y)
 }

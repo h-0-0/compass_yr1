@@ -3,5 +3,5 @@
 export(E_l2)
 export(LLS)
 export(LLS_R)
-export(feat_trans)
 export(model_matrix)
+export(poly_feat_trans)
