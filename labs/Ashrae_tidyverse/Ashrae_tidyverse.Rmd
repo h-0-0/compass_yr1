@@ -10,3 +10,32 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # a
+We first load in all the data which is stored locally, you can download the data from "https://www.kaggle.com/competitions/ashrae-energy-prediction/data". 
+```{r}
+building_metadata <- read.csv("building_metadata.csv")
+test <- read.csv("test.csv")
+train <- read.csv("train.csv")
+weather_test <- read.csv("weather_test.csv")
+weather_train <- read.csv("weather_train.csv")
+```
+Now we have loaded in the data we will print the first 6 rows of each dataset to see what the structure of the dataset looks like,
+```{r}
+head(building_metadata)
+```
+```{r}
+head(test)
+```
+```{r}
+head(train)
+```
+```{r}
+head(weather_test)
+```
+```{r}
+head(weather_train)
+```
+First what we will do is with the help of the tidyverse construct some visualizations for the data. 
+```{r}
+library(tidyverse)
+```
+

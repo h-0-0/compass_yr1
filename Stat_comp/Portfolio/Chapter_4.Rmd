@@ -93,9 +93,14 @@ In the final line of the function we return the object, hence when we call *new(
 We can also have relationships between objects in S4. For example two individual objects can be related to each other, to model this relation we create a slot in each of the classes for which their objects will be related and make the type of the slot the class of the related object. When all the objects of one class are related to all of the objects of another class (ie. one class inherits or is a more general version of another class) then we can model this by adding the *contains* argument to the call of setClass and setting it to a vector of the classes from which it should inherit. This then means that the child class will have all the slots the parent class has and methods. In regards to methods if for a particular method the child class has an implementation of this method then this will be called, if it doesn't then the parent class will be checked for this method and used if it has it, if not then the grandparent class will be checked and so on.
 
 ### Reference Classes 
-The final way of doing OOP in R that we will discuss is reference classes. Reference classes provide a way of conducting OOP in R with a higher degree of encapsulation than with S3 and S4, it also allows for modify-in-place (memory changed directly) as opposed to copy-on-modify (creates a copy in memory with modification) which is used most of the time in R. We will explain how reference classes work within the context of an example, what we will do is create a class that can carry out cross-validation for the "stattools" package. 
+The final way of doing OOP in R that we will discuss is reference classes. Reference classes provide a way of conducting OOP in R with a higher degree of encapsulation than with S3 and S4, it also allows for modify-in-place (memory changed directly) as opposed to copy-on-modify (creates a copy in memory with modification) which is used most of the time in R. We will explain how reference classes work within the context of an example, what we will do is create a class that can carry out cross-validation for the "stattools" package. First we install the stattools package:
+```{r}
+library(stattools)
+# Can use "devtools::install_github("h-aze/compass_yr1", subdir = "/labs/stattools")" if not already downloaded
+```
 
-Curently the cross_validation function in "stattools" is implemented as so:
+
+Currently the cross_validation function in "stattools" is implemented as so:
 ```{r}
 regr_cross_val <- function(D, y, RM=LLS, k=10, ...){
 
@@ -165,5 +170,129 @@ regr_cross_val <- function(D, y, RM=LLS, k=10, ...){
   error.CV
 }
 ```
-The problem with this function is that it can be a hastle to use. In order to carry out cross-validation with this function using a 
+The problem with this function is that it can be a hastle to use. If we want to carry out cross-validation multiple times with a specific regression method we must specify it each time and if the regression method has hyper-parameters then we must first specify the regression method, RM, we want to use and the k we want to use, even if we are happy with the default values. Further we may sometimes want more information from this function, such as the estimates it found, or we may want to change the cost function being used. By writing a class for this function we will be able to solve all of the above problems and add extra functionality, whilst making it easier for the user.
 
+We have already made sure that we have the methods package in this RMarkdown script, so now we can create the class:
+```{r}
+CrossValidation <- setRefClass("CrossValidation", 
+                               fields=c( data="numeric",
+                                         target="numeric", 
+                                         k="integer",
+                                         Regr_method="ANY", 
+                                         Regr_method.name="character",
+                                         E_fun = "ANY",
+                                         E_fun.name = "character"
+                                         )
+                               )
+```
+Here we have created a class called CrossValidation and defined the fields it will have along with their names. Note that in reference classes they are called fields and not slots like in S4. Now we would like to define some methods for the class:
+```{r}
+#need to do functional closure regr_methods
+CrossValidation$methods(
+  initialize = function(data, target, k=as.integer(10), Regr_method=LLS, E_fun=E_l2 ) {
+    .self$data <- data
+    .self$target <- target
+    .self$k <- k
+    .self$Regr_method <- Regr_method
+    .self$Regr_method.name <- as.character(substitute(Regr_method))
+    .self$E_fun <- E_fun
+    .self$E_fun.name <-as.character(substitute(E_fun))
+  },
+  
+  #TODO: track certain things
+  # Carries out k-fold cross-validation for a regression problem
+  regr_cv = function(){
+    # We randomly shuffle the indices of the rows and using these randomized indices shuffle the rows of the dataset and the target variable (in the same order)
+    if(is.vector(.self$data)){
+      ind <- sample(length(.self$data))
+      D_dash <- .self$data[ind]
+      y_dash <- .self$target[ind]
+    }
+    else if(is.array(.self$data)){
+      ind <- sample(nrow(.self$data))
+      D_dash <- .self$data[ind,]
+      y_dash <- .self$target[ind]
+    }
+    else{
+      ind <- sample(nrow(.self$data))
+      D_dash <- .self$data[paste(ind),]
+      y_dash <- .self$target[ind]
+    }
+  
+    # We now create a list which indexes the rows in our dataset, we will use this to select groups of certain rows from the dataset.
+    if(is.vector(.self$data)){
+      subsets <- cut(seq(1,length(.self$data)), breaks = .self$k, labels = FALSE)
+    }
+    else{
+      subsets <- cut(seq(1,nrow(.self$data)), breaks = .self$k, labels = FALSE)
+    }
+  
+    # We create a vector to store our cross-val errors
+    errors <- c()
+  
+    # Loop for carrying out k-fold cross-val
+    for(i in 1:.self$k){
+      # We segment our data into testing, D.test, and training, D.train, datasets
+      testIndexes <- which(subsets==i,arr.ind=TRUE)
+      if(is.vector(.self$data)){
+        D.test <- D_dash[testIndexes]
+        D.train <- D_dash[-testIndexes]
+      }
+      else{
+        D.test <- D_dash[testIndexes, ,drop=FALSE]
+        D.train <- D_dash[-testIndexes, ,drop=FALSE]
+      }
+  
+      # We get the model matrix and predictor variables for the training data and then we find the estimator using our regression method
+      X.train <- model_matrix(D.train)
+      y.train <- y_dash[-testIndexes]
+      w <- .self$Regr_method(X.train, y.train)
+  
+      # We get the model matrix and predictor variables for the testing data and then we calculate the error using our error function
+      X.test <- model_matrix(D.test)
+      y.test <- y_dash[testIndexes]
+      test.error <- .self$E_fun(y.test, X.test %*% w)
+      
+      # We add the testing error to our error vector
+      errors[i] <- test.error
+  
+    }
+  
+    # We find and return the cross-val error
+    error.CV <- sum(errors)/.self$k
+    error.CV
+  },
+  
+  show = function() {
+    cat("head(data)   =", head(.self$data), "\n", sep=" ")
+    cat("head(target) =", head(.self$target), "\n", sep=" ")
+    cat("k =", .self$k, "\n", sep=" ")
+    cat("Regr_method =", .self$Regr_method.name, "\n", sep=" ")
+    cat("E_fun =", .self$E_fun.name, "\n", sep=" ")
+  },
+  getResult = function() {
+    if (!flag) {
+      .self$doComputation()
+    }
+    return(result)
+  },
+  setData = function(value) {
+    .self$initialize(data = value)
+  }
+)
+```
+
+Now we will test out this class, first we create some data to test it on and initialize the class,
+```{r}
+x <- runif(100,0,10)
+y <- 2*x -1 + rnorm(100)
+cv <- CrossValidation$new(data=x,  target=y) ;cv
+```
+
+Now we run cross validation on our toy data:
+```{r}
+cv$regr_cv()
+```
+
+
+means we can also add a classification method later

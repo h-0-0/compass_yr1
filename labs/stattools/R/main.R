@@ -87,7 +87,21 @@ LLS <- function(X, y) {
 LLS_R <- function(X, y, lambda) {
     w <- solve(t(X) %*% X + lambda*diag(ncol(X))) %*% t(X)  %*% y
     w
-  }
+}
+
+#' L2 Norm Error
+#'
+#' Given targets and predictions computes the L2 norm of their difference.
+#' @param targ, a vector
+#' @param pred, a vector
+#' @return a numeric
+#' @export
+#' @examples
+#' err <- E_l2( c(5,4,3,2,1), c(6,3,4,1,2) )
+E_l2 <- function(targ, pred){
+  norm(targ - pred, type="2")**2
+}
+
 
 #' Cross validation
 #'
