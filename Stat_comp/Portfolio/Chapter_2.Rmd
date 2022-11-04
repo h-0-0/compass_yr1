@@ -94,7 +94,7 @@ library(devtools)
 devtools::install_github("h-aze/compass_yr1", subdir = "/labs/stattools")
 ```
 Using the "?" we can view documentation for specific functions, for example typing ?model_matrix will return:
--------------------------------------------------------
+
 model_matrix {stattools}	R Documentation
 Create a model matrix
 Description
@@ -148,7 +148,7 @@ lines(seq(x_start, x_end, length.out=500), eq(seq(x_start, x_end, length.out=500
 
 We now begin our model fitting by first performing a feature transform on x, so we can fit a more complex non-linear model but still use (regularised) linear least squares (LS-R).
 ```{r}
-x_ft <- stattools::feat_trans(x,7)
+x_ft <- stattools::poly_feat_trans(7,x)
 ```
 
 Next we select a sequence of lambda values in a set range and using the "regr_cross_val" function fit a model using LS-R and compute the Cross-Validation (CV) error for each value of lambda. Here we perform CV using k=200 (leave-one-out validation) and use as our error function the euclidean norm.
@@ -190,14 +190,14 @@ X <- stattools::model_matrix(x_ft)
 w.LS_R <- stattools::LLS_R(X, y, lambda.hat)
 
 mu.predictor <- function(x){ 
-  X <- stattools::model_matrix(stattools::feat_trans(x,7))
+  X <- stattools::model_matrix(stattools::poly_feat_trans(7,x))
   X %*% w.LS_R
   }
 ```
 
 Now all we have to do is estimate the sd, we can infer $\hat{\sigma}$ by calculating $\hat{\sigma} = \frac{RSS}{n-1}$.
 ```{r}
-X <- stattools::model_matrix(stattools::feat_trans(x,7))
+X <- stattools::model_matrix(stattools::poly_feat_trans(7,x))
 y_hat <- X %*% w.LS_R
 sigma.predictor <- sqrt( (t(y - y_hat) %*% (y - y_hat) * (1/(length(y)-1)))[1]) ; sigma.predictor
 ```
