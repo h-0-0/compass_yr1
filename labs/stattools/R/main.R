@@ -4,6 +4,21 @@
 #   Check Package:             'Ctrl + Shift + E'
 #   Test Package:              'Ctrl + Shift + T'
 
+#' Turns data.frame into a numeric
+#'
+#' Given a data.frame df, will convert to a numeric and return it.
+#' @param df, data.frame
+#' @return df, numeric
+#' @export
+#' @examples
+#' df_to_numeric(cars)
+df_to_numeric <- function(df){
+  df[] <- lapply(df, function(x) {
+    if(is.factor(x)) as.numeric(as.character(x)) else x
+  })
+  df
+}
+
 #' Create a model matrix
 #'
 #'Given data, D, and columns to leave out, r, creates the corresponding model matrix.
@@ -22,7 +37,7 @@ model_matrix <- function(D,r) {
     colnames(X) <- rep(NULL, ncol(D))
   }
   else{
-    X <- as.matrix(D)
+    X <- as.matrix(D, rownames.force = FALSE)
   }
 
   if(is.vector(D)){
@@ -124,6 +139,128 @@ LLS_R <- function(lambda, X=NULL, y=NULL) {
   }
 }
 
+#' Kernel Regularized Linear Least Squares (K-LLS-R) estimator
+#'
+#' Given model matrix, X, targets, y, and regularization rate, lambda, and kernel function, k, returns the K-LLS-R estimator.
+#' If only the regularization rate and kernel function is given will return function that computes the predictions using the K-LLS-R estimator for the given regularization rate and kernel function when passed the .
+#' Where our regularization term is "\eqn{\text{lambda} \cdot \mathbf{w}^{T} \mathbf{w}}"
+#' @param lambda, a numeric
+#' @param k, a closure
+#' @param X, a matrix (Optional)
+#' @param y, a numeric or vector (Optional)
+#' @return g, a closure, or if X and Y also supplied a numeric
+#' @export
+#' @examples
+#' X <- model_matrix(c(1,2,3,4))
+#' y <- c(1,4,9,16)
+#' k <-
+#' # The following are equivalent
+#' --------
+#' f <- LLS_R(k, 1)
+#' f(X,y)
+#' --------
+#' LLS_R(k,1,X,y)
+#TODO: add testing
+K_LLS_R <- function(k, lambda, X=NULL, y=NULL) {
+  f_is_kernel_method_aevniseanv <- function(A, b){
+    K <- matrix(nrow = nrow(A), ncol = nrow(A)  )
+    for(j in 1:ncol(K)){
+      for(i in 1:nrow(K)){
+        K[i,j] <- k(A[i,],A[j,])
+      }
+    }
+    w <- solve(K + lambda*diag(nrow(K))) %*% b
+    g <- function(x){
+      out <- c()
+      for(j in 1:nrow(x)){
+        v <- c()
+        for(i in 1:nrow(A)){
+          v[i] <- k(t(x[j, ,drop=F]), t(A[i, ,drop=F]))
+        }
+        out[j] <- v %*% w # is still array
+      }
+      out
+    }
+    g
+  }
+  if(is.null(X) || is.null(y)){
+    return(f_is_kernel_method_aevniseanv)
+  }
+  else{
+    return(f_is_kernel_method_aevniseanv(X,y))
+  }
+}
+
+#' Linear Kernel function
+#'
+#' Given x and y computes the linear kernel and returns it.
+#' @param x, a numeric
+#' @param y, a numeric
+#' @return a numeric
+#' @export
+#' @examples
+#' k_linear(c(1,2,3,4), c(3,5,7,9))
+# TODO: add testing
+k_linear <- function(x,y){
+  t(x)%*%y +1
+}
+
+#' Polynomial Kernel function
+#'
+#' Given b will return the polynomial kernel function for degree b, if x and y also given will compute the polynomial kernel (of degree b) and return it.
+#' @param b, an integer
+#' @param x, a numeric
+#' @param y, a numeric
+#' @return a closure, or numeric if x and y also given
+#' @export
+#' @examples
+#' The following are the same:
+#' f <- k_poly(4)
+#' f(c(1,2,3,4), c(3,5,7,9))
+#' --------
+#' k_poly(4, c(1,2,3,4), c(3,5,7,9))
+# TODO: add testing
+k_poly <- function(b, x=NULL, y=NULL){
+  f <- function(x, y){
+    (t(x)%*%y +1)^b
+  }
+  if(is.null(x) || is.null(y)){
+    return(f)
+  }
+  else{
+    return(f(x,y))
+  }
+}
+
+#' RBF Kernel function
+#'
+#' Given sigma will return the RBF kernel function for bandwidth sigma, if x and y also given will compute the RBF kernel (of bandwidth sigma) and return it.
+#' @param sigma, an integer
+#' @param x, a numeric
+#' @param y, a numeric
+#' @return a closure, or numeric if x and y also given
+#' @export
+#' @examples
+#' The following are the same:
+#' f <- k_RBF(4)
+#' f(c(1,2,3,4), c(3,5,7,9))
+#' --------
+#' k_RBF(4, c(1,2,3,4), c(3,5,7,9))
+# TODO: add testing
+# TODO: add pairwise distance of data calc? use in example above aswell?
+k_RBF <- function(sigma, x=NULL, y=NULL){
+  f <- function(x, y){
+    exp(- E_l2(x,y) / (2* (sigma^2)) )
+  }
+  if(is.null(x) || is.null(y)){
+    return(f)
+  }
+  else{
+    return(f(x,y))
+  }
+}
+
+
 #' L2 Norm Error
 #'
 #' Given targets and predictions computes the L2 norm of their difference.
@@ -141,11 +278,29 @@ E_l2 <- function(targ, pred){
 
 #' Cross validation
 #'
-#' This function is still under construction
-# This function given a dataset (either as a dataframe or vector), D, and target variable, y, performs k-fold cross validation using a specified Regression Method, RM.
-#TODO: Update documentation and add testing
+#' This class can be used to carry out cross validation,
+#' simply initialize the class with the correct fields as an object,
+#' then one can use its methods to carry out cross-validation and change and check its fields.
+#' @field data, a data.frame
+#' @field target, a numeric
+#' @field k, an integer
+#' @field Regr_method, ANY
+#' @field Regr_method.name, character
+#' @field E_fun, ANY
+#' @field E_fun.name, character
+#' @field Feat_trans, ANY
+#' @field Feat_trans.name, character
+#' @field k_test_errors, numeric
+#' @field estimators, list
+#' @field cv_error, numeric
+#' @field flag, logical
+#' @field flag_km, logical
+#' @method initialize, given the fields data and target and the optional fields: k, Regr_method, E_fun. Will return an object of the class CrossValidation.
+#' @export CrossValidation
+#' @exportClass CrossValidation
+#TODO: Add testing
 CrossValidation <- setRefClass("CrossValidation",
-                               fields=c( data="numeric",
+                               fields=c( data="data.frame",
                                          target="numeric",
                                          k="integer",
                                          Regr_method="ANY",
@@ -157,16 +312,19 @@ CrossValidation <- setRefClass("CrossValidation",
                                          k_test_errors = "numeric",
                                          estimators = "list",
                                          cv_error = "numeric",
-                                         flag = "logical"
+                                         flag = "logical",
+                                         flag_km = "logical"
                                         )
                               )
+
 CrossValidation$methods(
-  initialize = function(data, target, k=as.integer(10), Regr_method=LLS, E_fun=E_l2 ) {
+  initialize = function(data, target, k=as.integer(10), Regr_method=LLS, E_fun=E_l2 , km=FALSE) {
     .self$data <- data
     .self$target <- target
     .self$k <- k
 
-    .self$setRegr_method(Regr_method)
+    if( (as.character(substitute(Regr_method)) == "f_is_kernel_method_aevniseanv") && !km ){print("Warning you may have forgot to specify that your regression method employs kernel methods")}
+    .self$setRegr_method(Regr_method, km)
     .self$Regr_method.name <- as.character(substitute(Regr_method)) # We set the name again when initializing otherwise will use argument name
     .self$setE_fun(E_fun)
     .self$E_fun.name <-as.character(substitute(E_fun)) # We set the name again when initializing otherwise will use argument name
@@ -223,27 +381,43 @@ CrossValidation$methods(
         D.train <- D_dash[-testIndexes, ,drop=FALSE]
       }
 
-      # We get the model matrix and predictor variables for the training data and then we find the estimator using our regression method
-      if(is.null(.self$Feat_trans)){
-        X.train <- model_matrix(D.train)
+
+      if(.self$flag_km == TRUE){
+        y.train <- y_dash[-testIndexes]
+        D.train <- as.matrix(D.train, rownames.force = FALSE)
+        y.train <- as.vector(y.train)
+        w <- .self$Regr_method(D.train, y.train)
+        .self$estimators[[i]] <- w
       }
       else{
-        X.train <-model_matrix(.self$Feat_trans(D.train))
+        # We get the model matrix and predictor variables for the training data and then we find the estimator using our regression method
+        if(is.null(.self$Feat_trans)){
+          X.train <- model_matrix(D.train)
+        }
+        else{
+          X.train <-model_matrix(.self$Feat_trans(D.train))
+        }
+        y.train <- y_dash[-testIndexes]
+        w <- .self$Regr_method(X.train, y.train)
+        .self$estimators[[i]] <- w
       }
-      y.train <- y_dash[-testIndexes]
-      w <- .self$Regr_method(X.train, y.train)
-      .self$estimators[[i]] <- w
 
-      # We get the model matrix and predictor variables for the testing data and then we calculate the error using our error function
-      if(is.null(.self$Feat_trans)){
-        X.test <- model_matrix(D.test)
+      # This if-else statement deals with computing the prediction using the kernel function if we are using a kernel function
+      if(typeof(w) == "closure"){
+        y.test <- y_dash[testIndexes]
+        test.error <- .self$E_fun(y.test, w(D.test))
       }
       else{
-        X.test <-model_matrix(.self$Feat_trans(D.test))
+        # We get the model matrix and predictor variables for the testing data and then we calculate the error using our error function
+        if(is.null(.self$Feat_trans)){
+          X.test <- model_matrix(D.test)
+        }
+        else{
+          X.test <-model_matrix(.self$Feat_trans(D.test))
+        }
+        y.test <- y_dash[testIndexes]
+        test.error <- .self$E_fun(y.test, X.test %*% w)
       }
-      y.test <- y_dash[testIndexes]
-      test.error <- .self$E_fun(y.test, X.test %*% w)
-
       # We add the testing error to our error vector
       .self$k_test_errors[i] <- test.error
 
@@ -305,10 +479,14 @@ CrossValidation$methods(
   },
 
   # Sets the regression method passed to it to Regr_method if function is of type "closure"
-  setRegr_method = function(Regr_method){
+  setRegr_method = function(Regr_method, km=FALSE){
     if (.self$check_closure(Regr_method)){
       .self$Regr_method <- Regr_method
       .self$Regr_method.name <- as.character(substitute(Regr_method))
+      # We set flag_km to true when we are using kernel methods, this instructs other methods to then perform the relevant computations for a kernel method
+      .self$flag_km <- km
+      # Prints warning if it thinks a kernel method is being used
+      if( all( (.self$Regr_method.name == "f_is_kernel_method_aevniseanv"), !km )){print("Warning you may have forgot to specify that your regression method employs kernel methods")}
     }
     else{
       stop("Regr_method doesnt have type: closure")

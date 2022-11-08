@@ -1,0 +1,85 @@
+---
+title: "lab_5"
+author: "Henry Bourne"
+date: "2022-11-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# LS Regression with kernel functions
+We first load in the data we are going to get and the stattools package:
+```{r}
+D <- read.table(url("https://hastie.su.domains/ElemStatLearn/datasets/prostate.data"));
+library(stattools)
+```
+
+We now create a CrossValidation object (from the stattools package) initialized with our data.
+```{r}
+cv <- CrossValidation$new(D[ 1:(ncol(D)-2) ], D$lpsa, k=as.integer(15))
+```
+We now will change our regression method to use the linear kernel function and ask for it to compute the cross-validation error:
+```{r}
+k_linear <- function(x,y){
+  t(x)%*%y +1
+  }
+cv$setRegr_method(K_LLS_R(k_linear,1), km=TRUE)
+cv$getCv_error()
+```
+We now will now do the same but for the polynomial kernel:
+```{r}
+k_poly <- function(b, x=NULL, y=NULL){
+  f <- function(x, y){
+    (t(x)%*%y +1)^b
+  }
+  if(is.null(x) || is.null(y)){
+    return(f)
+  }
+  else{
+    return(f(x,y))
+  }
+}
+
+cv$setRegr_method(K_LLS_R( k_poly(2), 1 ), km=TRUE)
+cv$getCv_error()
+```
+Finally we will do it for the RBF kernel:
+```{r}
+k_RBF <- function(sigma, x=NULL, y=NULL){
+  f <- function(x, y){
+    exp(- E_l2(x,y) / (2* (sigma^2)) )
+  }
+  if(is.null(x) || is.null(y)){
+    return(f)
+  }
+  else{
+    return(f(x,y))
+  }
+}
+cv$setRegr_method(K_LLS_R(k_RBF(3),1), km=TRUE)
+cv$getCv_error()
+```
+From our above results we find that the linear kernel is the best, this also suggests that the optimal model is linear.
+
+
+# Optimal number of bases
+We first will generate our data
+```{r}
+n  <- 100
+x <- runif(n, 0, 2)
+y <- exp(1.5*x -1) + rnorm(n,0,1)
+```
+Now we would like to use marginalized likelihood maximization to find the optimal hyper-parameter, nb, of our linear basis expansions. We start by doing this for when our basis function is the polynomial basis function. 
+
+
+
+
+
+
+
+
+
+
+
