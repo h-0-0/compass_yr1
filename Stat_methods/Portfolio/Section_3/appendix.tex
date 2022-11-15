@@ -80,6 +80,50 @@ We notice that the condition above simply says that two linear equations of $\x$
 
 
 \subsection{For Section 2}
+
+\begin{question}
+    \textbf{What are the decision functions given by a binary logistic regression?} \\
+    One of them is $p(y|\x;\w)-\frac{1}{2}$ the other is $\frac{1}{2} -p(y|\x;\w)$.
+\end{question}
+
+\begin{question}
+    \textbf{Prove that if $p(\x|y=1)$ and $p(\x|y=-1)$ are MVN with shared covariance matrix $\bm{\Sigma}$ but different means $\bm{\mu_{+}}, \bm{\mu_{-}}$:}
+    \begin{subquestion}
+        \textbf{$\exists \wstar$ such that $p(y|\x)=\sigma((\langle\x,\wstar_{1}\rangle + w_{0}^{*}) \cdot y)$:}\\
+        We have that,
+        \begin{equation}
+            p(y|\x;\w) = \sigma(f(\x;\w) \cdot y) 
+        \end{equation}
+        and that,
+        \begin{equation}
+            f(\x;\w) = \log \left(\frac{p(\x|y=1)}{p(\x|y=-1)}\right)
+        \end{equation}
+        Note that the log ratio of these densities makes up the binary decision boundary for this classification problem. Also recall that in \cref{subsubsection:Continuous input} we claimed that if $p(\x|y=k;\w)=N_{x}(\bm{\mu}_{k},\bm{\Sigma})$ for all classes k (for some covariance matrix $\bm{\Sigma}$), then the decision boundaries are piecewise linear, ie. in the binary case $\exists \wstar$ such that:
+        \begin{equation}
+            f(\x,\w) = \langle \x,\wstar_{1} \rangle + w_{0}^{*}
+        \end{equation}
+        hence,
+        \begin{equation}
+            p(y|\x) = \sigma((\langle\x,\wstar_{1} \rangle + w_{0}^{*}) \cdot y)
+        \end{equation}
+    \end{subquestion}
+    \begin{subquestion}
+        \textbf{Find $\wstar$:}\\
+        \begin{align}
+            f(\x;\w) &{} = \log \left(\frac{p(\x|y=1)}{p(\x|y=-1)}\right) \\ 
+            &= \log \left(\frac{N_{\x}(\muplus, \bms)}{N_{\x}(\muminus, \bms)}\right) \\
+            &= \log \left(\frac{(2\pi)^{-d/2} \text{det}(\bms)^{-1/2} \exp(-\frac{1}{2} (\x - \muplus)^{T} \bms^{-1} (\x - \muplus))}
+            {(2\pi)^{-d/2} \text{det}(\bms)^{-1/2} \exp(-\frac{1}{2} (\x - \muminus)^{T} \bms^{-1} (\x - \muminus))}\right) \\
+            &= -\frac{1}{2} (\x - \muplus)^{T} \bms^{-1} (\x - \muplus) +\frac{1}{2} (\x - \muminus)^{T} \bms^{-1} (\x - \muminus) \\ 
+            &= (\bms^{-1} \muplus)^{T} \x -\frac{1}{2} \muplus^{T} \bms^{-1} \muplus 
+            - (\bms^{-1} \muminus)^{T} \x +\frac{1}{2} \muminus^{T} \bms^{-1} \muminus \\
+            &= ((\bms^{-1} \muplus)^{T} - (\bms^{-1} \muminus)^{T}) \x 
+            + ( \frac{1}{2} \muminus^{T} \bms^{-1} \muminus -\frac{1}{2} \muplus^{T} \bms^{-1} \muplus )
+        \end{align}
+        Hence we have found $\wstar$.
+    \end{subquestion}
+\end{question}
+
 \begin{question} \label{question:prob-interp-f}
     \textbf{What is the probabilistic interpretation of f?:} \\
     First, continuing from the end of \cref{section:Discriminative-classifiers} we will describe using multi-class logistic regression with one-hot encoding. Note:
