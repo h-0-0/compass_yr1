@@ -1,0 +1,34 @@
+\section{Discriminative Classifiers} \label{section:Discriminative-classifiers}
+Before we looked at Generative Classifiers, now we will look at discriminative classifiers. \textbf{Discriminative classifiers} aim to infer $p(y|\x)$ given dataset $D$. The process normally looks like so:
+\begin{enumerate}
+    \item Make a model assumption $p(y|\x;\w)$.
+    \item Construct the likelihood function $p(D|\w)$.
+    \item Estimate the parameters (eg. using MLE, MAP, full probabilistic approach, etc.).
+\end{enumerate}
+The first question we ask is: what model should we use? Bayes rule says:
+\begin{equation}
+    p(y|\x) = \frac{p(\x|y) p(y)}{p(\x)} = \frac{p(\x|y)p(y)}{\sum_{y'} p(\x,y')} = \frac{p(\x|y) p(y)}{\sum_{y'} p(\x|y')p(y')}
+\end{equation}
+Notice that we are now representing $p(y|\x)$ using $p(\x|y)$. Suppose $y \in \{-1,1\}$ then $p(y=1|\x) = \frac{p(\x|y=1)p(y=1)}{p(\x|y'=1)p(y'=1) + p(\x|y'=-1)p(y'=-1)}$. Assume $p(\x|y) p(y) >0, \forall \x,y$ then this equals $1 / (1 + \frac{p(\x|y=-1)p(y=-1)}{p(\x|y=1)p(y=1)})$, ie. we can rewrite $p(y|\x)$ using the ratio $\frac{p(\x|y=-1)p(y=-1)}{p(\x|y=1)p(y=1)}$. So in a discriminative learning we model the \textbf{density ratio} $\frac{p(\x|y=-1)}{p(\x|y=1)}$ as opposed to the class density like in generative learning \footnote{As a side note: clearly modelling the density ratio requires a lot fewer assumptions on your class densities, so models on class densities will model the density ratio, however models on the density ratio will not necessarily model the class density}. We will model the log of the inverse of the density ratio (as $f(\x;\w)$) and so in our expression above we can replace the density ratio with $\exp(-f(\x;\w))$.
+
+The \textbf{sigmoid function} is denoted $\sigma(t) := \frac{1}{1+\exp(-t)}$. Then note that $p(y=1|\x;\w) = \frac{1}{1+\exp(-f(\x;\w))} = \sigma(f(\x;\w))$, also note that when $y=-1$ our density ratio is inverse and so we no longer need the minus in front of f, therefore, in general $p(y|\x;\w) = \sigma(f(\x;\w) \cdot y)$. 
+
+Now, assuming the data, D, is iid., we would like to find the MLE for $p(y|\x;\w)$:
+\begin{equation}
+    \wmle = \argmax_{\w} \log \prod_{i \in D} p(\yi | \xui; \w) = \argmax_{\w} \sum_{i \in D} \log p(\yi | \xui;\w) = \argmax_{\w} \sum_{i\in D} \log \sigma(f(\xui;\w) \cdot \yi)
+\end{equation}
+This procedure is called \textbf{Logistic Regression} (even though it is not a regression!). Note that logistic regression is robust to outliers, unlike the LS classifier, this is because the sigmoid function tapers their affect. As before with the LS classifier we can also fit non-linear classifiers using a feature transform.
+
+Apart from logistic regression there are other methods for estimating $p(y|\x;\w)$. For example assuming a prior on $\w$ we could use MAP:
+\begin{equation}
+    \wmap = \argmax_{\w} \sum_{i\in D} \log(\sigma(f(\xui;\w) \cdot \yi)p(\w)) = \argmax_{\w} \sum_{i \in D} \log(\sigma(f(\xui ; w) \cdot \yi)) + \log(p(\w))
+\end{equation}
+We can also use the full probabilistic approach \footnote{Note that unlike regression using MVN models, we cannot calculate this integral in closed form}:
+\begin{align}
+    p(y|\x) &{} = \int p(y|\x;\w) p(\w|D) d\w \propto \int p(y|\x;\w) p(D|\w) p(\w) d\w \\ &\propto \int \sigma(f(\xui;\w) \cdot \yi) \prod_{i \in D} \sigma(f(\xui;\w) \cdot \yi) p(\w) d\w 
+\end{align}
+What about in the multi-class scenario? we can extend logistic regression to the multi-class scenario, where the density ratio is now:
+\begin{equation}
+    p(y=i|\x) = \frac{p(\x| y=i)p(y=i)}{\sum_{k} p(\x|y=k)p(y=k)}
+\end{equation}
+We expand further on this in conjunction with one-hot encoding in \cref{question:prob-interp-f}. Note that unlike in LS, logistic regression does not have a closed form solution and therefore must employ numerical methods to find $\wmle$.

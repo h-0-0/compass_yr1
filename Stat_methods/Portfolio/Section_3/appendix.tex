@@ -4,16 +4,117 @@
 
 \section{Proofs}
 
-\subsection{} \label{}
-
+\subsection{We prove the following from \Cref{subsubsection:Continuous input}} \label{Proofs:linear-decision-boundary}
+\textbf{Prove that when using the shared covariance matrix MVN model, the decision boundary is piecewise-linear:}\\
+The decision boundary for a class k' is given by the following set:
+\begin{equation}
+    \{\x | p(y=k| \x ; \hat{\w}) = p(y=k' | \x; \hat{\w})\}, \quad \forall k \neq k'
+\end{equation}
+We can rewrite this set as follows:
+\begin{equation}
+    \left\{\x \middle| \frac{p(\x|y=k;\hat{\w}) p(y=k)}{p(\x|y=k';\hat{\w}) p(y=k')} =1 \right\}
+\end{equation}
+Which taking logs can be rewritten as:
+\begin{align}
+    &{} \{ \x | \log[p(\x | y=k;\hat{\w})p(y=k)] - \log[p(\x | y=k';\hat{\w})p(y=k')] =0 \} \\
+    & = \{ \x | \log[N_{\x}(\hat{\bm{\mu}}_{k}, \bm{\Sigma})] + \log[p(y=k)] - \log[N_{\x}(\hat{\bm{\mu}}_{k'}, \bm{\Sigma})] - \log[p(y=k')] =0 \} \\
+    &= \{ \x | (\Sigma^{-1} \bm{\mu}_{k})^{T} \bm{x} -\frac{1}{2} \bm{\mu}_{k}^{T} \bm{\Sigma}^{-1} \bm{\mu}_{k} + \log(p(y=k)) \\  &- [(\Sigma^{-1} \bm{\mu}_{k'})^{T} \bm{x} -\frac{1}{2} \bm{\mu}_{k'}^{T} \bm{\Sigma}^{-1} \bm{\mu}_{k'} + \log(p(y=k'))] = 0 \}
+\end{align}
+We notice that the condition above simply says that two linear equations of $\x$ are equal to each other. The $\x$ that satisfy this must also therefore be described by a linear relationship.
 
 
 \newpage
 \section{Homeworks}
 \subsection{For Section 1}
 \begin{question}
-
+    \textbf{Proof in \cref{Proofs:linear-decision-boundary}}
 \end{question}
 
+\begin{question}
+        \textbf{Derive the MLE for the parameters of the multinomial distribution:} \\
+        Let $\p = [p_{1},...,p_{d}]^{T}$, where $p_{i}$ denotes the probability of event i occurring and d is the number of mutually exclusive events. Then we can write out the likelihood: 
+        \begin{equation}
+            p(D| \p) = \sum_{j=1}^{n} \frac{k!}{x_{j}^{(1)} \cdots x_{j}^{(d)}} \prod_{i=1}^{d} \pui^{\xji} = k! \sumjn \prod_{i=1}^{d} \frac{\pui^{\xji}}{\xji !}
+        \end{equation}
+        Now taking the log we get:
+        \begin{equation}
+            log(p(D|\p)) = log(k!) + \sumjn \sumid \xji log(\pui) - log(\xji !)
+        \end{equation}
+        We must have that $\sumid \pui = 1$, the lagrangian with this constraint is:
+        \begin{equation}
+            \mathcal{L}(\p,\lambda) = log(p(D|\p)) + \lambda(1- \sumid \pui)
+        \end{equation}
+        To find the MLE we now differentiate the lagrangian wrt. $\pui$:
+        \begin{equation}
+            \frac{\partial}{\partial \pui} \mathcal{L}(\p,\lambda) = \frac{\xji}{\sumjn \pui} - \lambda
+        \end{equation}
+        Setting this equal to zero and solving we get:
+        \begin{equation}
+            \pui = \sumjn \frac{ \xji }{\lambda} 
+        \end{equation}
+        Now using our constraint we solve for $\lambda$:
+        \begin{align}
+            &{} \sumid \pui = \sumid \sumjn \frac{\xji}{\lambda} \\
+            & \Rightarrow 1 = \frac{1}{\lambda} \sumid \sumjn \xji \\ 
+            & \Rightarrow \lambda = \sumjn \sumid \xji
+        \end{align}
+        Therefore our MLE of the parameters is:
+        \begin{equation}
+            \hat{\pui} = \frac{\sumjn \xji}{\sumjn \sumid \xji} 
+        \end{equation}
+\end{question}
+
+\begin{question}
+    \textbf{Explain the Naive Bayes classifier using a maximum likelihood framework:}\\
+    Lets say we would like to model a classifier using the multinomial distribution as our model. When choosing to use the multinomial distribution as our model, we "naivly" assume that all the features are mutually independent. We would like to formulate a prediction:
+    \begin{equation}
+        \hat{y} := p(y|\x;\p)
+    \end{equation}
+    Using Bayes rule we have that:
+    \begin{align}
+        p(y|D, \p) &{} = \frac{p(D | \p) p(y)}{p(D)} \\
+        & \propto p(y) \cdot p(D | \p)
+    \end{align}
+    Using the previous question we can find using the MLE a $\hat{\p}$ that maximizes $p(D | \p)$, then $p(y)$ can simply be calculated by finding the proportion of the time in the dataset where y equals a certain value. This then allows us to formulate a prediction, that has the maximum likelihood, for the classification of a given input $\x$ as long as our "naive" assumptions are true. 
+\end{question}
+
+
+\subsection{For Section 2}
+\begin{question} \label{question:prob-interp-f}
+    \textbf{What is the probabilistic interpretation of f?:} \\
+    First, continuing from the end of \cref{section:Discriminative-classifiers} we will describe using multi-class logistic regression with one-hot encoding. Note:
+    \begin{align}
+        f(\x;\w) = \W^{T} \tilde{\x}, \: \w \in \mathbb{R}^{d \times K}, \: \tilde{\x} := 
+        \begin{bmatrix}
+            \x \\
+            \bm{1}
+        \end{bmatrix}
+    \end{align}
+    For $y_{i} \in \{1,...,K\}$ we let $\bm{t}_{i} \in \mathbb{R}^{K}$ be the one-hot encoding for it, further let:
+    \begin{equation}
+        \sigma(f,t) := \frac{\exp \langle f,t \rangle}{\sum_{k} \exp f^{(k)}}
+    \end{equation}
+    Then:
+    \begin{equation}
+        \wmle = \argmax_{\w} \sum_{i \in D} \log \sigma(f(\xui ; \w), \bm{t}_{i})
+    \end{equation}
+    In this scenario whats's the probabilistic interpretation of f? like from which we derived the model of f in the binary logistic regression case in \cref{section:Discriminative-classifiers}. Recall that in discriminative classifiers we are trying to infer $p(y|\x;\w)$ and that:
+    \begin{equation}
+        p(y|\x;\w) = \frac{p(\x|y;\w)p(y)}{\sum_{y'} p(\x|y';\w)p(y')}
+    \end{equation}
+    Let $i \in \{1,...,K\}$, consider $p(y=i|\x;\w)$,
+    \begin{align}
+        p(y=i |\x;\w) &{} = \frac{p(\x|y=i;\w)p(y=i)}{\sum_{y'} p(\x|y';\w)p(y')} \\
+        &= \frac{1}{1+ \frac{\sum_{y',y' \neq i} p(\x|y';\w)p(y')}{p(\x|y=i;\w)p(y=i)}}
+    \end{align}
+    Like in the binary case we can focus on modelling the density ratio, so the probabilistic interpretation of f is:
+    \begin{equation}
+        f(\x;\w)^{(i)} = \log \left(\frac{p(\x|y=i;\w)p(y=i)}{\sum_{y',y'\neq i} p(\x|y';\w) p(y')} \right)
+    \end{equation}
+    We further note that if $\hat{y} := \argmax_{y} p(y|\x;\w)$, then our predictions will correspond to the multi-class decision rule in \cref{def:multi-class-LS-class}, as:
+    \begin{equation}
+        \argmax_{y} p(y|\x;\w) = \argmax_{y} f(\x;\w)^{(y)}
+    \end{equation}
+\end{question}
 
 \end{appendices}

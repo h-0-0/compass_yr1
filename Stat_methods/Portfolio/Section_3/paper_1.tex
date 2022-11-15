@@ -16,7 +16,7 @@ We will first define the least squares classifier in the binary classification c
     Then we can find the predicted label $\hat{y}:= \text{sign}(f(\xui;\wls))$
 \end{definition}
 Note that we can also use a feature transform for f as well, which would allow us to fit more complex classifiers, as data not separable in the original space may be separable in the feature space. In the multi-class case:
-\begin{definition}
+\begin{definition} \label{def:multi-class-LS-class}
     \textbf{Multi-class LS classification:} \\
     We use a \textbf{one-hot encoding} which is where we replace $y_{i}=k$ in our data with $\t_{i} \in \{0,1\}^{K}$ where all entries are 0 bar $t_{i}^{(k)}=1$. Then we have:
     \begin{equation}
@@ -62,3 +62,16 @@ Then ideally we would like to maximize the between-class scatterness and minimiz
 if $K=2$ then this has a simple solution: $\w := \bm{S}_{\w}^{-1} (\bm{\mu}_{+} - \bm{\mu}_{-})$, where $\bm{S}_{\w} := \sum_{k=1}^{K} \bm{S}_{k}$ and $\bm{S}_{k}$ is the sample covariance matrix of class k times $n_{k}$. However, note that the FDA does not learn a decision function f, the $\w_{FDA}$ obtained cannot be used directly by the prediction function to make a prediction. This is because (eg. in the binary case) $f(\x;\w_{FDA})>0$ does not mean that $\x$ is predicted as the positive class. The FDA also doesn't care about classification accuracy, ie. minimizing the FP or FN rate.
 
 \subsection{Probabilistic (Generative) Classifiers}
+How do we put a classification problem under a probabilistic framework? Let's say we would like to \textbf{minimize the expected loss:} $\hat{y} := \argmin_{y_{0}} \E_{p(y|\x)} [L(y,y_{0})|\x]$. To do this we need $p(y|\x)$. The \textbf{discriminative approach} would be to infer $p(y|\x)$ directly. Here, we will look at the \textbf{generative approach} which is where we note that $p(y|\x) \propto p(\x|y) p(y)$ and we infer $p(\x|y)$ \footnote{$p(y)$ is just the probability of the class being class y}.
+
+\subsubsection{Continuous input} \label{subsubsection:Continuous input}
+If $\x$ is a continuous variable then the Multi-Variate Normal (MVN) is a natural choice for the model of $p(\x|y)$, ie. we have $p(\x | y=k;\w) := N_{\bm{x}}(\bm{\mu_{k}}, \bm{\Sigma_{k}})$ (assuming iid data and that all classes have same covariance matrix). We can write the likelihood of the parameters over the data, D, as: $p(D|\w) = \prod_{i \in D}p(\xui , y_{i}|\w) = \prod_{i \in D} p(\xui | y_{i} ;\w)p(y_{i}) = \prod_{i \in D} N_{\xui} (\bm{\mu}_{y_{i}};\bm{\Sigma}) p(y_{i})$. Therefore our MLE's are: $\hat{\bm{\mu}_{1}, ..., \bm{\mu}_{K},\hat{\bm{\Sigma}}} := \argmax_{\bm{\mu}_{1}, ..., \bm{\mu}_{K},\hat{\bm{\Sigma}}} \sum_{i \in D} \log [ N_{\xui} (\bm{\mu}_{y_{i}} ; \bm{\Sigma}) p(y_{i})]$. If we plug in our estimates for $p(y_{i}=k)$ which are $\frac{n_{k}}{n}$, then we can find the MLE for $\hat{\bm{\mu}}_{k} := \frac{1}{n_{k}} \sum_{i \in D, y_{i}=k} \xui$. We can then plug in our $\hat{\bm{\mu}}_{k}$'s to work out: $\hat{\bm{\Sigma}} := \sum_{k=1,...,K} \frac{n_{k}}{n} \color{red} \frac{1}{n_{k}} \sum_{i \in D, y_{i}=k} (\xui - \bmuhatk)(\xui - \bmuhatk)^{T} \color{black}$, where we notice that in red is the MLE of the covariance of individual classes. Our prediction is $\hat{y} := \argmax_{y} p(y| \x ; \hat{\w}) \propto p(\x | y ; \hat{\w}) p(y)$. We can also prove that when using the shared covariance matrix MVN model, the decision boundary is piecewise-linear (\Cref{Proofs:linear-decision-boundary}).
+
+What if we assume that for each class k there are different covariance matrices? then the MLE reduces to estimating individual $\bm{\mu}_{k}$ and $\bm{\Sigma}_{k}$. Note that in this case the decision boundary is no longer linear.
+
+\subsubsection{Discrete input}
+Here we will look at the case where $\x$ is discrete. Let $\x := [x^{(1)},...,x^{(d)}]^{T}$ and assume $x^{(1)},...,x^{(d)}$ follow a multinomial distribution, where each $x^{(i)}$ is a quantity for a feature. Using Bayes rule we have that $p(y=k| \x) = (p(\x|y=k) \cdot p(y=k)) / p(\x)$. We now introduce our "naive assumptions" which are that all the features in $\x$ are mutually independent, conditional on $y=k$. Using these assumptions we can write $p(y=k | \x) \propto p(y=k) \prod_{i=1}^{n} p(x_{i} |y=k)$ \footnote{We get this by discarding the $p(\x)$, which makes it proportional and then using our assumption on $p(\x|y=k)$}. Therefore $p(\x = \x_{0} |y=k) \propto \prod_{i=1,...,d} \beta(i|y=k)^{x_{0}^{(i)}}$, for some $\x_{0}$ where $\beta(i|y=k)$ is the probability feature i occurs in class k. It is easy to estimate this quantity:
+\begin{equation}
+    \beta(i|y=k) \approx \frac{\sum_{j \in D, y_{j}=k} x_{j}^{(i)}}{\sum_{j \in D, y_{j}=k} \sum_{l=1}^{d} x_{j}^{(l)}}
+\end{equation}
+Then our prediction is $\hat{y} := \argmax_{y} p(\x=\x_{0} |y) \cdot p(y)$ where as before $p(y=k)$ can be estimated as $\frac{n_{k}}{n}$ and note that $\beta(i|y=k)$ can be estimated by counting. This is called \textbf{Naive Bayes classification"}.
