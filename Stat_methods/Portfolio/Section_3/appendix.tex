@@ -23,6 +23,68 @@ Which taking logs can be rewritten as:
 We notice that the condition above simply says that two linear equations of $\x$ are equal to each other. The $\x$ that satisfy this must also therefore be described by a linear relationship.
 
 
+\subsection{Obtain the stated optimization problem in \cref{section:Support-Vector-Machines} by finding the Lagrangian dual:} \label{Proofs:lagrangian-dual}
+First we will define what the lagrangian dual is:
+\begin{definition}
+    \textbf{Lagrangian Dual:}\\
+    A technique that transforms a constrained problem into a less constrained problem. For a constrained problem:
+    \begin{equation}
+        \min_{\theta} f(\theta), \: \text{subject to} \: g_{i}(\theta)\leq 0, \forall i
+    \end{equation}
+    We can construct the lagrangian:
+    \begin{equation}
+        mathcal{L}(\bml) := \min_{\theta} f(\theta) + \sum_{i} \lambda_{i} g_{i}(\theta)
+    \end{equation}
+    where $\lambda_{i} \geq 0$ are called \textbf{lagrangian multipliers}
+\end{definition}
+We now will write the lagrangian dual for the soft-margin classifier:
+\begin{equation}
+    \mathcal{L}(\bml, \bmlt) := \min_{\w,\bm{\epsilon}} ||\w_{1}||^{2} +\sum_{i} \epsilon_{i} - \sum_{i} \lambda_{i} y_{i} (\langle \w_{1},\xui \rangle + w_{0}) + \lambda_{i} \epsilon_{i} -\lambda_{i} - \sum_{i} \lambda_{i}' \epsilon_{i}
+\end{equation}
+with optimality conditions,
+\begin{equation}
+    \w' = \frac{\sum_{i} \lambda_{i} y_{i} \xui}{2}, \: \lambda_{i} + \lambda_{i}' =1, \: \sum_{i} \lambda_{i} y_{i} = 0
+\end{equation}
+We will now rewrite this, first note that,
+\begin{equation}\label{equation:one}
+    ||\w_{1}||^{2} = \frac{||\sum_{i} \lambda_{i} y_{i} \xui||}{4}
+\end{equation}
+And that,
+\begin{equation}\label{equation:two}
+    - \sum_{i} \lambda_{i} y_{i} \langle \w_{1} ,\xui \rangle = - \frac{\langle\sum_{i} \lambda_{i} y_{i} \xui, \sum_{i} \lambda_{i} y_{i} \xui \rangle}{2}
+\end{equation} 
+and that \cref{equation:one} + \cref{equation:two} is,
+\begin{equation}
+    - \frac{\langle\sum_{i} \lambda_{i} y_{i} \xui, \sum_{i} \lambda_{i} y_{i} \xui \rangle}{4} = - \frac{\bmlt^{T} \X^{T} \X \bmlt}{4}
+\end{equation}
+where $\bmlt = [\lambda_{1} y_{1} \cdots \lambda_{n} y_{n}]^{T}$. Also note that
+\begin{align}\label{equation:three}
+    &{} \sum_{i} \epsilon_{i} - \sum_{i} \lambda_{i} \epsilon_{i} - \sum_{i} \lambda_{i}' \epsilon_{i} \\
+    &= \sum_{i} \epsilon_{i} (1- \lambda_{i} -\lambda_{i}') \\
+    &= 0
+\end{align} 
+finally note,
+\begin{equation}\label{equation:four}
+    -\sum_{i} \lambda_{i} y_{i} w_{0} = -w_{0} \sum_{i} \lambda_{i} y_{i} = 0
+\end{equation}
+Note that $\mathcal{L}(\bml,\bmlt)=$ \cref{equation:one} + \cref{equation:two} + \cref{equation:three} + \cref{equation:four} $+\sum_{i} \lambda_{i}$, therefore,
+\begin{equation}
+    \mathcal{L}(\bml,\bmlt) := -\frac{\bmlt^{T} \X^{T} \X \bmlt}{4} + \sum_{i} \lambda_{i}
+\end{equation}
+So our lagrangian problem is:
+\begin{equation}
+    \max_{\bml} \mathcal{L}(\bml) := \max_{\bml} - \frac{\bmlt \X^{T} \X \bml}{4} + \langle \bmlt , \bm{1} \rangle
+\end{equation}
+Under constraints:
+\begin{equation}
+    0 \leq \lambda_{i} \leq 1, \: \sum_{i} \lambda_{i} y_{i} =0
+\end{equation}
+where $0 \leq \lambda_{i} \leq 1$ comes from the fact that,
+\begin{equation}
+    \forall_{i}: \lambda_{i} \geq 0, \lambda_{i}' \geq 0, \: \text{and} \: \lambda_{i} + \lambda_{i}' = 1
+\end{equation}
+
+
 \newpage
 \section{Homeworks}
 \subsection{For Section 1}
@@ -160,5 +222,6 @@ We notice that the condition above simply says that two linear equations of $\x$
         \argmax_{y} p(y|\x;\w) = \argmax_{y} f(\x;\w)^{(y)}
     \end{equation}
 \end{question}
+
 
 \end{appendices}
