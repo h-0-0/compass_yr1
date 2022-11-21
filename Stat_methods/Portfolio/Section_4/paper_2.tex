@@ -1,0 +1,32 @@
+\section{Markov Network (Undirected Graph)}
+We will first start with a definition:
+\begin{definition}
+    \textbf{Markov Network / Undirected Graphical Model:} \\
+    An undirected graph representing the conditional independence of the probability distribution $p(X)$
+\end{definition}
+More specifically we can define the \textbf{Gaussian Markov Network} (GMN) which uses an undirected graph to represent the conditional independence of a random variable that is multivariate gaussian. Let $\x \in \mathbb{R}^{d}$, $\x \sim N(\bm{0},\bms)$ then $p(\x) \propto \exp(-\frac{1}{2} \x(\bms)^{-1} \x^{T})$. Let $\bm{\Theta} = (\bms)^{-1}$, then we can rewrite this as $p(\x) \propto \exp (-\frac{1}{2} \sum_{u,v} \bm{\Theta}^{(u,v)} x^{(u)} x^{(v)}) \propto \prod_{u,v; \bm{\Theta}^{(u,v)} \neq 0} \exp(-\bm{\Theta}^{(u,v)} x^{(u)} x^{(v)})$. Hence, we can write:
+\begin{equation}
+    p(\x) \propto \prod_{u,v; \bm{\Theta}^{(u,v)} \neq 0} g_{u,v} (x^{(u)}, x^{(v)})
+\end{equation}
+So, $p(\x)$ factorizes over G, where we can define G using the following adjacency matrix:
+\begin{equation}\label{equation:adjacency-Theta}
+    A^{(u,v)} =  \begin{cases} \mbox{0,} & \Theta^{(u,v)} =0 \\ \mbox{1,} & \Theta^{(u,v)} \neq 0 \end{cases}
+\end{equation}
+Note that G must be undirected as $\bms$ and therefore $\Theta$ are symmetric so if $\Theta^{(u,v)} \neq 0$ then $\Theta^{(v,u)} \neq 0$ and therefore every edge in G is bidirectional. Also note that given a graph G we can decode from it the sparsity of $\bm{\Theta}$, ie. all the entries that are zero. This means that we can go from the dependencies to a graph and then from the graph find the factorization. Even if we do not know the conditional independence of $p(\x)$, we can still find a factorization of $p(\x)$ as follows: given a dataset D we can fit a $\hat{\bm{\Theta}}$ (for example using the MLE), the sparsity of $\hat{\bm{\Theta}}$ then gives a graph corresponding to the factorization of $p(\x)$, additionally this graph also gives us the conditional independencies of the random variables. 
+
+\subsection{Conditional Markov Network}
+In many tasks we may want to find the conditional distribution, $p(Y|X)$. So, how do we factorize a conditional distribution over G?
+\begin{definition}
+    \textbf{Conditional Markov Network:} \\
+    We say a conditional probability distribution $P(Y|X)$ factorizes over G, whose nodes $V=X \cup Y$, if:
+    \begin{equation}
+        p(Y|X) = \frac{1}{N(X)} \prod_{c \in C} g_{c}(V_{c})
+    \end{equation}
+    Where $C:= \{c \: \text{is a clique in G} | V_{c} \nsubseteq X \}$ and the normalizing constant $N(X) := \int \prod_{c \in C} g_{c}(V_{c}) dY$
+\end{definition}
+Note that $p(Y|X)$ does not include factors defined on subsets of conditioning variable X, eg. if $p(Y|X) = \frac{1}{N(X)} g_{1}(Y,X) g_{2}(X)$ then $N(X)=\int g_{1}(Y,X) g_{2}(X)dY= g_{2}(X) \int g_{1}(Y,X) dY$ and therefore $p(Y|X) = \frac{g_{1}(Y,X) g_{2}(X)}{g_{2}(X) \int g_{1}(Y,X) dY} = \frac{g_{1}(Y,X)}{\int g_{1}(Y,X)dY}$.
+
+\subsubsection{Logistic Regression}\label{subsubsection:Logistic-Regression}
+This way of constructing a conditional likelihood gives us a logistic regression. Let's consider a simple Markov Network where we have $Y \in \{-1,1\}$ and $X \in \mathbb{R}^{d}$ where we draw an edge between each node $X^{(i)}$ and Y. The factorization we obtain from this graph is $p(Y|X) = \frac{1}{N(X)} \prod_{i} g_{i}(Y,X^{(i)})$ with $N(X)= \sum_{Y \in \{-1,1\}} \prod_{i} g_{i}(Y,X^{(i)})$.
+
+Let us now construct a model of $p(Y|X)$ by setting: $g_{i}(Y=y,X^{(i)}=x^{(i)}; \beta_{i}, \beta_{0}) := \exp(y(\beta^{(i)} \cdot x^{(i)} + \beta_{0}))$. Then our model is $p(y|\x ; \bm{\beta}, \beta_{0}) = \frac{1}{N(X)} \prod_{i} \exp(y(\beta^{(i)} \cdot x^{(i)} + \beta_{0})) = \frac{1}{N(X)} \exp(y(\langle \bm{\beta}, \x \rangle + d\beta_{0}))$, where $N(X;\bm{\beta},\beta_{0}) = \sum_{y \in \{1,-1\} } \exp(y(\langle \bm{\beta} , \x \rangle + d\beta_{0}))$. We can then fit $\bm{\beta},\beta_{0}$ using the MLE (\cref{question:logistic-regression} shows this is the same logistic regression we discussed in the previous portfolio).

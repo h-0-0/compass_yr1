@@ -1,0 +1,25 @@
+\section{Bayesian Network (Directed Graph)}\label{section:Bayesian-Network}
+So far we have been working with undirected graphs to represent conditional independencies. However, what if we want to represent causal relationships for example? then what might serve as a better model would be a directed graphical model, we will be using a:
+\begin{definition}
+    \textbf{Directed Acyclic Graph (DAG):} \\
+    A graph, $G = (V,E)$, where $E$ is a directed edge set and $G$ is an acyclic graph, ie. it has no directed cycles. 
+\end{definition} 
+We can represent the factorization of a probability distribution using a DAG. We say a probability distribution $p(X)$ factorizes over a DAG $G$ if $p(X) = \prod_{v \in V} p(X_{v} | X_{ \text{parent}(X_{v}) })$. And we can construct the DAG using a similar methodology to constructing undirected graphical models.
+
+We can also represent conditional independencies using a DAG. Given a DAG $G$, $X_{v}$ is independent of $X_{\text{non-desc}(X_{v})}$ given $X_{\text{parent}(X_{v})}, \forall v$. This is analogous to the markov net as $X_{v}$ and all non-descendants of $X_{v}$ are "made independent" by the parents of $X_{v}$. Also note that knowing $X_{\text{parent}(X_{v})}, X_{\text{non-desc}(X_{v})}$ tell us nothing new about $X_{v}$. Just as in \cref{section:sectionone} we can show that the graph given by the dependencies and the graph given by the factorization are equivalent.
+
+We can then define a:
+\begin{definition}
+    \textbf{Bayesian Network:} \\
+    A DAG $G$ constructed using the factorization of a probability distribution, $p(\x)$.
+\end{definition}
+Lets consider again the simple graph described in \cref{subsubsection:Logistic-Regression} except we have a directed edge (instead of undirected) going from $Y$ to each $X^{(i)}$. We can write down the conditional probability from this graph:
+\begin{equation}
+    P(Y|X) = \frac{\prod_{i} P(X^{(i)} | Y) P(Y)}{P(X)}
+\end{equation}
+Note that this is how Naive Bayes is derived.
+
+\subsection{Bayesian Network for Classification vs. Logistic Regression}
+Consider the setup with the simple graph we just introduced, we note that it has the same structure as the graph that lead to a logistic regression, except the edges were directed. What are the similarities and differences between naive Bayes and logistic regression? 
+
+First lets consider the factorization, for both we have pairwise factors between Y and the $X^{(i)}$. However, in Naive Bayes the factors are conditional probabilities as opposed to cliques in logistic regression. Next, we have that for the probabilistic model they both use $p(Y|X)$ to make a prediction, however, Naive Bayes does not give you $p(Y|X)$ it only give you it up to a constant. Next, for the training/fitting of the classifier in the logistic regression case we estimate $p(Y|X)$ as opposed to $P(X|Y)$ in the case of naive bayes. Finally, for both we use the prediction rule: $\hat{y} := \argmax_{y} p(Y|X)$.

@@ -1,0 +1,14 @@
+\section{Capturing Dependency of Data Using Graphical Models}\label{section:sectionone}
+Firstly we will ask the question: How does the dependencies between random variables affect modelling the likelihood? 
+
+If we assume our data $\x_{1},...,\x_{n}$ are iid then the likelihood factorizes: $p( \x_{1}, ... , \x_{n} | \theta) = \prod_{i=1}^{n} p( \xui | \theta )$. However, what if we have complicated dependencies in our data? how would we factorize our likelihood then? To solve this problem we can first convert our dependencies into a graphical representation and then use the graph to guide our factorization; this is called \textbf{graphical modelling}. 
+
+Let $X$ and $Y$ be two random variables, if $p(X,Y) = p(X) p(Y)$ \footnote{Equivalently $p(X|Y)=p(X)$ and $p(Y|X)=p(Y)$ also define independence of X and Y} then $X \bot Y$ which denotes that X and Y are \textbf{independent}. We say $X$ is \textbf{conditionally independent} of $Y$ given $Z$, denoted $X \bot Y|Z$, if $p(X,Y|Z)= p(X|Z) p(Y|Z)$ or equivalently $p(X,Y,Z) \propto P(X,Z) P(Y,Z)$ (which note is a factorization) \footnote{Further equivalent definitions are that $p(X|Y,Z)=p(X|Z)$ and $p(Y|X,Z)=(Y|Z)$}. 
+
+Conditional independence and independence tell us how information is exchanged between RVs, ie. $X \bot Y$ tells us no information exchanges between X and Y and $X \bot Y|Z$ tells us no direct information exchanges between X and Z. 
+
+Given many RVs, listing all their dependencies can be cumbersome, let's instead use a graphical representation. We let each RV be a node in the graph and join two nodes if they are not dependent on each other, ie. if $X \bot Y$ then we do not draw an edge between X and Y and if $X \bot Y|Z$ then we only draw edges between ``Z and X'' and ``Z and Y''. We can read from the graph (or conversely construct it) by checking which RV another RV isn't directly connected to (or equivalently is (conditionally) independent to) and then following a path that connects the two (or equivalently check what RVs are being conditioned on) we can read the following conditional independency: <Node> $\bot$ <Node/s to which it doesn't have an edge/s> | <Nodes on the path> (or equivalently we draw a edge from the node to the start of the path along the path and from the node at the end of the path to the nodes that represent the RV/s being conditioned on).
+
+Can we represent a probability distribution factorization using a graph? Given a graph $G= (E,V)$, we say $p(X)$ factorizes over G if $p(X) \propto \prod_{c \in C} g_{c}(X^{c})$. Where C is the set of all cliques in G and $g_{c}$ is a function defined on $X^{(c)}$ which is the subset of X restricted on c. A \textbf{clique} is a fully connected subgraph.  
+
+It turns out that these two graphical representations are equivalent! ie. if p factorizes over G, p satisfies all conditional independence represented by G and vice-versa. We verify this using an example in \cref{question:graph-equivelance}.
