@@ -1,0 +1,49 @@
+\section*{Question 0}
+E
+
+\section*{Question 1}
+
+\subsection*{1.1}
+The answer is c or d as this line goes roughly through the class means and when the data points are projected onto the embedding vector (for either of the directions) it appears as though the between-class scatterness will be maximized and the within-class scatterness minimized as points from the negative/positive class will be close together and the class means in the embedding will be fairly centrally located (within their classes). For comparison we can argue that the opposite would be true for directions a and b, where points from both classes will not be separated (class-wise) in the embedding and the furthest points from a given class to its class mean will be larger than we had with embedding vectors in directions c or d. 
+
+\subsection*{1.2}
+We can construct a likelihood function over the entire dataset:
+\begin{equation}
+    L(\bm{\mu},\bm{\Sigma}) := \prod_{i=1}^{n} p(\xui | \bm{\mu}, \bm{\Sigma}) = \prod_{i=1}^{n} N_{\xui}(\bm{\mu},\bm{\Sigma})
+\end{equation}
+ie. all the points are iid. normally distributed (have same mean and covariance matrix) where $\bm{\Sigma}_{ML}$ maximizes the above likelihood.
+
+Let's take the decomposition to be the eigen-decomposition of $\bm{\Sigma}_{ML}$, then $\bm{\mu}_{1}$ is an eigenvector of $\bm{\Sigma}_{ML}$ with corresponding eigenvalue $D_{1}$. Note that $D_{1} > D_{2}$ which means the eigenvector $\bm{u}_{1}$ corresponds to the direction of the largest variance in the data, hence must correspond to direction a or b. 
+
+\section*{Question 3}
+Recall the soft margin SVM:
+\begin{align}
+    \text{Minimize} \: \: || \w '||^{2} + \sum_{i \in D} \epsilon_{i} \\
+    \text{Subject to} \: \: \forall i, y_{i} \cdot f(\xui ; \w) + \epsilon_{i} \geq 1, \epsilon_{i} \geq 0
+\end{align}
+We can modify the objective function such that it penalizes False Negatives (FN) by making FNs 1000 times more costly by rewriting the objective function as:
+\begin{equation}
+    \text{Minimize} \: \: || \w ' ||^{2} + \sum_{i \in D} (1000 \cdot I(y_{i}=1) + (1-I(y_{i}=1))  )\cdot \epsilon_{i}
+\end{equation}
+where $I(y_{i}=1)$ is the indicator function that is one when $y_{i}=1$ (ie. when wrongly classifying would lead to a FN) it multiplies the cost times 1000. So, during optimization we will have attributed a 1000x cost to giving a FN, meanwhile the cost of a FP stays as is (a 1000th of the cost).
+
+\section*{Question 4}
+\subsection*{4.1}
+B
+\subsection*{4.2}
+The factorization of $p(y,x^{(1)},x^{(2)},x^{(3)},x^{(4)})$ according the to graph is:
+\begin{equation}
+    p(y) \cdot p(x^{(1)}|y) \cdot p(x^{(2)}|y,x^{(1)}) \cdot p(x^{(3)}|x^{(2)}) \cdot p(x^{(4)}|x^{(1)}) 
+\end{equation}
+The conditional independencies encoded by this graph are:
+\begin{align}
+    x^{(2)} \bot x^{(4)} | y,x^{(1)} \\
+    x^{(3)} \bot y,x^{(1)},x^{(4)} | x^{(2)} \\
+    x^{(4)} \bot y, x^{(2)}, x^{(3)} | x^{(1)}
+\end{align}
+And no we should just use $x^{(1)}$ and $x^{(2)}$ as given these two features we have from our conditional independencies that $x^{(3)}$ and $x^{(4)}$ are independent of y, we also have that our prediction function:
+\begin{align}
+    p(y|x^{(1)},x^{(2)},x^{(3)},x^{(4)}) &{} = \frac{p(y) \cdot p(x^{(1)}|y) \cdot p(x^{(2)}|y,x^{(1)}) \cdot p(x^{(3)}|x^{(2)}) \cdot p(x^{(4)}|x^{(1)})}{p(x^{(1)},x^{(2)},x^{(3)},x^{(4)})} \\
+    &\propto p(y) \cdot p(x^{(1)}|y) \cdot p(x^{(2)}|y,x^{(1)})
+\end{align}
+Therefore to formulate a prediction for y we only need $x^{(1)}$ and $x^{(2)}$.
