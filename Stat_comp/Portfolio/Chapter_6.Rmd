@@ -1,0 +1,81 @@
+---
+title: "Chapter_6"
+author: "Henry Bourne"
+date: "2022-11-28"
+output: pdf_document
+header-includes:
+  \usepackage{fvextra}
+  \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Performance and Bugs
+When writing code we want it to "a) do its job" and "b) be efficient". In order to help achieve these two aims we will discuss in this chapter how to debug, increase performance and profile (check the time spent on pieces of code) in R.
+
+## Debugging 
+We will start by discussing **debugging** which is the process of removing **bugs** which are computations that lead to errors being thrown or unintended results. Often it is not immediately obvious where the bug is in your piece of code or how to fix it. A good process for debugging is as follows:   
+
+* Understand precisely the error, note that the symptom of the problem may not be entirely helpful for finding the source of the problem.    
+
+* Produce a minimal (least complexity as possible) working example of the unintended behavior.    
+
+  + At this stage you could submit a bug report, if this isn't your code.   
+  
+
+* Identify the actual issue.    
+
+* Fix the bug and add tests so that this bug does not crop up again later.    
+
+Of course the best case scenario is no having to do any debugging! and on top of this write code that makes debugging easier! and we can try work towards this by employing good programming practices such as testing and breaking large tasks into smaller ones. However, we can't stop the inevitable, we will get bugs and the following tools can help us in removing them. 
+
+One such tool is the **traceback()** function (also graphically accessible in R) which will print out the call stack, the sequence of calls, that lead to the error. Often we find that the bug only crops up in certain scenarios and often we work with randomness which can make it difficult to isolate the problem (as sometimes it will arise and other times it won't). We can fix our pseudo-random number generator by calling **set.seed()** which can help us isolate the computation to a scenario where the bug pops up. Lastly we can use the **browser()** function, we use it by writing it before a piece of code we would like to evaluate in more detail. At run time when it gets to this part of the code then pause and an interactive window will pop up where we can type commands one of the following commands:    
+
+* 'n': Evaluates the next statement, stepping over function calls.   
+
+* 's': Evaluates the next statement, stepping into function calls.    
+
+* 'f': Finish execution of the current loop or function.   
+
+* 'where': Prints a stack trace of of all active function calls.    
+
+* ‘c’: Exits the browser and continues execution at the next statement.   
+
+* ‘Q’: Exits the browser and the current evaluation and returns to the top-level prompt.
+
+When using *browser()* one can also type variable names in order to inspect their values. 
+
+## Profiling
+Now we will look at profiling which we use to tell us how much time we spend computing different lines or chunks of code, this information can then be useful when modifying our code to make it more efficient or often even in debugging. To profile in R we can use the **profvis** package, which is a **statistical profiler**, how it works is that it regularly (at fixed intervals) interrupts to check what code is currently being executed. This allows the profiler to build a picture of where most of the computation is taking place and using Monte Carlo methods we can give estimates for the time spent on each part of the code. The tradeoff here being that although it is not deterministic it adds very little overhead to computation. In contrast, an **instrumenting profiler** is deterministic and work by incrementing counters whenever certain events occur (eg. whenever a function is called), however, these incur significant computational overhead. 
+
+EXAMPLE USING PROFILER: MAYBE EM ALGORITHM?
+
+## Performance
+Now we will look at methods we can use to increase performance in R. 
+
+The first method we will talk about is using **optimized routines**. We note that code written in R will often fail to obtain as good performance as if we were to write the same code in a language like C. The main exception to this is when we delegate a task to optimized library code, the linear algebra operations are a good example of this (note that many of these packages are written in C).
+
+Another thing we must be careful about in R is **memory management**. Note that R uses **pass by value** semantics (as opposed to **pass by reference**, where only a reference to the variable is passed around), this means that whenever you pass a variable around R will create a copy, which can obviously lead to drastic increases in memory. Therefore it is very important to keep this fact in mind when trying to increase the performance of your code. Do note, however, that there are certain hidden optimizations which R will perform in order to improve performance. For example, when you update elements in an array in a for loop R will not create a new copy of the array each time which can save allot of memory. 
+
+The last thing we will consider here is the way matrices are stored. R uses **column-major** storage (as opposed to **row-major** storage). What this means is that elements stored in a given column are stored in a contiguous block in memory. It is useful to keep this in mind when writing code, as operations done on a matrix by column will be much faster than by row, as reading and writing memory in contiguous blocks is much faster. 
+
+The last thing we will note is that it is also possible to directly write code in C++ and use it in R with the help of the **Rcpp** package.  
+
+## An Example
+Here we will look at an example where we can put into practice some of what we have learned above. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
