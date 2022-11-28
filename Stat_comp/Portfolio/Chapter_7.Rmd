@@ -1,0 +1,15 @@
+---
+title: "Chapter_7"
+author: "Henry Bourne"
+date: "2022-11-28"
+output: pdf_document
+header-includes:
+  \usepackage{fvextra}
+  \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Matrices
