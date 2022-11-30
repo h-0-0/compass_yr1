@@ -50,8 +50,6 @@ When using *browser()* one can also type variable names in order to inspect thei
 ## Profiling
 Now we will look at profiling which we use to tell us how much time we spend computing different lines or chunks of code, this information can then be useful when modifying our code to make it more efficient or often even in debugging. To profile in R we can use the **profvis** package, which is a **statistical profiler**, how it works is that it regularly (at fixed intervals) interrupts to check what code is currently being executed. This allows the profiler to build a picture of where most of the computation is taking place and using Monte Carlo methods we can give estimates for the time spent on each part of the code. The tradeoff here being that although it is not deterministic it adds very little overhead to computation. In contrast, an **instrumenting profiler** is deterministic and work by incrementing counters whenever certain events occur (eg. whenever a function is called), however, these incur significant computational overhead. 
 
-EXAMPLE USING PROFILER: MAYBE EM ALGORITHM?
-
 ## Performance
 Now we will look at methods we can use to increase performance in R. 
 
@@ -64,7 +62,59 @@ The last thing we will consider here is the way matrices are stored. R uses **co
 The last thing we will note is that it is also possible to directly write code in C++ and use it in R with the help of the **Rcpp** package.  
 
 ## An Example
-Here we will look at an example where we can put into practice some of what we have learned above. 
+Here we will look at an example where we can put into practice some of what we have learned above. Here we will try to build a binary logistic regression classifier. First we load my package stattools.
+```{r}
+library(stattools)
+# Can use "devtools::install_github("h-aze/compass_yr1", subdir = "/labs/stattools")" if not already downloaded
+```
+We now define a toy dataset that we will work on.
+```{r}
+x <- c(1:10); x
+y <- c(c(rep(0,5), rep(1,5))); y
+```
+Now we will define the negative log likelihood function which we will use to perform our logistic regression. 
+```{r}
+neg_log_likelihood = function(par, D, y){
+  D <- model_matrix(D)
+  # D <- cbind(rep(1, nrow(D)), D )
+  y_hat <-  rowSums(D %*% par) 
+  
+  p <- sigmoid(y_hat)
+  val <- -sum(y * log(p) + (1-y)*log(1-p)) 
+  val
+}
+```
+Now all we have to do is optimize this for our data to obtain our classifier:
+```{r}
+results <- optim(par = c(0,0), fn = neg_log_likelihood, D=x, y=y); results
+```
+We now define the function which will return us our prediction:
+```{r}
+prediction = function(x, par){
+  x <- model_matrix(x)
+  # y_hat <- cbind(rep(1, nrow(D)), D )
+  y_hat <-  rowSums(x %*% par) 
+  
+  prob = sigmoid(y_hat)
+  return(prob)
+}
+```
+So using the parameter we found carrying out logistic regression we can now obtain predictions, eg.
+```{r}
+prediction(5, results$par)
+prediction(6, results$par)
+```
+We see that it has correctly predicted that 5 belongs to class 0 and 6 to class 1. 
+
+Now what we would like to do is run profiling to check if there is any speed ups that we could do before we add these functions to the stattools package. I ran profvis on the below on a larger binary classification dataset and found that what took the most time was the model_matrix function and within that function the *as.matrix* function. Although this slows down performance we will not remove it as having it in matrix form will allow for speedups in other functions in the package as we can use highly optimized linear algebra operations.
+```{r}
+library("mlbench")
+data(Sonar)
+x <- Sonar[,1:ncol(Sonar)-1]
+y <- ifelse(Sonar[,ncol(Sonar)] == 'R', 0, 1)
+optim(par = rep(1,ncol(x)+1), fn = neg_log_likelihood, D=x, y=y)
+```
+
 
 
 
