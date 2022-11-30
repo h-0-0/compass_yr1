@@ -76,7 +76,6 @@ Now we will define the negative log likelihood function which we will use to per
 ```{r}
 neg_log_likelihood = function(par, D, y){
   D <- model_matrix(D)
-  # D <- cbind(rep(1, nrow(D)), D )
   y_hat <-  rowSums(D %*% par) 
   
   p <- sigmoid(y_hat)
