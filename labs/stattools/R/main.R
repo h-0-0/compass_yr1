@@ -275,6 +275,68 @@ E_l2 <- function(targ, pred){
   norm(targ - pred, type="2")**2
 }
 
+#' Sigmoid function
+#'
+#' Outputs the value of the sigmoid function for a given value, z.
+#' @param z, a numeric
+#' @return a numeric
+#' @export
+#' @examples
+#' z <- runif(1)
+#' sigmoid(z)
+#TODO: add testing
+sigmoid <- function(z){
+  1/(1+exp(-z))
+}
+
+
+#' Negative log likelihood for binary logistic regression
+#'
+#' Given vector of parameters input data, D, and classes for the input data, y, computes and returns the negative log likelihood,
+#' @param par, a vector
+#' @param D, data in the form of a data frame, matrix or vector
+#' @param y, a vector where entries are 0 or 1
+#' @return a numeric
+#' @export
+#' @examples
+#' x <- c(1:10)
+#' y <- c(c(rep(0,5), rep(1,5)))
+#' par <- c(1,2)
+#' binlr_nll(par, x, y)
+#' To compute the MLE:
+#' optim(par = c(0,0), fn = neg_log_likelihood, D=x, y=y)
+#TODO: add testing
+binlr_nll = function(par, D, y){
+  D <- model_matrix(D)
+  y_hat <-  rowSums(D %*% par)
+
+  p <- sigmoid(y_hat)
+  val <- -sum(y * log(p) + (1-y)*log(1-p))
+  val
+}
+
+#' Prediction for binary logistic regression
+#'
+#' Given vector of parameters, par, and input data, x, computes the prediction for x given the parameters.
+#' @param par, a vector
+#' @param x, data in the form of a data frame, matrix or vector
+#' @return a numeric between 0 and 1: below 0.5 predicts class 0, above 0.5 predicts class 1
+#' @export
+#' @examples
+#' x <- c(1:10)
+#' y <- c(c(rep(0,5), rep(1,5)))
+#' results <- optim(par = c(0,0), fn = neg_log_likelihood, D=x, y=y)
+#' prediction(5, results$par)
+#' prediction(6, results$par)
+#TODO: add testing
+prediction = function(x, par){
+  x <- model_matrix(x)
+  y_hat <-  rowSums(x %*% par)
+
+  prob = sigmoid(y_hat)
+  return(prob)
+}
+
 
 #' Cross validation
 #'
