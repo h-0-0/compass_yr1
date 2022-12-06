@@ -1,0 +1,98 @@
+In this document I provide some preliminary material presented in an easily digestible way to help the listener better follow the lecture. We begin by describing various properties of the maximum likelihood estimator (MLE).
+\section{The MLE}
+In the lecture we say that the MLE is a consistent estimator and that no other consistent estimator has lower asymptotic error than the MLE (assuming the correct distribution has been picked). But what is a consistent estimator?
+\begin{definition}
+    \textbf{Consistent estimator:} \\
+    An estimator that converges (in probability) to the true value of the parameter being estimated as the sample size increases. Let $\{Y_{1},...,Y_{n}\}$ be a sequence of observations and let $\hat{\theta}_{n}$ be the estimator found using $\{Y_{1},...,Y_{n}\}$. Then $\hat{\theta}_{n}$ is consistent if for any $\epsilon>0$,
+    \begin{equation}
+        \mathbb{P}(|\hat{\theta}_{n} - \theta| > \epsilon) \rightarrow 0
+    \end{equation}
+    as $n \rightarrow \infty $.
+\end{definition} 
+This means that the MLE will become more accurate as more data is collected. The Cramer-Rao Lower bound states:
+\begin{theorem}
+    \textbf{Cramer-Rao Lower Bound:} \\
+    Describes a lower bound on the variance of any estimator, $\hat{\theta}$, of the deterministic parameter $\theta$. That is,
+    \begin{equation}
+        \text{Var}(\hat{\theta}) \geq \frac{(\frac{\partial}{\partial \theta} \mathbb{E}(\hat{\theta}))^{2}}{I(\theta)}
+    \end{equation}
+    where $I(\theta)$ is the Fischer information matrix
+\end{theorem}
+The MLE achieves the Cramer-Rao lower bound and as it also is a consistent estimator is thus an \textbf{efficient estimator}. 
+
+I also mention in the lecture that the MLE is approximately normal,
+\begin{theorem}
+    \textbf{The MLE is asymptotically normal:} \\
+    If sample size n is sufficiently large and and the true value of the parameters lies in the interior of the parameter space, then the MLE is normally distributed (given certain conditions) with mean equal to the true value of the parameter and variance equal to the inverse of the Fisher information. Let $\{Y_{1},...,Y_{n}\}$ be a sequence of iid observations where,
+    \begin{equation}
+        Y_{k} \sim f_{\theta}(y)
+    \end{equation}
+    Let $\hat{\theta}$ be the MLE of $\theta$, then,
+    \begin{equation}
+        \sqrt{n} (\hat{\theta} - \theta) \rightarrow N(0,I(\theta)^{-1})
+    \end{equation}
+\end{theorem}
+Note that the MlE isn't always approximately normal, for more information on the conditions under which it is normal and for a proof of the above theorem please refer to chapter 7 in \cite{lehmann1999elements}.
+
+\section{One-hot encoding}
+One-hot encoding is a method for encoding data, it works as follows:
+\begin{definition}
+    \textbf{One-hot Encoding:} \\
+    Is where we encode using a vector with all entries equal to zero bar one which is set to one. In the context of classification one-hot encoding is used to encode the class labels, where to encode a label representing the i-th class we create a vector with all entries equal to zero bar the i-th entry, ie, let y be the label we want to encode and let's say we want the label to represent the i-th class then y is encoded as follows,
+    \begin{equation}
+        y = e_{i}
+    \end{equation}
+    where $e_{i}$ is a vector of zeros bar a 1 at the i-th entry. 
+\end{definition}
+Advantages of using one-hot encoding include allowing us to encode every class label as a fixed-length vector (where the length is equal to the number of class labels) and allowing each class to be represented as a separate dimension in the vector space, which can make it easier to learn relationships between datapoints. 
+
+\section{Bias}
+In the lecture we also mention bias, specifically unbiasedness. We can define bias as follows:
+\begin{definition}
+    \textbf{Bias:} \\
+    Suppose we want to estimate the true parameter $\theta^{*}$ and we have obtained a statistic $\hat{\theta}$ which is an estimator of $\theta$ based on some observed data, D. Then we define the bias of $\hat{\theta}$ relative to $\theta$ as,
+    \begin{equation}
+        \text{Bias}(\hat{\theta}, \theta^{*}) = \mathbb{E}_{D|\theta} (\hat{\theta} - \theta^{*})
+    \end{equation}
+\end{definition} 
+We then say an estimator is \textbf{unbiased} if the bias is equal to zero.
+
+\subsection{Notation}
+Finally I will note here some of the notation used in the lecture.
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{|l|c|r|}
+    \hline
+    \textbf{Notation} & \textbf{Meaning}  \\
+    \hline
+    D & A dataset  \\
+    \hline
+    $\theta$ & Model parameters  \\
+    \hline
+    $\hat{\theta}$ & The MLE  \\
+    \hline
+    $\hat{\theta}_{t}$ & The t-th guess of the MLE \\
+    \hline
+    $x^{(i)}$ & The i-th element of a vector x  \\
+    \hline
+    $N_{x}(\mu, \sigma)$ & Pdf of a normal distribution with mean $\mu$ and standard deviation $\sigma$ evaluated at x  \\
+    \hline
+    $x_{i}$ & The i-th observation  \\
+    \hline
+    $z_{i}$ & The latent variable corresponding to the i-th observation \\
+    \hline
+    $L(\theta)$ & The likelihood evaluated for parameters $\theta$ \\
+    \hline
+    $x^{(i)}$ & The i-th element of a vector x  \\
+    \hline
+    $\alpha$ & The step-size  \\
+    \hline
+    $q_{t}(z)$ & The t-th guess of the pdf of the latent variable\\
+    \hline
+    $F$ & The lower bound function for the EM algorithm\\
+    \hline
+    \end{tabular}
+    \caption{Notation}
+\end{table}
+    

@@ -1,0 +1,60 @@
+\section{Analysis of Learning from Positive and Unlabeled Data}
+This paper looks at \textbf{PU classification} the problem of learning a (binary) classifier from positive and unlabelled data. This is where we have access to labels for some of the positive data, however, no labels for the rest of our data including all the negative samples \footnote{Outlier detection in unlabelled data based on labelled inlier data can also be regarded as PU classification.}. What the paper \cite{du2014analysis} covers includes:
+\begin{itemize}
+    \item Casting PU classification as cost-sensitive classification.
+    \item Exploring how convex surrogate loss functions such as the hinge loss can lead to an incorrect classification boundary, even when the classes are entirely separable. It then shows that non-convex loss functions, such as the ramp loss, lead to the correct classification boundaries.  
+    \item When the class prior in the unlabelled dataset is estimated from the data the classification error is governed by the effective class prior. Where the effective class prior depends on the true and estimated class priors. This analysis then shows that the classification error is not sensitive to class-prior estimation error if the unlabelled data has substantially more positive data. 
+    \item Generalization error bounds for PU classification are established: ``For an equal number of positive and unlabeled samples, the convergence rate is no worse than $2 \sqrt{2}$ times the fully supervised case'' \cite{du2014analysis}.
+\end{itemize}
+Here we will discuss the first two bullet points.
+
+\subsection*{PU classification as cost-sensitive classification}
+The first thing we will do is show that the PU classification problem can be cast as a cost-sensitive classification problem. Let's begin by describing an \textbf{ordinary classification problem}, specifically Bayes optimal classifier (which we saw in Portfolio 1). Let Bayes optimal classifier corresponds to the decision function $f(X) \in \{1,-1\}$ that minimizes the expected misclassification rate wrt. a class prior $\pi$. Then our misclassification rate, or our risk, can be written $R(f) := \pi R_{1}(f) +(1- \pi) R_{-1}(f)$, where $R_{1}(f), R_{-1}(f)$ are the FN and FP rates, ie. $R_{1}(f) = \mathbb{P}(f(X) \neq 1 | y=1)$ and $R_{-1}(f) = \mathbb{P}(f(X) \neq -1 | y=-1)$ where y is the class label. What we typically do is then calculate the empirical risk using our fully labeled data. 
+
+Now, a \textbf{cost-sensitive classification problem} again selects a function $f(X) \in \{1,-1\}$, however, now we would like to minimize the \underline{weighted} expected misclassification rate: $R(f) := \pi c_{1} R_{1}(f) + (1- \pi) c_{-1} R_{-1}(f)$, where $c_{1}, c_{-1}$ are the costs for associated with each class. We can also interpret the costs as reweighing the problem according to new class priors proportional to $\pi c_{1}$ and $(1- \pi) c_{-1}$. 
+
+In \textbf{PU classification} we learn a classifier from labelled data belonging to the positive class and unlabelled data that is a mixture of samples from both the positive and negative class, which has some unknown class prior $\pi$, ie. $P_{X}(A) = \pi P(A | y=1) + (1-\pi) P(A | y=-1)$. Since we don't have access to negative labels we will train the classifier to minimize the expected misclassification rate between the positive (labelled) and unlabelled samples. Since we don't have labelled negative samples we cannot directly estimate $R_{-1}(f)$ here, so instead we will rewrite $R(f)$ such that it doesn't appear. Let $R_{X}(f)$ be the probability that the function $f(X)$ gives a positive label over $P_{X}$, then: 
+\begin{align}
+    R_{X}(f) &{} = P_{X}(f(X)=1) \\
+    &= \pi P(f(X)=1 |y=1) + (1- \pi) P(f(X)=1 | y=-1) \\
+    &= \pi (1-R_{1}(f)) + (1- \pi) R_{-1}(f)
+\end{align}
+Then we have that the risk, $R(f)$, can be written as:
+\begin{align}
+    R(f) &{}= \pi R_{1}(f) + (1-\pi)R_{-1}(f) \\
+    &= \pi R_{1}(f) - \pi (1-R_{1}(f)) + R_{X}(f)  \\
+    &= 2 \pi R_{1}(f) + R_{X}(f) -\pi
+\end{align} 
+We now will cast this to a cost-sensitive classification problem. First, let $\eta$ be the proportion of labelled samples from class 1 compared to the whole dataset, which we can empirically estimate as $n / (n+n')$ where $n$ is the number of positive samples and $n'$ is the number of unlabeled samples. We can then express the risk as: $R(f) = c_{1} \eta R_{1}(f) +c_{X}(1- \eta) R_{X}(f) - \pi$, where $c_{1} = 2 \pi / \eta$ and $c_{X} = 1/ (1- \eta)$. Comparing this with the weighted expected misclassification rate for cost-sensitive classification we wrote above we see that the PU classification problem is the same as a cost-sensitive classification problem between positive and unlabelled data with costs $c_{1}$ and $c_{X}$. 
+
+\subsection{Investigating the affect of convexity of the loss function on PU classification}
+We now will investigate how wether or not a loss function is convex affects our solution to PU classification. But let's first consider an ordinary classification problem where instead of using our binary decision function $f(X) \in \{1,-1\}$, this time let us have a continuous decision function $g(X) \in \mathbb{R}$ such that $\text{sign}(g(X)) = f(X)$. Then our loss function becomes: $\mathcal{L}_{0,1}(g) = \pi \mathbb{E}_{1} (l_{0,1} (g(X))) + (1- \pi) \mathbb{E}_{-1} (l_{0,1}(-g(X)))$ where $\mathbb{E}_{x}$ is the expectation over $P(A| y=x)$ and $l_{0,1}$ is the \textbf{zero-one loss} (outputs zero when its argument is strictly bigger than zero and one otherwise). The problem here is that the zero-one loss is hard to optimize as its discontinuous. To fix this it can be replaced by the:
+\begin{definition}
+    \textbf{Ramp-Loss:} \\
+    $l_{R}(z) = \frac{1}{2} \max(0, \min(2,1-z))$
+\end{definition}
+However, the ramp-loss is non-convex and therefore we would prefer a convex loss function as it will be easier to optimize, in practice we often use the:
+\begin{definition}
+    \textbf{Hinge Loss:} \\
+    $l_{H}(z) = \frac{1}{2} \max(1-z,0)$
+\end{definition}
+Provided the positive and negative samples are non-overlapping the hinge loss gives the the same decision boundary as the ramp loss \footnote{As separability implies for optimal $g$ that $l_{R}(z)=0$ everywhere and for all values of z for which $l_{R}(z)=0$ we have $l_{H}(z)=0$.}. 
+
+Now, does this hold for PU classification? Let's first look at what happens when we use the ramp-loss, our loss function for PU classification becomes:
+\begin{align}
+    \mathcal{L}_{PU-R}(g) &{} = 2 \pi R_{1}(f) + R_{X}(f) - \pi \\
+    &= 2 \pi \mathbb{E}_{1} (l_{R}(g(X))) + (\pi \mathbb{E}_{1} (l_{R}(-g(X)))) + (1 - \pi) \mathbb{E}_{-1} (l_{R}(-g(X))) - \pi \\
+    &= \pi \mathbb{E}_{1}(l_{R}(g(X))) + \pi \mathbb{E}_{1} (l_{R}(g(X)) + l_{R}(-g(X))) + (1-\pi) \mathbb{E}_{-1}(l_{R}(-g(X))) - \pi
+\end{align} 
+Now, since $l_{R}(-z)+l_{R}(z)=1$, we have $\mathcal{L}_{PU-R}(g) = \pi \mathbb{E}_{1} (l_{R}(g(X))) + (1-\pi) \mathbb{E}_{-1}(l_{R}(-g(X)))$. Which is the same as the objective function for an ordinary classification problem (when using the ramp loss). 
+
+When using the hinge loss our objective function becomes:
+\begin{align}
+    \mathcal{L}_{PU-H}(g) &{}= 2 \pi \mathbb{E}_{1}(l_{H}(g(X))) + (\pi \mathbb{E}_{1}(l_{H}(-g(X)))) + (1-\pi) \mathbb{E}_{-1} (l_{H}(-g(X))) - \pi \\
+    &= \color{red} \pi \mathbb{E}_{1}(l_{H}(g(X))) + (1-\pi) \mathbb{E}_{-1}(l_{H}(-g(X))) 
+    \color{orange} + \pi \mathbb{E}_{1}(l_{H}(g(X)) + l_{H}(-g(X)) ) 
+    \color{black} - \pi
+\end{align}
+In \color{red}red \color{black} is the ordinary error term, however, we also have a superfluous penalty in \color{orange}orange \color{black}. This superfluous penalty term may cause us to obtain an incorrect classification boundary as our objective function, as a $g(X)$ that perfectly separates the data may not now minimize our objective function. 
+
+Therefore, to obtain a correct decision boundary the loss function should be symmetric and therefore non-convex \footnote{Note that an alternative to this would be to evaluate the superfluous penalty term and subtract it from the objective function.}. 
