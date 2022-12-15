@@ -309,8 +309,9 @@ sigmoid <- function(z){
 binlr_nll = function(par, D, y){
   D <- model_matrix(D)
   y_hat <-  rowSums(D %*% par)
-
   p <- sigmoid(y_hat)
+  ifelse(p<0.00001, p+0.0001, p)
+  ifelse(p>0.99999, p-0.0001, p)
   val <- -sum(y * log(p) + (1-y)*log(1-p))
   val
 }
