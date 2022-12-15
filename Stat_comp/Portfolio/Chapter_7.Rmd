@@ -13,3 +13,129 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # Matrices
+In this chapter we will go over various ways matrices are implemented and can be used in R. 
+
+## Dense Matrices
+First we will go over using dense matrices in R. A **dense matrix** is a two-dimensional data structure where we can assign entries values by column, or by row if we set *byrow=TRUE*. We can also change the name of the rows and columns. If we access a coumn/row of a matrix we obtain a vector, we can change this so instead we get a column by setting *drop=FALSE* when indexing. R also has higher dimensional data structures known as arrays, note that the matrix is just a special case of an array.
+
+We can solve **linear systems** in R very quickly and easily using the **solve()** command. When just given a matrix, eg. *solve(A)*, it will compute the inverse and when given a matrix and a vector, eg. *solve(A,b)*, it will solve the linear equation *Ax=b* for x. Note that when we do want to solve a linear system it is advised to use the second option as opposed to finding *solve(A)* and then multiplying b. This is because it is faster and more accurate, unless a linear system needs to be solved repeatedly for different vectors. 
+
+### Numerical stability, finite precision arithmetic
+Now we will briefly talk about numerical stability and finite precision arithmetic which is useful to know about when working with dense matrices.
+
+In R a floating point number is stored as a double precision number. According to the IEEE754 standard, a double number consists of 64 binary bits arranged as follows: sign bit = 1 bit, exponent = 11 bits, significant precision = 53 bits. This means there exist largest and smallest finite numbers in R. It also means we have **finite precision**, as we can only represent a number to a precision of $2^{-53} \approx 1.11 \times 10^{-16}$, so we can expect errors of order $10^{-16}$ in numerical representations (and therefore computation) of double numbers.
+
+This can not only be a problem in terms of accuracy but also when trying to compare values. For example:
+```{r}
+0.1 + 0.2 - 0.3 == 0
+```
+The statement above evaluates as *FALSE* even though we know this statement to be true, this is down to finite precision. To remedy this we can use **all.equal()** which ignores differences up to a tolerance level of $1.5 \times 10^{-8}$ (as default):
+```{r}
+all.equal(0.1+0.2-0.3, 0)
+```
+Due to finite precision errors many errors can arise when using matrices, especially in matrix multiplication due to the many operations involved. For example earlier we talked about the *solve()* function and how when we want to solve linear systems it is better off letting the function handle it all due to problems with accuracy.
+
+## Sparse Matrices
+The R **Matrix** package provides additional functions for both dense and sparse matrices that extend the basic matrix data type. Some usefull functions for dense matrices from this package are: **rankMatrix()** which returns the rank of the input matrix (up to a certain tolerance if desired) and **rcond()** which gives the condition number of the square matrix. Where the **condition number** is the product of the norm of the matrix and the norm of its inverse. In the *Matrix* package dense matrices are stored as **dgeMatrix** objects. 
+
+By default a sparse matrix is stored as a **dgCMatrix**, **sparse matrices** are matrices where most entries will be 0, we can use the fact a matrix is sparse to save on memory and compute. The "d" stands for digit, "g" for general (ie. not triangular or symmetric) and "C" for column (ie. not row or triplet). The benefit of storing a matrix as a *dgCMatrix* is that it is stored using compressed sparse column format (**CSC format**), alternatives are compressed sparse row format (**CSR format**) which is **dgRMatrix** or triplets which is **dgTMatrix**. The benefits of these objects are that they take up less memory than a *dgeMatrix*. Note that addition or subtraction with a sparse matrix object will result in a dense matrix and that multiplication of a sparse matrix by a dense matrix will result in a dense matrix. Also note that just like we had with dense matrices one should avoid inverting sparse matrices as they are not guaranteed to be sparse, so when trying to solve linear equations one should aim to use *solve(A,b)*. 
+
+### Dependency Graphs
+A graph G=(V,E) can be represented using an adjacency matrix A, where A is a square matrix with $A_{i,j}=1$ if E contains the edge (i,j) and 0 otherwise. Note that this adjacency matrix will likely be sparse. Here we will look at an example of building and using an sparse adjacency matrix from a dependency graph. 
+
+The senate is a legislative branch of the US government where senators are (usually) affiliated to either the democratic or republican party and there are 100 senators - 2 per state. We will be looking at a dataset which contains rollcall votes (senators say "yay" or "nay" when names are called for their verdict on the bill) of the 109th US senate. Our aim will be to analyze the dependencies between senators using rollcall data. First we will load in the data:
+```{r}
+# We first download the data from: https://github.com/anewgithubname/MATHM0041-2022/blob/main/lecs/senate109.zip
+votes <- read.csv("senate109/votes.csv")
+party <- read.csv("senate109/party.csv")
+name <- read.csv("senate109/name.csv")
+
+# We remove data pertaining to the independent party member
+votes <- t(votes[-90,])
+party <- ifelse(party[-90,] == -1, 0, 1) 
+```
+We would like to model the factorization of $p(x^{(1)} \cdots x^{(100)})$, where $x^{(i)}$ is the vote senator i casts on a bill. Let's assume p is a pairwise markov network, then we have $p(x^{(1)} \cdots x^{(100)}) \propto \prod_{c \in C} g_{c}(x^{(c)})$ where we can further factorize each clique as $g_{c} = \prod_{(u,v) \in c} g_{u,v} (x^{(u)},x^{(v)})$. Which means we can write $p(x^{(1)} \cdots x^{(100)}) \propto \prod_{(u,v) \in E} g'_{u,v} (x^{(u)},x^{(v)})$ for some unknown function g'. If we model $g'(u,v) := \exp(w_{u,v} x^{(u)} x^{(v)})$ for all u,v where we have that if $w_{u,v}=0$ there is no edge between nodes u and v in the graph. 
+
+Let us first model $g'_{1,v}$ (The parameter belonging to the senator named SESSIONS) to do this we would like to maximize the likelihood wrt. $w_{1,v, \forall v}$ (note what we have here is a binary logistic regression):
+```{r}
+devtools::install_github("h-aze/compass_yr1", subdir = "/labs/stattools")
+library(stattools)
+y <- ifelse(votes[,1] == -1, 0, 1)
+init_params <- rnorm(ncol(votes)+1)
+SESSIONS <- optim(par = init_params, fn = binlr_nll, D=votes, y=y, method = "SANN") ; SESSIONS
+```
+We note, however, that most of the parameters here are not close to zero, to make this the case we need to add a regularization term, we will use the l1 regularization:
+```{r}
+lambda <- 200000
+binlr_nll.l1 <- function(par, D, y){
+  binlr_nll(par,D,y) + lambda * sum(abs(par))
+}
+```
+Now lets again try and model $g'_{1,v}$:
+```{r}
+SESSIONS <- optim(par = init_params, fn = binlr_nll.l1, D=votes, y=y, method = "SANN") ; SESSIONS
+```
+Here alot more of the parameters are close to zero. We can now map values that are close to zero to zero:
+```{r}
+SESSIONS_tidy <- ifelse(SESSIONS$par < 0.5, 0, SESSIONS$par) ; SESSIONS_tidy
+```
+Now we see that most of our values are now zero and from this we can infer which senators SESSIONS tends to vote the same as.
+
+Now we would like to do this for all the senators and store the results in a spare matrix to reduce memory, where this sparse matrix is the adjacency matrix for the graph:
+```{r}
+library(Matrix)
+connections <- c()
+for(j in 1:ncol(votes)){
+  y <- ifelse(votes[,j] == -1, 0, 1)
+  senator_j <- optim(par = init_params, fn = binlr_nll, D=votes, y=y , method = "SANN")
+  connected_to <- c()
+  for(i in 2:length(senator_j$par)){
+    if(senator_j$par[i] > 0.5){
+      connected_to <- c(connected_to,1) 
+    }
+    else{
+      connected_to <- c(connected_to,0)
+    }
+  }
+  connections <- c(connections, connected_to)
+}
+g <- Matrix(connections, nrow=ncol(votes), ncol=ncol(votes), sparse=TRUE)
+```
+We can then plot the graph we get using our sparse adjacency matrix:
+```{r}
+library(igraph)
+G <- graph.adjacency(g)     
+G<- as.undirected(G)
+plot(G, vertex.size=6, vertex.label=NA)
+```
+Note that it is very hard to tell anything from this graph as there are too many nodes and connections. Let's instead analyse the connections of one node at a time, for example let's just plot the graph with edges included if it's incident on node 26 which belongs to OBAMA:
+```{r}
+gdash <-  Matrix(0, nrow = ncol(votes), ncol = ncol(votes), sparse=TRUE)
+gdash[,26] <- g[,26]
+gdash[26,] <- g[26,]
+G <- graph.adjacency(gdash)     
+G<- as.undirected(G)
+plot(G, vertex.size=6, vertex.label=NA)
+```
+We see here that OBAMA votes similarly to some of the other senators, but not all, specifically he votes similarly to:
+```{r}
+agrees <- c()
+for(i in 1:nrow(g)){
+  if(g[i,1] == 1){
+    agrees <- c(agrees, name[i,])
+  }
+}
+agrees
+```
+And he votes disimilarly to:
+```{r}
+disagrees <- c()
+for(i in 1:nrow(g)){
+  if(g[i,1] == 0){
+    disagrees <- c(disagrees, name[i,])
+  }
+}
+disagrees
+```
+
+
