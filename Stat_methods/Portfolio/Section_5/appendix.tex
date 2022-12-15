@@ -2,15 +2,30 @@
 \begin{appendices}
 
 
-% \section{Proofs}
+\section{Proofs}
 
-% \subsection{---} \label{Proofs:}
-
-
+\subsection{Proof of \ref{lemma:one}}\label{Proofs:one}
+First note that,
+\begin{equation}
+    q'(x+ \epsilon V(x)) = q(x) \cdot \frac{1}{|I + \epsilon \nabla V(x)|}
+\end{equation}
+Where $|\cdot|$ is the determinant and $\nabla V(x)$ is the jacobian of $V(x)$. Then we have, 
+\begin{align}
+    \mathbb{E}_{x} \left[\log \frac{q'(x + \epsilon V(x))}{q(x+ \epsilon V(x))} \right]|_{\epsilon=0}
+    &{}=\mathbb{E}_{x} \left[\log \frac{q(x)}{q(x+ \epsilon V(x)) \cdot | I + \epsilon \nabla V(x) |} \right]|_{\epsilon=0} \\ 
+    &= \mathbb{E}_{x} \left[\log \frac{q(x)}{q(x)} \right] - \mathbb{E}_{x} \left[\epsilon \cdot \langle \nabla \log q(x) , V(x) \rangle + O(\epsilon^{2}) \right] \\  &- \mathbb{E}_{x} \left[\log |I + \epsilon \nabla V(X)| \right]
+\end{align}
+Now taking $\wrte$ and evaluating at $\epsilon=0$, we get,
+\begin{align}
+    &{} = 0 - \mathbb{E}_{x}[\langle \nabla \log q(x), V(x) \rangle ] - \wrte \mathbb{E}_{x}[\log | I + \epsilon \nabla V(x) |]|_{\epsilon=0} \\
+    &= - \mathbb{E}_{x}[\langle \nabla \log q(x) , V(x) \rangle ] - \mathbb{E}_{x}[\text{tr}(I^{-1} \nabla V(x)) ] \\
+    &= \mathbb{E}_{x}[\sum_{i} \wrtx V_{i}(x)] - \mathbb{E}_{x}[\sum_{i} \wrtx V_{i}(x)] \\ 
+    &= 0
+\end{align}
 
 %\newpage
-\section{Homeworks}
-\subsection{For Section 1}
+% \section{Homeworks}
+% \subsection{For Section 1}
 
 
 

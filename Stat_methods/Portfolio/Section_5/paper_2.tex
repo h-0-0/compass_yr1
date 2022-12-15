@@ -1,0 +1,65 @@
+\section{Stein Variational Gradient Descent: A General Purpose Bayesian Inference Algorithm \cite{liu2016stein}}
+This paper proposes a general purpose variational inference algorithm that in empirical studies performs competitively with the existing state-of-the-art methods at the time (2019). The derivation of the method is based on a new theoretical result that connects the derivative of the KL divergence under smooth transforms with Steins identity aswell as a  kernelized Stein discrepancy. 
+
+We will begin by first asking what is variational inference? \textbf{Variational inference} concerns methods that approximately infer a probability distribution. In particular we seek to infer a distribution that is close to the true posterior distribution of the model but is tractable and easy to work with. This is typically done by defining a family of distributions and then finding the member of that family that is ``closest'' to the true posterior in some sense. 
+
+More mathematically: we want to find a distribution $q$ that is approximately $p$, ie. $q \approx p$, where p is our target distribution. Let $x$ be a continuous random variable or parameter of interest and D be our dataset consisting of iid observations. We would like to find the posterior of x, ie. $p(x|D)$. One potential way to find the posterior would be using sampling methods such as Markov Chain Monte Carlo (MCMC) methods. With these methods we generate samples from the posterior distribution, ie. we generate $x_{i} \sim p(x|D)$, and then use these samples to approximate the posterior. However, these methods can be very computationally expensive, especially for high-dimensional models amongst other disadvantages.
+
+Another way of finding the posterior is to find some $q$ that minimizes the Kullback-Leibler divergence: $\min_{q \in F} \text{KL}(q,p)$, where F is some set of distributions that we restrict ourselves to. This approach is defined by variational inference.
+
+However, does there exist a more flexible approach? one where we are not restricted to F (is non-parametric)? let $X \sim Q$ where $Q$ has density $q(x)$ and let $X'=X+ \epsilon V(X)$, where $V \in \mathbb{R}^{d} \sim Q'$ has density $q'(x)$. What we are doing here is we are saying $x$ comes from some proposal distribution Q, we are then ``moving'' our samples (or particles) by some magnitude $\epsilon$ in direction given to us by $V$ in the hope that the distribution of our now moved samples is closer to that of the true distribution. To ``move our samples'' in the optimal direction we would like to choose $V$ such that $\text{KL}(q',p) < \text{KL}(q,p)$ and the optimal V will decrease the KL divergence by the maximum amount (ie. minimize it). What we are doing in this process is carrying out gradient descent.
+
+So, we would like to find $\min_{V, ||V||=1} \wrte \KL(q',p)|_{\epsilon=0}$. First, note that by the law of the unconscious statistician,
+\begin{equation}
+    \KL(q',p) = \mathbb{E}_{x'} \left(\log \left(\frac{q'(x')}{p(x')} \right) \right) = \mathbb{E}_{x} \left(\log \left(\frac{q(x+ \epsilon V(x))}{p(x+\epsilon V(x))} \right) \right)
+\end{equation}
+We then have that,
+\begin{equation}\label{equation:eq1}
+    \mathbb{E}_{x} \left( \log \left(\frac{q(x+ \epsilon V(x))}{p(x+\epsilon V(x))} \right) \right)
+    = E_{x} \left( \frac{\log (q(x+ \epsilon V))}{\log(p(x+ \epsilon V))} \right)
+    + E_{x}(\log q'(x+ \epsilon V(x)) ) - E_{x}(\log q(x+ \epsilon V(x)) )
+\end{equation}
+We will now state a lemma which will get rid of the added cost (the last two terms):
+\begin{lemma}\label{lemma:one}
+    $\wrte \mathbb{E}_{x}(\log \frac{q'(x + \epsilon V(x))}{q(x+ \epsilon V(x))})|_{\epsilon=0} = 0$
+\end{lemma}
+The proof of this lemma is in \ref{Proofs:one}. We can then split the first term on the RHS in \ref{equation:eq1} and take the derivative to get:
+\begin{equation}
+    \wrte[ \mathbb{E}_{x}[\log q(x+ \epsilon V(x))] - \mathbb{E}_{x}[\log p(x + \epsilon V(x))]]
+\end{equation}
+First lets look at the first term above:
+\begin{align}
+    \wrte \mathbb{E}_{x}[\log q(x+ \epsilon V(x))]|_{\epsilon=0} &{}
+    = \mathbb{E}_{x}[\wrte \log q(x + \epsilon V(x))]|_{\epsilon=0} \\
+    &= \mathbb{E}_{x} \left[\frac{\wrte q(x + \epsilon V(x))}{q(x+ \epsilon V(x))} \right] \bigg\rvert_{\epsilon=0} \\
+    &= \mathbb{E}_{x} \left[\frac{\langle \wrtx q(x+\epsilon V(x)), V(x) \rangle }{q(x+ \epsilon V(x))} \right] \bigg\rvert_{\epsilon=0} 
+    \text{\footnotemark}\\
+    &= \mathbb{E}_{x} \left[\frac{\langle \wrtx q(x), V(x) \rangle}{q(x)} \right] \\
+    &= - \mathbb{E} \left[\sum_{i} \frac{\partial}{\partial x_{i}} V_{i}(x) \right]
+\end{align}
+\footnotetext{We get this step by using the directional derivative, that is we have by the chain rule that $\frac{\partial}{\partial \epsilon} q(x+ \epsilon V(x)) = \frac{\partial q}{\partial x} \frac{\partial x}{ \partial \epsilon} (x+ \epsilon V(x)) = V(x) \frac{\partial q}{\partial x} (x+ \epsilon V(x))$} 
+For the second term we have:
+\begin{align}
+    - \wrte \mathbb{E}_{x}[\log p(x + \epsilon V(x))] 
+    &{}= - \mathbb{E}_{x}\left[\frac{\langle \wrtx p(x + \epsilon V(x)), V(x) \rangle}{p(x+ \epsilon V(x))} \right] \bigg\rvert_{\epsilon=0} \\
+    &= - \mathbb{E}_{x} \left[\frac{\langle \wrtx p(x), V(x) \rangle}{p(x)} \right] \\
+    &= - \mathbb{E}_{x} \left[\sum_{i} \frac{\partial}{\partial x_{i}} \log p(x) V_{i}(x) \right]
+\end{align}
+Where $V(x) \in \mathbb{R}^{d}$ with $V_{i}(x) = \langle V, \phi_{i}(x) \rangle$ with $\phi_{i} \in \mathbb{R}^{b}$. Where our $\phi_{i}'s$ are the feature transforms induced by a kernel we choose, this is where the Reproducing Kernel Hilbert Space (RKHS) comes in (which is mentioned many times in the paper) as its induced by the kernel. Therefore,
+\begin{align}
+    \wrte \KL(q',p) &{}= - \mathbb{E}_{x}[\langle V, \sum_{i} \frac{\partial}{\partial x_{i}} \log p(x) \phi_{i}(x) \rangle ] - \mathbb{E}_{x}[\langle V, \sum_{i} \frac{\partial}{\partial x_{i}} \phi_{i}(x) \rangle ] \\ 
+    &= \langle V, -\mathbb{E}_{x}[\sum_{i} \log p(x) \phi_{i}(x) + \sum_{i} \frac{\partial}{\partial x_{i}} \phi_{i}(x) ] \rangle
+\end{align}
+We want to minimize $\wrte \KL(q',p)$ subject to $||V||=1$. So we take our optimal value for v, $V^{*}$, to be:
+\begin{equation}
+    V* = \frac{\mathbb{E}_{x}[ \sum_{i} \log p(x) \phi_{i}(x) + \sum_{i} \frac{\partial}{\partial x_{i}} \phi_{i}(x) ]}{ || \mathbb{E}_{x}[\sum_{i} \log p(x) \phi_{i}(x) + \sum_{i} \frac{\partial}{\partial x_{i}} \phi_{i}(x)] ||}
+\end{equation}
+Where we obtain the expectation using MCMC (note its cheaper here than it would be using it directly on the posterior). Now we can construct an algorithm:
+\begin{enumerate}
+    \item $\{x_{0}^{n}\}_{n=1}^{N} \sim Q_{0} $
+    \item For $i = 1,...,100$
+    \begin{enumerate}
+        \item $x_{i+1}^{n} = x_{i}^{n} + \epsilon \cdot V^{*}(x_{i}^{n})$
+    \end{enumerate}
+\end{enumerate}
+Where we find $V^{*}$ as we defined above. Using this we can then perform variational inference. 
