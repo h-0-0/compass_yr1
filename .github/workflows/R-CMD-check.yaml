@@ -14,7 +14,7 @@ name: R-CMD-check
 
 defaults:
   run:
-    working-directory: labs
+    working-directory: labs/stattools
 
 jobs:
   R-CMD-check:
