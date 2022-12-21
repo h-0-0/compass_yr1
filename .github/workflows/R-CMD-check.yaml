@@ -39,6 +39,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+          with:
+            working-directory: labs/stattools
 
       - uses: r-lib/actions/setup-pandoc@v2
 
