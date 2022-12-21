@@ -42,6 +42,7 @@ jobs:
       - uses: r-lib/actions/setup-pandoc@v2
 
       - name: Query dependencies
+      	uses: actions/checkout@v2
         run: |
           install.packages('remotes')
           saveRDS(remotes::dev_package_deps(dependencies = TRUE), ".github/depends.Rds", version = 2)
