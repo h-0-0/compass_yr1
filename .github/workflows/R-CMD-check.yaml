@@ -39,8 +39,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-          with:
-            working-directory: labs/stattools
+
+      - name: Change directory
+      	  run: |
+      	    cd labs
+      	    cd stattools
 
       - uses: r-lib/actions/setup-pandoc@v2
 
