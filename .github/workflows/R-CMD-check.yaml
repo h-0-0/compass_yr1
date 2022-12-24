@@ -41,10 +41,10 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Change to subdirectory
-	shell: bash
-	run: |
-	  cd labs
-      	  cd stattools
+        shell: bash
+        run: |
+          cd labs
+          cd stattools
 
       - uses: r-lib/actions/setup-pandoc@v2
 
