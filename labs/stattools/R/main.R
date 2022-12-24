@@ -1,9 +1,3 @@
-# Some useful keyboard shortcuts for package authoring:
-#
-#   Install Package:           'Ctrl + Shift + B'
-#   Check Package:             'Ctrl + Shift + E'
-#   Test Package:              'Ctrl + Shift + T'
-
 #' Turns data.frame into a numeric
 #'
 #' Given a data.frame df, will convert to a numeric and return it.
@@ -21,8 +15,8 @@ df_to_numeric <- function(df){
 
 #' Create a model matrix
 #'
-#'Given data, D, and columns to leave out, r, creates the corresponding model matrix.
-#'Note: doesn't notify you or make the model matrix full rank if its not.
+#' Given data, D, and columns to leave out, r, creates the corresponding model matrix.
+#' Note: doesn't notify you or make the model matrix full rank if its not.
 #' @param D, data in the form of a data frame, matrix or vector
 #' @param r, optional vector of column indices to omit from the model matrix
 #' @return The corresponding model matrix X
@@ -153,7 +147,7 @@ LLS_R <- function(lambda, X=NULL, y=NULL) {
 #' @examples
 #' X <- model_matrix(c(1,2,3,4))
 #' y <- c(1,4,9,16)
-#' k <-
+#' k <- some_kernel_function
 #' # The following are equivalent
 #' --------
 #' f <- LLS_R(k, 1)
@@ -300,10 +294,10 @@ sigmoid <- function(z){
 #' @export
 #' @examples
 #' x <- c(1:10)
-#' y <- c(c(rep(0,5), rep(1,5)))
+#' y <- c(rep(0,5), rep(1,5))
 #' par <- c(1,2)
 #' binlr_nll(par, x, y)
-#' To compute the MLE:
+#' # To compute the MLE:
 #' optim(par = c(0,0), fn = neg_log_likelihood, D=x, y=y)
 #TODO: add testing
 binlr_nll = function(par, D, y){

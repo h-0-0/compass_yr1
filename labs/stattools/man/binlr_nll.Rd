@@ -21,9 +21,9 @@ Given vector of parameters input data, D, and classes for the input data, y, com
 }
 \examples{
 x <- c(1:10)
-y <- c(c(rep(0,5), rep(1,5)))
+y <- c(rep(0,5), rep(1,5))
 par <- c(1,2)
 binlr_nll(par, x, y)
-To compute the MLE:
+# To compute the MLE:
 optim(par = c(0,0), fn = neg_log_likelihood, D=x, y=y)
 }
