@@ -40,10 +40,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - run: |
-        getwd()
-        cd labs
-      	cd stattools
+      - name: Change to subdirectory
+	  shell: bash
+	  run: |
+	    cd labs
+      	    cd stattools
 
       - uses: r-lib/actions/setup-pandoc@v2
 
