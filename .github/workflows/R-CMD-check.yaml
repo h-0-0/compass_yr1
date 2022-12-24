@@ -40,8 +40,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Change directory
-      	  run: |
+      - run: |
       	    cd labs
       	    cd stattools
 
