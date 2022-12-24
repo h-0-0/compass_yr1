@@ -41,8 +41,8 @@ jobs:
       - uses: actions/checkout@v2
 
       - run: |
-      	    cd labs
-      	    cd stattools
+        cd labs
+      	cd stattools
 
       - uses: r-lib/actions/setup-pandoc@v2
 
