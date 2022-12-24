@@ -57,7 +57,7 @@ model_matrix <- function(D,r) {
 #' poly_feat_trans(3,5)
 #' # The following two are equivalent:
 #' poly_feat_trans(4, c(1,2,3,4))
-#' ---------------
+#' # ---------------
 #' pft <- poly_feat_trans(4)
 #' pft(c(1,2,3,4))
 #TODO: can you give this a matrix or dataframe?
@@ -114,10 +114,10 @@ LLS <- function(X, y) {
 #' X <- model_matrix(c(1,2,3,4))
 #' y <- c(1,4,9,16)
 #' # The following are equivalent
-#' --------
+#' # --------
 #' f <- LLS_R(1)
 #' f(X,y)
-#' --------
+#' # --------
 #' LLS_R(1,X,y)
 #TODO: add testing
 LLS_R <- function(lambda, X=NULL, y=NULL) {
@@ -149,10 +149,10 @@ LLS_R <- function(lambda, X=NULL, y=NULL) {
 #' y <- c(1,4,9,16)
 #' k <- some_kernel_function
 #' # The following are equivalent
-#' --------
+#' # --------
 #' f <- LLS_R(k, 1)
 #' f(X,y)
-#' --------
+#' # --------
 #' LLS_R(k,1,X,y)
 #TODO: add testing
 K_LLS_R <- function(k, lambda, X=NULL, y=NULL) {
@@ -208,10 +208,10 @@ k_linear <- function(x,y){
 #' @return a closure, or numeric if x and y also given
 #' @export
 #' @examples
-#' The following are the same:
+#' # The following are the same:
 #' f <- k_poly(4)
 #' f(c(1,2,3,4), c(3,5,7,9))
-#' --------
+#' # --------
 #' k_poly(4, c(1,2,3,4), c(3,5,7,9))
 # TODO: add testing
 k_poly <- function(b, x=NULL, y=NULL){
@@ -235,10 +235,10 @@ k_poly <- function(b, x=NULL, y=NULL){
 #' @return a closure, or numeric if x and y also given
 #' @export
 #' @examples
-#' The following are the same:
+#' # The following are the same:
 #' f <- k_RBF(4)
 #' f(c(1,2,3,4), c(3,5,7,9))
-#' --------
+#' # --------
 #' k_RBF(4, c(1,2,3,4), c(3,5,7,9))
 # TODO: add testing
 # TODO: add pairwise distance of data calc? use in example above aswell?

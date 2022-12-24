@@ -28,9 +28,9 @@ X <- model_matrix(c(1,2,3,4))
 y <- c(1,4,9,16)
 k <- some_kernel_function
 # The following are equivalent
---------
+# --------
 f <- LLS_R(k, 1)
 f(X,y)
---------
+# --------
 LLS_R(k,1,X,y)
 }

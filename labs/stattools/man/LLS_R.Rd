@@ -25,9 +25,9 @@ Where our regularization term is "\eqn{\text{lambda} \cdot \mathbf{w}^{T} \mathb
 X <- model_matrix(c(1,2,3,4))
 y <- c(1,4,9,16)
 # The following are equivalent
---------
+# --------
 f <- LLS_R(1)
 f(X,y)
---------
+# --------
 LLS_R(1,X,y)
 }

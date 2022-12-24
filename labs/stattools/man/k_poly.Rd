@@ -20,9 +20,9 @@ a closure, or numeric if x and y also given
 Given b will return the polynomial kernel function for degree b, if x and y also given will compute the polynomial kernel (of degree b) and return it.
 }
 \examples{
-The following are the same:
+# The following are the same:
 f <- k_poly(4)
 f(c(1,2,3,4), c(3,5,7,9))
---------
+# --------
 k_poly(4, c(1,2,3,4), c(3,5,7,9))
 }

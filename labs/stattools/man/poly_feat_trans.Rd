@@ -22,7 +22,7 @@ If no x is given then it returns a function that will compute polynomial feature
 poly_feat_trans(3,5)
 # The following two are equivalent:
 poly_feat_trans(4, c(1,2,3,4))
----------------
+# ---------------
 pft <- poly_feat_trans(4)
 pft(c(1,2,3,4))
 }
