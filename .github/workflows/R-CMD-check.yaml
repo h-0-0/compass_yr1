@@ -43,8 +43,8 @@ jobs:
       - name: Change to subdirectory
         shell: bash
         run: |
-          setwd("labs")
-          setwd("stattools")
+          cd labs
+          cd stattools
 
       - uses: r-lib/actions/setup-pandoc@v2
 
