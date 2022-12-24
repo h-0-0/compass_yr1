@@ -43,6 +43,7 @@ jobs:
       - name: Change to subdirectory
         shell: bash
         run: |
+          pwd
           cd labs
           cd stattools
 
