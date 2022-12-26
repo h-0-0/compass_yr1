@@ -40,7 +40,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Change to subdirectory
+      - name: Check working directory
         shell: bash
         run: |
           pwd
