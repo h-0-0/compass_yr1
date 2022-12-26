@@ -29,8 +29,8 @@ y <- c(1,4,9,16)
 k <- k_linear
 # The following are equivalent
 # --------
-f <- LLS_R(k, 1)
+f <- K_LLS_R(k, 1)
 f(X,y)
 # --------
-LLS_R(k,1,X,y)
+K_LLS_R(k,1,X,y)
 }

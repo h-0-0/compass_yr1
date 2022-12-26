@@ -150,10 +150,10 @@ LLS_R <- function(lambda, X=NULL, y=NULL) {
 #' k <- k_linear
 #' # The following are equivalent
 #' # --------
-#' f <- LLS_R(k, 1)
+#' f <- K_LLS_R(k, 1)
 #' f(X,y)
 #' # --------
-#' LLS_R(k,1,X,y)
+#' K_LLS_R(k,1,X,y)
 #TODO: add testing
 K_LLS_R <- function(k, lambda, X=NULL, y=NULL) {
   f_is_kernel_method_aevniseanv <- function(A, b){
