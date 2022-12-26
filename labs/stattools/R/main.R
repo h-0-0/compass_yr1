@@ -60,8 +60,6 @@ model_matrix <- function(D,r) {
 #' # ---------------
 #' pft <- poly_feat_trans(4)
 #' pft(c(1,2,3,4))
-#TODO: can you give this a matrix or dataframe?
-#TODO: add testing
 poly_feat_trans <- function(b, x=NULL){
   if(is.null(x)){
     f <- function(x){

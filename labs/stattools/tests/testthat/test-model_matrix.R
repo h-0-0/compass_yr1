@@ -1,7 +1,7 @@
 test_that("model_matrix works when just supplied with vector", {
   x <- c(1,2,3,4)
   expect_equal(
-    stattools::model_matrix(x)
+    model_matrix(x)
   , cbind(c(1,1,1,1) , c(1,2,3,4) )
   )
 })
@@ -9,7 +9,7 @@ test_that("model_matrix works when just supplied with vector", {
 test_that("model_matrix works when just supplied with matrix", {
   x <- matrix(c(1:16), 4,4)
   expect_equal(
-    stattools::model_matrix(x)
+    model_matrix(x)
     , cbind(c(1,1,1,1) , matrix(c(1:16), 4,4) )
   )
 })
@@ -18,7 +18,7 @@ test_that("model_matrix works when supplied with matrix and vector of columns to
   x <- matrix(c(1:16), 4,4)
   r <- c(3,4)
   expect_equal(
-    stattools::model_matrix(x,r)
+    model_matrix(x,r)
     , cbind(c(1,1,1,1) , matrix(c(1:8), 4,2) )
   )
 })
@@ -32,7 +32,7 @@ test_that("model_matrix works when supplied with data-frame and vector of column
   r <- c(3,4)
 
   expect_equal(
-    stattools::model_matrix(x,r)
+    model_matrix(x,r)
     , cbind(c(1,1,1,1) , x_1, x_2 , deparse.level=0)
   )
 })
