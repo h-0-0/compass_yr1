@@ -20,7 +20,7 @@ Given vector of parameters, par, and input data, x, computes the prediction for 
 \examples{
 x <- c(1:10)
 y <- c(c(rep(0,5), rep(1,5)))
-results <- optim(par = c(0,0), fn = neg_log_likelihood, D=x, y=y)
+results <- optim(par = c(0,0), fn = binlr_nll, D=x, y=y)
 prediction(5, results$par)
 prediction(6, results$par)
 }
