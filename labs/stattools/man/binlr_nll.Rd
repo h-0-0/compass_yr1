@@ -25,5 +25,5 @@ y <- c(rep(0,5), rep(1,5))
 par <- c(1,2)
 binlr_nll(par, x, y)
 # To compute the MLE:
-optim(par = c(0,0), fn = neg_log_likelihood, D=x, y=y)
+optim(par = c(0,0), fn = binlr_nll, D=x, y=y)
 }

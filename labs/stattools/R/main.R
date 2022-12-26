@@ -298,7 +298,7 @@ sigmoid <- function(z){
 #' par <- c(1,2)
 #' binlr_nll(par, x, y)
 #' # To compute the MLE:
-#' optim(par = c(0,0), fn = neg_log_likelihood, D=x, y=y)
+#' optim(par = c(0,0), fn = binlr_nll, D=x, y=y)
 #TODO: add testing
 binlr_nll = function(par, D, y){
   D <- model_matrix(D)
