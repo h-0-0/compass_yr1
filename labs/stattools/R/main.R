@@ -294,7 +294,7 @@ sigmoid <- function(z){
 #' binlr_nll(par, x, y)
 #' # To compute the MLE:
 #' optim(par = c(0,0), fn = binlr_nll, D=x, y=y)
-binlr_nll = function(par, D, y){
+binlr_nll <- function(par, D, y){
   D <- model_matrix(D)
   y_hat <-  rowSums(D %*% par)
   p <- sigmoid(y_hat)
@@ -317,7 +317,7 @@ binlr_nll = function(par, D, y){
 #' results <- optim(par = c(0,0), fn = binlr_nll, D=x, y=y)
 #' prediction(5, results$par)
 #' prediction(6, results$par)
-prediction = function(x, par){
+prediction <- function(x, par){
   x <- model_matrix(x)
   y_hat <-  rowSums(x %*% par)
 
@@ -345,7 +345,6 @@ prediction = function(x, par){
 #' @field cv_error, numeric
 #' @field flag, logical
 #' @field flag_km, logical
-#' @method initialize, given the fields data and target and the optional fields: k, Regr_method, E_fun. Will return an object of the class CrossValidation.
 #' @export CrossValidation
 #' @exportClass CrossValidation
 #TODO: Add testing
