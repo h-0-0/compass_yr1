@@ -1,3 +1,5 @@
+#TODO: Add capability for dealing with factor variables
+
 #' Turns data.frame into a numeric
 #'
 #' Given a data.frame df, will convert to a numeric and return it.
@@ -24,14 +26,17 @@ df_to_numeric <- function(df){
 #' @examples
 #' model_matrix(c(1,2,3,4))
 #' model_matrix(cars)
-#TODO: check matrix is full rank and if not make it so IMPORTANT
-model_matrix <- function(D,r) {
+model_matrix <- function(D, r, supress=FALSE) {
   if(!missing(r)){
     X <- data.matrix( D[, -r ] )
     colnames(X) <- rep(NULL, ncol(D))
   }
   else{
     X <- as.matrix(D, rownames.force = FALSE)
+  }
+
+  if((qr(X)$rank != ncol(X)) & (!supress) ){
+    warning("Matrix is not full rank")
   }
 
   if(is.vector(D)){
@@ -91,7 +96,6 @@ poly_feat_trans <- function(b, x=NULL){
 #' X <- model_matrix(c(1,2,3,4))
 #' y <- c(1,4,9,16)
 #' LLS(X,y)
-#TODO: add testing
 LLS <- function(X, y) {
   w <- solve(t(X) %*% X) %*% t(X)  %*% y
   w
@@ -117,8 +121,8 @@ LLS <- function(X, y) {
 #' f(X,y)
 #' # --------
 #' LLS_R(1,X,y)
-#TODO: add testing
 LLS_R <- function(lambda, X=NULL, y=NULL) {
+  if(lambda < 0){ warning("Lambda smaller than zero so large parameters are no longer penalized (they are encorouged)") }
   f <- function(A, b){
     w <- solve(t(A) %*% A + lambda*diag(ncol(A))) %*% t(A)  %*% b
     w
@@ -152,7 +156,6 @@ LLS_R <- function(lambda, X=NULL, y=NULL) {
 #' f(X,y)
 #' # --------
 #' K_LLS_R(k,1,X,y)
-#TODO: add testing
 K_LLS_R <- function(k, lambda, X=NULL, y=NULL) {
   f_is_kernel_method_aevniseanv <- function(A, b){
     K <- matrix(nrow = nrow(A), ncol = nrow(A)  )
@@ -192,7 +195,6 @@ K_LLS_R <- function(k, lambda, X=NULL, y=NULL) {
 #' @export
 #' @examples
 #' k_linear(c(1,2,3,4), c(3,5,7,9))
-# TODO: add testing
 k_linear <- function(x,y){
   t(x)%*%y +1
 }
@@ -211,7 +213,6 @@ k_linear <- function(x,y){
 #' f(c(1,2,3,4), c(3,5,7,9))
 #' # --------
 #' k_poly(4, c(1,2,3,4), c(3,5,7,9))
-# TODO: add testing
 k_poly <- function(b, x=NULL, y=NULL){
   f <- function(x, y){
     (t(x)%*%y +1)^b
@@ -238,8 +239,6 @@ k_poly <- function(b, x=NULL, y=NULL){
 #' f(c(1,2,3,4), c(3,5,7,9))
 #' # --------
 #' k_RBF(4, c(1,2,3,4), c(3,5,7,9))
-# TODO: add testing
-# TODO: add pairwise distance of data calc? use in example above aswell?
 k_RBF <- function(sigma, x=NULL, y=NULL){
   f <- function(x, y){
     exp(- E_l2(x,y) / (2* (sigma^2)) )
@@ -262,7 +261,6 @@ k_RBF <- function(sigma, x=NULL, y=NULL){
 #' @export
 #' @examples
 #' err <- E_l2( c(5,4,3,2,1), c(6,3,4,1,2) )
-#TODO: add testing
 E_l2 <- function(targ, pred){
   norm(targ - pred, type="2")**2
 }
@@ -276,7 +274,6 @@ E_l2 <- function(targ, pred){
 #' @examples
 #' z <- runif(1)
 #' sigmoid(z)
-#TODO: add testing
 sigmoid <- function(z){
   1/(1+exp(-z))
 }
@@ -297,7 +294,6 @@ sigmoid <- function(z){
 #' binlr_nll(par, x, y)
 #' # To compute the MLE:
 #' optim(par = c(0,0), fn = binlr_nll, D=x, y=y)
-#TODO: add testing
 binlr_nll = function(par, D, y){
   D <- model_matrix(D)
   y_hat <-  rowSums(D %*% par)
@@ -321,7 +317,6 @@ binlr_nll = function(par, D, y){
 #' results <- optim(par = c(0,0), fn = binlr_nll, D=x, y=y)
 #' prediction(5, results$par)
 #' prediction(6, results$par)
-#TODO: add testing
 prediction = function(x, par){
   x <- model_matrix(x)
   y_hat <-  rowSums(x %*% par)
@@ -407,7 +402,7 @@ CrossValidation$methods(
     }
     else{
       ind <- sample(nrow(.self$data))
-      D_dash <- .self$data[paste(ind),]
+      D_dash <- .self$data[ind,]
       y_dash <- .self$target[ind]
     }
 
@@ -450,7 +445,7 @@ CrossValidation$methods(
           X.train <- model_matrix(D.train)
         }
         else{
-          X.train <-model_matrix(.self$Feat_trans(D.train))
+          X.train <- model_matrix(.self$Feat_trans(D.train))
         }
         y.train <- y_dash[-testIndexes]
         w <- .self$Regr_method(X.train, y.train)
@@ -465,10 +460,10 @@ CrossValidation$methods(
       else{
         # We get the model matrix and predictor variables for the testing data and then we calculate the error using our error function
         if(is.null(.self$Feat_trans)){
-          X.test <- model_matrix(D.test)
+          X.test <- model_matrix(D.test, supress=TRUE)
         }
         else{
-          X.test <-model_matrix(.self$Feat_trans(D.test))
+          X.test <-model_matrix(.self$Feat_trans(D.test), supress=TRUE)
         }
         y.test <- y_dash[testIndexes]
         test.error <- .self$E_fun(y.test, X.test %*% w)

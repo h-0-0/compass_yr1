@@ -4,7 +4,7 @@
 \alias{model_matrix}
 \title{Create a model matrix}
 \usage{
-model_matrix(D, r)
+model_matrix(D, r, supress = FALSE)
 }
 \arguments{
 \item{D, }{data in the form of a data frame, matrix or vector}
