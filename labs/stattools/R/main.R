@@ -21,6 +21,7 @@ df_to_numeric <- function(df){
 #' Note: doesn't notify you or make the model matrix full rank if its not.
 #' @param D, data in the form of a data frame, matrix or vector
 #' @param r, optional vector of column indices to omit from the model matrix
+#' @param supress, optional boolean that if TRUE will supress matrix of not full rank warning
 #' @return The corresponding model matrix X
 #' @export
 #' @examples

@@ -10,6 +10,8 @@ model_matrix(D, r, supress = FALSE)
 \item{D, }{data in the form of a data frame, matrix or vector}
 
 \item{r, }{optional vector of column indices to omit from the model matrix}
+
+\item{supress, }{optional boolean that if TRUE will supress matrix of not full rank warning}
 }
 \value{
 The corresponding model matrix X
