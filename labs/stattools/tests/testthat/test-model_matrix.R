@@ -7,10 +7,10 @@ test_that("model_matrix works when just supplied with vector", {
 })
 
 test_that("model_matrix works when just supplied with matrix", {
-  x <- matrix(c(1:16), 4,4)
+  x <- matrix(c(5,2:15,3), 4,4)
   expect_equal(
     model_matrix(x)
-    , cbind(c(1,1,1,1) , matrix(c(1:16), 4,4) )
+    , cbind(c(1,1,1,1) , matrix(c(5,2:15,3), 4,4) )
   )
 })
 
