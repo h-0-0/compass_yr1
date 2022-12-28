@@ -52,10 +52,7 @@ jobs:
           path: ${{ runner.temp }}/package
 
       - name: Upload coverage to Codecov
-        run: |
-          npm i yargs --save
-          node ./.github/scripts/generate-codecov-json.js --archive-path ./results.xcresult
-          bash <(curl -s https://codecov.io/bash) -t ${{ secrets.CODECOV_TOKEN }} -f ./coverage-report-results.json
-        #uses: codecov/codecov-action@v3
-        #with:
-          #working-directory: labs/stattools
+        uses: codecov/codecov-action@v3
+        with:
+          working-directory: labs/stattools
+          token: ${{ secrets.CODECOV_TOKEN }}
