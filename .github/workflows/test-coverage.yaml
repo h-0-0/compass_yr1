@@ -56,7 +56,7 @@ jobs:
         with:
           working-directory: labs/stattools
           token: ${{ secrets.CODECOV_TOKEN }}
-                  directory: ./coverage/reports/
+          directory: ./coverage/reports/
           env_vars: OS,PYTHON
           files: /home/runner/work/SIESTAstepper/SIESTAstepper/coverage.xml
           flags: tests
