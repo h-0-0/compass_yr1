@@ -1,0 +1,111 @@
+---
+title: "SM2_Portfolio_1"
+author: "Henry Bourne"
+date: "2023-01-23"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(ggbiplot)
+```
+
+# Principal Component analysis
+
+## Task 1
+First let's look at the structure of the data:
+```{r}
+USA <- USArrests[,-3]
+summary(USA)
+```
+We have four columns and would like to perform PCA on the data minus the UrbanPop feature. First we will carry out PCA using the covariance matrix, S, manually:
+```{r}
+S.USA <- cov(USA)
+ev.USA <- eigen(S.USA)
+ev.USA
+```
+Notice that the eigenvectors in the matrix are already sorted by the size of their eigenvalues and so have decreasing sample variance. Thus the matrix of our principal components is exactly the matrix of eigenvalues above. 
+
+Now we will carry out PCA using the correlation matrix, R, and the help of the *prcomp* command.
+```{r}
+pc_USArrests <- prcomp(~Murder + Assault + Rape, USArrests, scale. = TRUE, retx=TRUE); pc_USArrests # We set scale to TRUE so that we are working with correlation matrix R
+pc_USArrests$x
+```
+The **sdev** component tells us the standard deviations of the principal components which corresponds to the squareroot of the eigenvalues of the covariance matrix, $(\sqrt{\lambda_{1}},\sqrt{\lambda_{2}}, \sqrt{\lambda_{3}})^{T} = \text{diag}(\Lambda)$. The **rotation** component contains the matrix of the principal components, ie. the eigenvectors of the correlation matrix, R, $\mathbf{A} = [v_{1} \quad v_{2} \quad v_{3}]$ where $\mathbf{A}$ is the matrix of principal components (the eigenvectors of R) and $v_{i}$ is the i-th eigenvector. Finally **x** contains the data transformed by the principal component matrix (ie. our now uncorrelated data), in the notes: $\mathbf{Y} = \mathbf{X} \mathbf{A}$.
+
+The correlation matrix can be interpreted as the sample covariance matrix of the scaled data. So wether we should use the covariance matrix or correlation matrix depends on the variances of the predictor variables. Recalling the variances:
+```{r}
+diag(S.USA)
+```
+We see that the variances of the predictor variables greatly differ by orders of magnitude, therefore it is sensible to work with the scaled data, ie. the correlation matrix R. 
+
+Now we will plot a **scree plot** which is a plot of the variance explained by each principal component, ie. the percentage of the variance accounted for by the principal component.
+```{r}
+var_prcnt = pc_USArrests$sdev^2 / sum(pc_USArrests$sdev^2)
+
+qplot(c(1:3), var_prcnt) + 
+  geom_line() + 
+  xlab("Principal Component") + 
+  ylab("Variance Explained") +
+  ggtitle("Scree Plot") +
+  ylim(0, 1)
+```
+From the scree plot we can see the first principal component accounts for a very large percentage of the variance with the 3rd principal component accounting for less than $12 \%$ of the variance. 
+
+We will now compute the Kaiser's criterion:
+```{r}
+max(which(pc_USArrests$sdev > sum(pc_USArrests$sdev)/length(pc_USArrests$sdev)))
+```
+and now the number of PC's to keep according to Horn's parallel analysis:
+```{r}
+M <-1000
+n <- nrow(USA)
+p <- ncol(USA)
+lambdas <- matrix(NA, M, p)
+for(i in 1:M){
+  M <- matrix( rnorm(p*n,mean=0,sd=1), n, p)  # genrate matrix with N(0,1) entries 
+  R <- cor(M) # find correlation matix
+  S <- diag(pc_USArrests$sdev) %*% R %*% diag(pc_USArrests$sdev) # scale
+  lambdas[i,] <- eigen(S)$values # find the eigenvalues 
+}
+mean_lambda <- colMeans(lambdas) # find the mean of the eigenvalues
+
+# find the largest index of eigenvalues larger than the mean eigenvalue of our M standard normal matrices
+max(which(pc_USArrests$sdev > mean_lambda)) 
+```
+Kaiser's criterion tells us to only keep the first principal component, ie. let $q=1$, whereas Horn's parallel analysis suggests not throwing away any of the principal components, ie. $q=3$. Horn's parallel analysis takes into account the sampling error that arises from the fact that we don't have infinite observations (only n) unlike Kaiser's criterion, therefore we will select $q=3$. Looking at the scree plot we can back up this decision as throwing away the second two principal components would amount to loosing close to $25 \%$ of the varaince. 
+
+Now we will produce a biplot:
+```{r}
+ggbiplot(pc_USArrests)
+```
+The black dots are the datapoints transformed by our PC's, here we plot the first component versus the second. The red arrows tell us which predictor variables contribute to which principal components. Here we see that higher values in murder and assault contribute to a larger value of PC2 for example. From the plot we see that all the features have negative values for the first component which means the first component is an average of all three features and suggests that all three features are correlated with each other. For the second component we see that larger values in murder and assault lead to a higher value and rape to a lower value, ie. it contrasts rape against the other features. 
+
+
+## Task 2
+We will be working with the iris dataset:
+```{r}
+summary(iris)
+```
+Ideally we would like to use the covariance matrix as this will preserve variance, however, if the predictor variables are scaled differently this could lead to one predictor variable accounting for a large percentage of the variance. In this case we would prefer to standardize the data and use the correlation matrix. Let us asses the variances of the predictor variables:
+```{r}
+diag(cov(iris[,-5]))
+```
+We see that the variances do differ and even though they all use the same measurement on the same scale the variances are very different, for example Petal.length has a variance of 13 times Sepal.Width so we will use the correlation matrix:
+```{r}
+pc_iris <- prcomp(~Sepal.Length + Sepal.Width + Petal.Length + Petal.Width , iris, scale. = TRUE, retx=TRUE); pc_iris
+```
+Let's now plot the two dimensional reduction of observations and color the data-points according to their species:
+```{r}
+ggbiplot(pc_iris, ellipse=TRUE, groups = iris$Species)
+```
+From the plot we see that using our first two principal components has resulted in a two-dimensional reduction of the data-set where the points are clustered according to group, ie. all the points belonging to the setosa species appear together in the feature space and the same can be said for versicolor and virginica, although the between group scatterness between these two is much lower (ie. they appear much sloer together in feature space). 
+
+## Task 3
+
+
+
+
+
+
