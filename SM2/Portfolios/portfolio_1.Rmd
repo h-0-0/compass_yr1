@@ -100,9 +100,48 @@ Let's now plot the two dimensional reduction of observations and color the data-
 ```{r}
 ggbiplot(pc_iris, ellipse=TRUE, groups = iris$Species)
 ```
-From the plot we see that using our first two principal components has resulted in a two-dimensional reduction of the data-set where the points are clustered according to group, ie. all the points belonging to the setosa species appear together in the feature space and the same can be said for versicolor and virginica, although the between group scatterness between these two is much lower (ie. they appear much sloer together in feature space). 
+From the plot we see that using our first two principal components has resulted in a two-dimensional reduction of the data-set where the points are clustered according to group, ie. all the points belonging to the setosa species appear together in the feature space and the same can be said for versicolor and virginica, although the between group scatterness between these two is much lower (ie. they appear much closer together in feature space). 
 
 ## Task 3
+For this task we will be working with the communities and crime dataset, let's start by loading in and summarising the dataset:
+```{r}
+library(mogavs)
+data(crimeData)
+summary(crimeData)
+```
+We see that this dataset contains a large number of variables, each of these variables tell us something different about a community such as its state, population, percentage of people under the poverty level and wether or not a gang unit is deployed in that community among a total of 127 variables (not including the target variable). Among these the first 5 variables are non predictive and so won't be used in constructing a model, leaving 122 predictor variables (note that the dataframe from the *mogavs* package does not include the first 5 attributes). The target variable is y which is the total number of violent crimes per 100k population. 
+
+We would like to fit a regression model of the form $Z_{i} \sim f(\alpha + \beta^{T} x_{i}^{0})$ using PCR to estimate the model parameters. The first thing to do is decide wether PCA should be applied to the covariance matrix or the correlation matrix. One thing to note is that in the original dataset all values were standardized between 0 and 1 and the dataset in *mogavs* is the same bar the fact that they impute missing values so we may find some values outside of this range. Knowing this it would make sense to use the covariance matrix for PCA as it will preserve variance and as all the attributes are already scaled. 
+
+Let's now carry out our PCA and print out a summary of our results:
+```{r}
+pc_crimeData <- prcomp(~ . -y , crimeData, scale. = TRUE, retx=TRUE); summary(pc_crimeData)
+```
+Let's first fit a linear model (carry out PCR) using all the principal components and print out a summary:
+```{r}
+Regr_data <- data.frame(y = crimeData$y, pc_crimeData$x) # Create data frame from target variable and our transformed predictor variables
+lmodel.all <- lm(y ~ ., data = Regr_data)
+summary(lmodel.all)
+```
+We can then obtain our values for $\alpha, \beta$ from our $a, \gamma$:
+```{r}
+gamma <- as.matrix(lmodel.all$coefficients[2:123])
+A <- as.matrix(pc_crimeData$rotation)
+beta <- A %*% gamma
+beta
+
+a <- lmodel.all$coefficients[1]
+alpha <- a - t(beta) %*% colMeans(crimeData[,-ncol(crimeData)])
+alpha
+```
+
+Now we would like to see how the performance of our PCR differs as we change the number of principal components. To analyse this we will fit multiple PCR's and measure their performance in terms of the Root Mean Squared Error of Prediction (RMSEP) for different numbers of components:
+```{r}
+library(pls)
+model <- pcr(y~ ., ncol(crimeData)-1, data=crimeData)
+validationplot(model)
+```
+We see a very quick initial decrease in RMSEP when we increase the number of components, followed by a more gradual decrease. This indicates that somewhere around 10 components the performance increase we get from including more principal components has diminished very significantly. So ideally we should set q=10 as this is a good trade off between performance and keeping dimensionality low. 
 
 
 
