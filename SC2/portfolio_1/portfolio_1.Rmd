@@ -1,0 +1,136 @@
+---
+title: "portfolio_1"
+author: "Henry Bourne"
+date: "2023-01-30"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 60), tidy = TRUE)
+```
+
+# Intro to C++
+In this document we will go over the basics of C++, the idea of this document is for it to act as a quick reference sheet to refresh on C++ syntax should I forget. We will use bash to print out and run C++ files all of which (along with this R markdown file can be found on my github: "github.com/h-aze/compass_yr1/SC2"). Some explanation I will give before the code chunks and some I will give in the comments of the C++ files. 
+
+## The basics
+We will start by covering the basics which is all contained in the "intro.cpp" file, lets print it out and run it:
+```{r, engine = 'bash'}
+cat intro_to_cpp/intro.cpp
+```
+```{r, engine = 'bash'}
+g++ intro_to_cpp/intro.cpp -o intro_to_cpp/intro
+./intro_to_cpp/intro
+```
+
+## Types
+Let's now discuss types in more detail:
+```{r, engine = 'bash'}
+cat intro_to_cpp/types.cpp
+```
+```{r, engine = 'bash'}
+g++ intro_to_cpp/types.cpp -o intro_to_cpp/types
+./intro_to_cpp/types
+```
+
+## Scope
+Scope is controlled by "{}", anything defined in the brackets is only available in the brackets. It is also defined by files, anything defined in a file is only available in that file, unless we import of course (we will discuss this later). Note that if we have multiple definitions of a variable in different levels of nests we use the definition of the inner most nest we currently are in.  
+
+## Lists and Dictionaries
+```{r, engine = 'bash'}
+cat intro_to_cpp/vector_dict.cpp
+```
+```{r, engine = 'bash'}
+g++ intro_to_cpp/vector_dict.cpp -o intro_to_cpp/vector_dict
+./intro_to_cpp/vector_dict
+```
+
+## Multi-File Programmes
+In C++ we use something called a header file (uses the ".h" extension). Header files are where you store all your function declarations and in the .cpp files you should store all your function definitions and main code. What this achieves is a separation between interface (the header file) and implementation (the .cpp file). To use the function declarations in your cpp file you must use "#include". If we then want to use a function that was declared in a header file but defined elsewhere all we must do is "#include" the header file, this is how we use functions from standard libraries. There are two ways of "#include"-ing: 
+```{r, eval = FALSE}
+#include <standard_library_name>
+
+#include "user_defined_library"
+```
+Another thing to mention that we haven't yet is that you can overload functions, ie. you can create multiple instances of a function that take different types and at run time the definition of the function that has the correct types and number of arguments is used. Before moving on we will mention header guards, we must include these to prevent the situation where we copy are code in twice (if we have two includes of the same thing in our code for example), at the top of the file one should write:
+```{r}
+#ifndef _FILENAME_H
+
+#define _FILENAME_H
+```
+and at the bottom:
+```{r}
+#endif
+```
+Finally we should have a file named "main.cpp" where we keep our main function. 
+
+## Objects, Classes, Concepts, Default Arguments and Operators
+Finally we will talk briefly about objects, classes, concepts, default arguments and operators. We can declare a class in C (in the header file!) using the following syntax:
+```{r}
+#'class ClassName
+#'{
+#'public:
+#'    ClassName(type arg); //This is the constructor (or initialization) method 
+#'  
+#'    type class_method(type arg);
+#'  
+#'private:
+#'    type an_attribute;
+#'};
+```
+We can then define a method we have declared in a .cpp file using the following syntax:
+```{r}
+#'ClassName::name_of_class_method(type arg)
+#'{
+#'  do something 
+#'}
+```
+If we want to change the value of an attribute we can do it as follows:
+```{r}
+#'this->attribute_name = value;
+```
+We can initialize a class as follows:
+```{r}
+#'ClassName obj(init_param);
+```
+And then use a method as follows:
+```{r}
+#'obj.method_name(params);
+```
+
+Now we will talk about operators. For classes in C++ we can define operators, operators are functions that are added to classes to specify what code should be used when we operate on them with other classes. Examples of key operators are:
+```{r}
+#;operator+ : addition
+#;operator- : subtraction
+#;operator* : multiplication
+#;operator/ : division
+#;bool operator== : comparison equals to,
+#;bool operator!= : not equal to
+#;bool operator< : less than
+#;bool operator<= : less than or equal to
+#;bool operator> : greater than
+#;bool operator>= : greater than or equal to
+```
+We can declare an operator for a class like so:
+```{r}
+#'ClassName operator+(ClassName arg_name);
+```
+And then define it like so:
+```{r}
+#'ClassName ClassName::operator+(ClassName arg_name)
+#'{
+#'    do and return something
+#'}
+```
+This concludes the intro to C++!
+
+# Let's Get Some C++ Practice!
+To get coding some more C++ we will now move onto a project I have done in C++. The project was to create, train and test a neural network all written in C++. 
+
+## Creating a Neural Network
+
+## Fitting a Neural Network
+
+
+
+
