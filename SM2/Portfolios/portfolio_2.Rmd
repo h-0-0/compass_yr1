@@ -1,0 +1,103 @@
+---
+title: "portfolio_2"
+author: "Henry Bourne"
+date: "2023-01-31"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(psych)
+library(ggplot2)
+library(ggbiplot)
+library(ggfortify)
+library(corrplot)
+library(nFactors)
+library(fungible)
+library(mogavs)
+```
+
+# Factor Analysis and Independent Component Analysis
+
+## Task 1
+For this task we are going to use the communities and crime dataset:
+```{r}
+library(mogavs)
+data(crimeData)
+```
+Using the factor model on this dataset is a reasonable assumption as the number of samples will be larger than the number of factors and there is no perfect multicolinearity between any of the variables (ie. the covariance matrix will be full rank). Let's first analyse the difference between the number of constraints and the number of free parameters in the factor model for different values of k (the number of factors):
+```{r}
+p <- ncol(crimeData) -1
+for(k in 1:p){
+  print( paste( k, ": ", ((p-k)**2 /2 ) - ((p+k)/2) )  ) 
+}
+```
+For k < 108 we have the difference is positive which means there exists no solution but we can find an approximate solution. However, for $k \geq 108$  we have that the difference is negative indicating there are infinitely many solutions and the problem is therefore not well-defined. So we must select a k < 108. Let's now compute the correlation matrix which we will use in our further analysis:
+```{r}
+R <- cor(crimeData[,-ncol(crimeData)])
+corrplot(R, method="shade", tl.pos='n')
+```
+Using the help of the **nFactors** package we can create a plot that shows both the Scree plot and parallel analysis for the number of factors:
+```{r}
+ev <- eigen(R) # Get eigenvalues
+ap <- parallel(subject=nrow(crimeData),var=ncol(crimeData)-1, rep=100, model = "factors") # Conduct parallel analysis
+nS <- nScree(x=ev$values, aparallel=ap$eigen$qevpea)
+plotnScree(nS) 
+```
+The acceleration factor tells us where the elbow of the Scree plot is (n=2), and the optimal coordinates corresponds to an extrapolation if the preceding eigenvalue by a regression line between the eigenvalue coordinates and the last eigenvalue coordinates. We can also find the Kaiser criterion:
+```{r}
+nS$Components$nkaiser
+```
+Both the visual and analytical analyses support choosing a $k \approx 19$, so we will use k=19 for our factor analysis. We will now carry out our factor analysis:
+```{r}
+fit <- fapa(R, numFactors = 19)
+```
+Note that the initial matrix of specific variances used is the squared multiple correlation which we calculate as $1 / \text{diag}(R^{-1})$. 
+
+Let's now print out our estimated loading matrix
+```{r}
+fit$loadings
+```
+
+Now let's find the specific variances:
+```{r}
+# Since the variance of each variable is one (as we are using the correlation matrix) we have the specific variance can be calculated by:
+1-fit$h2
+```
+
+Let's now find and print the varimax rotation of the loadings which will be more easily interpretable:
+```{r}
+rotated_loadings <- varimax(fit$loadings)$loadings
+rotated_loadings
+```
+The rotated matrix is more easily interpretable as it "encourages" large (in absolute) values and many near-zero values, this makes it more interpretable as it reduces the number of factors a given feature relies on. In the output above small values aren't printed, hence the empty values. Let's try and interpret some of the factors, starting with factor 1 we can see that multiple features have large values for this factor, let's find the features with the largest absolute values:
+```{r}
+colnames(crimeData)[which(abs(rotated_loadings[,1]) > 0.9)]
+```
+These attributes correspond to the median family income, per capita income, per capita income for caucasians, owner occupied housing lower quartile, median and upper quartile, median rent for rental housing and upper quartile rent for medium housing. This indicates that the first factor is some weighted average of most of the factors with a large emphasis on income and accommodation costs, perhaps it is trying to model the general economic state of the community. 
+```{r}
+colnames(crimeData)[which(abs(rotated_loadings[,2]) > 0.9)]
+```
+Factor 2 has a particularly high weighting for the following features: percentage of kids born never to be married, total number of people known to be foreign born, percent of people foreign born. And so perhaps has more of a focus on demographics as opposed to economic data as in factor 1. 
+```{r}
+colnames(crimeData)[which(abs(rotated_loadings[,3]) > 0.8)]
+```
+Factor 3 has particularly high weightings for the percentage of population that is 65 and over in age and percentage of households with social security income in 1989. This factor could perhaps be modeling something such as the level of vulnerability of the community. 
+
+Let's now let k=2 and compare our two-dimensional reduction of the data to our PCA in the previous portfolio on this same dataset:
+```{r}
+fit2 <- fapa(R, numFactors = 2)
+plot(fit2$loadings,type="n") # set up plot
+text(fit2$loadings,labels=names(crimeData),cex=.7)
+```
+```{r}
+pc_crimeData <- prcomp(~ . -y , crimeData, scale. = TRUE, retx=TRUE)
+autoplot(pc_crimeData, data=crimeData[,-ncol(crimeData)], loadings = TRUE, alpha = 0, loadings.colour = "brown",
+         loadings.label.colour='black', loadings.label = TRUE, loadings.label.size = 4,
+         loadings.label.repel=TRUE)
+```
+Comparing the two plots we see that the contributions of the features to the first two principal components matches up well with the contributions of the features to the factors, this means that the results of the PCA and FA are very similar. 
+
+In this scenario it may make more sense to use FA as opposed to PCA as we don't simply want a dimensionality reduction of the dataset but we are trying to create some interpretation of the dataset. By using FA we infer latent variables which can be thought of as "abstract concepts" inferred from the data. For this dataset for example we would like to infer what concepts such as a communities finances and demographics cause correlation in our data. 
+
+## Task 2
