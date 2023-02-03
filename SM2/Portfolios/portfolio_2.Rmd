@@ -15,6 +15,9 @@ library(corrplot)
 library(nFactors)
 library(fungible)
 library(mogavs)
+library(tuneR)
+library(seewave)
+library(fastICA)
 ```
 
 # Factor Analysis and Independent Component Analysis
@@ -101,3 +104,31 @@ Comparing the two plots we see that the contributions of the features to the fir
 In this scenario it may make more sense to use FA as opposed to PCA as we don't simply want a dimensionality reduction of the dataset but we are trying to create some interpretation of the dataset. By using FA we infer latent variables which can be thought of as "abstract concepts" inferred from the data. For this dataset for example we would like to infer what concepts such as a communities finances and demographics cause correlation in our data. 
 
 ## Task 2
+First we load in the data and assemble it all together into one matrix:
+```{r}
+f1 <- readWave ('portfolio_2_data/audio1.wav')
+X1 <- f1@left
+
+f2 <- readWave ('portfolio_2_data/audio2.wav')
+X2 <- f2@left
+
+f3 <- readWave ('portfolio_2_data/audio3.wav')
+X3 <- f3@left
+
+X0 <- cbind ( X1 , X2 , X3 )
+X <- scale(X0, center=TRUE, scale=FALSE)
+```
+We next use **fastICA** to perform independent component analysis and save the estimated source matrix as S:
+```{r}
+results <- fastICA(X, n.comp = 3)
+S <- results$S
+```
+We then save the estimated signals as audio files so we can listen to them!
+```{r}
+savewav(S[ ,1], f = f1@samp.rate, channel = 1, filename = "portfolio_2_results/signal1.wav")
+
+savewav(S[ ,2] , f = f1@samp.rate, channel = 1, filename = "portfolio_2_results/signal2.wav")
+
+savewav(S[ ,3], f = f1@samp.rate, channel = 1, filename = "portfolio_2_results/signal3.wav") 
+```
+Upon listening can confirm that the estimated signals are extremely similar to the actual sources! (just differ by a little bit of noise).
