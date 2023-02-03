@@ -1,0 +1,27 @@
+\section{Introduction to Continual Learning}
+Deep learning \cite{lecun2015deep} over the past decade has been the foremost technology used in the creation of "intelligent" systems capable of solving previously unsolvable tasks such as protein folding \cite{varadi2022alphafold} and superhuman performance at games such as chess and go.
+
+Although a very powerful method, deep learning isn't without its weaknesses. One of these weaknesses is its poor performance in sequential learning, this is where we train the network on data pertaining to one ``task'' and then go on to train it on data from other tasks. It has been found that when we test the network on data from a previous task the performance it obtains is very low (in comparison to the performance it has straight after being trained on the task). This weakness is known as the problem of \textbf{Catastrophic Forgetting (CF)} \cite{french1999catastrophic,mccloskey1989catastrophic,ratcliff1990catastrophic}, and the reason it comes about is because when trained on a new task the neural network will change the networks weights such that the network performs optimally on the new task, however, in the process it changes weights such that the network will no longer perform well for the previous task. 
+
+If we could create a technique that solved the problem of catastrophic forgetting then we would have a technique that could continually learn (ie. train on tasks sequentially with good performance across all the tasks its ever been trained on) hence we aptly name techniques that aim to solve the problem of catastrophic forgetting as \textbf{Continual Learning (CL)} techniques.
+
+CL techniques become invaluable in a multitude of scenarios: such as when you don't have access to all the data that you want to train on at training time, when you can't store data due to data privacy reasons, when datasets are so large you can't store it all in one place, when the tasks you want to be able to perform aren't all known at initial training time, etc. 
+
+
+\section{The Literature}
+The literature in the area of CL is growing quickly as CF becomes a more pressing issue. A good survey of techniques pre 2022 is provided in \cite{de2021continual}. Per the taxonomy in the survey most CL techniques fall into one of three categories: 
+
+\begin{enumerate}
+    \item \textbf{Replay based methods:} which mainly focus on keeping old data and retraining the network on this old data (from previous tasks) so that the network doesn't loose performance \cite{rolnick2019replay,shin2017replay}.
+    \item \textbf{Regularization-based methods:} which focus on adding an extra regularization term to the loss function such that the network consolidates on previous knowledge when learning on new data \cite{kirkpatrick2017reg,zenke2017reg}.
+    \item \textbf{Parameter isolation methods:} which focus on dedicating model parameters to different tasks to alleviate possible overwriting \cite{mallya2018paramiso, serra2018paramiso} . 
+\end{enumerate} 
+There also exist many sub-approaches to each of these approaches and approaches that incorporate elements of multiple of these approaches. These approaches are also applied to a whole host of problems, however, in this brief and in the mini-project we will focus on the specific problem of image classification. 
+
+
+\section{Our Proposal}
+Often CL techniques will make use of an encoder \cite{bank2020autoencoders} during empirical testing to simplify the downstream task of continual learning and has been shown in the replay setting for example to dramatically reduce compute with on par performance to networks trained end-to-end in certain scenarios \cite{ostapenko2022continual}. It is often argued that adding an encoder to the architecture simplifies the downstream task (of image classification and CL). The encoder can be implemented in many ways but a classical setup is to feed images to the encoder and then to train the architecture on the output of the encoder, the output of the encoder is referred to as the latent space of the input (the image). 
+
+% TODO: add citations for CL techniques that make use of encoders 
+
+What we propose to investigate is to what degree does learning in latent space (eg. training the architecture on the output of an encoder) make simpler the downstream task of CL. We propose conducting an empirical investigation in order to say something rigorous about the effects of ``learning in latent space'' on CL performance (both in terms of accuracy and compute). If there is benefit to ``learning in latent space'', ie. there is evidence that it does in fact make the downstream task of CL more simple, we will also investigate \textit{why} it might make it easier to perform CL.
