@@ -36,7 +36,7 @@ g++ intro_to_cpp/types.cpp -o intro_to_cpp/types
 ## Scope
 Scope is controlled by "{}", anything defined in the brackets is only available in the brackets. It is also defined by files, anything defined in a file is only available in that file, unless we import of course (we will discuss this later). Note that if we have multiple definitions of a variable in different levels of nests we use the definition of the inner most nest we currently are in.  
 
-## Lists and Dictionaries
+## Vectors and Dictionaries
 ```{r, engine = 'bash'}
 cat intro_to_cpp/vector_dict.cpp
 ```

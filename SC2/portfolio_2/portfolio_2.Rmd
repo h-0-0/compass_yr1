@@ -1,0 +1,68 @@
+---
+title: "portfolio_2"
+author: "Henry Bourne"
+date: "2023-02-06"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Integrating C and C++ in R
+There are two main ways one can use C and C++ in R, the first is using C through the *.Call* interface which we will describe in this document. Another method we could use is the *Rcpp* package to seamlessly integrate R with C++, this we will cover in the next portfolio.
+
+## C via .Call
+First we will begin by describing the SEXP type. **SEXP** is a pointer to an encapsulated structure that holds the object’s type, value, and other attributes used by the R interpreter. Note that importantly this means that arguments are passed by reference. R objects passed to compiled C and C++ routines have type SEXP. SEXP is a C object whose subtype is only known at runtime, possible subtypes include:   
+
+- **REALSXP**: a numeric vector such as c(1.2, 0.45)   
+
+- **LGLSXP**: a logical vector such as c(TRUE, FALSE, FALSE)   
+
+- **INTSXP**: an integer vector such as c(2L, 34L, 1L)
+
+- **VECSXP**: a list such as list("a" = 2, "b" = c(5, 4))    
+
+Let's now dive in to how we would create a function in C for R, I will print the contents of a file named "moving_avg.c" which contains a function that calculates a simple moving average of a vector of data. The code is commented explaining what is happening at each stage:
+```{r, engine = 'bash'}
+cat moving_avg.c
+```
+Let's now load in some data so we can test our newly created c function, we will load in some price data on Bitcoin valued in USD:
+```{r}
+library(tidyquant)
+library(tidyr)
+stock <- c("BTC-USD")
+prices <- tq_get(stock, from = as.Date("2018-01-02"))
+prices <- prices[,c("symbol", "date", "adjusted")]
+prices <- prices %>% pivot_wider(names_from = "symbol", values_from = "adjusted")
+colnames(prices)[colnames(prices) == stock] = gsub(x = stock, pattern = "-", replacement = "_")
+prices <- as.data.frame(prices)
+rownames(prices) <- prices$date
+prices <- prices[-1]
+head(prices)
+```
+Now we have our data let's use our function to find the 100 day moving average of the Bitcoin price:
+```{r}
+# We compile the c code
+system("R CMD SHLIB moving_avg.c")
+# we load binary file into R
+dyn.load("moving_avg.so")
+# we check if the function has been loaded
+is.loaded("moving_avg")
+# we finally use our c function by using the .Call function 
+mavg_prices <- .Call("moving_avg", as.vector(prices["BTC_USD"])[[1]], 100)
+prices["BTC_USD_mavg100"] <- mavg_prices
+```
+Let's plot the moving average against the price data for Bitcoin:
+```{r}
+library(SVMForecast)
+library(ggplot2)
+# We use a function from one of my own libraries to create a column for the data frame with the dates
+prices <- long_format(prices)
+
+# We plot the BTC_USD price data along with the moving average obtained from moving_avg()
+ggplot(data = prices, aes(x = Date, y = BTC_USD))+
+  geom_line(color = "#00AFBB", size = 1) +
+  geom_line(aes(x=Date, y=BTC_USD_mavg100), color = "red", size = 1)
+```
+We can see that our function has worked! It returns a nice smooth moving average of the Bitcoin price. Note that the first 100 datapoints for the moving average are set to 0, this is so we have a clear idea of where the moving average actually starts as opposed to computing the average for the number of datapoints up to the current index when below the lag index. 

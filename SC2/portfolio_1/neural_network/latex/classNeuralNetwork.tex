@@ -1,0 +1,46 @@
+\hypertarget{classNeuralNetwork}{}\doxysection{Neural\+Network Class Reference}
+\label{classNeuralNetwork}\index{NeuralNetwork@{NeuralNetwork}}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classNeuralNetwork_aa289b31f453ff1a3605b18003ab828b4}\label{classNeuralNetwork_aa289b31f453ff1a3605b18003ab828b4}} 
+{\bfseries Neural\+Network} (std\+::vector$<$ uint $>$ topology, Scalar learning\+Rate=Scalar(0.\+005))
+\item 
+\mbox{\Hypertarget{classNeuralNetwork_ac77dd5411e182fc8982d8824b56c2c0f}\label{classNeuralNetwork_ac77dd5411e182fc8982d8824b56c2c0f}} 
+void {\bfseries propagate\+Forward} (Row\+Vector \&input)
+\item 
+\mbox{\Hypertarget{classNeuralNetwork_a0fb51030b72de104e65164287a69ff16}\label{classNeuralNetwork_a0fb51030b72de104e65164287a69ff16}} 
+void {\bfseries propagate\+Backward} (Row\+Vector \&output)
+\item 
+\mbox{\Hypertarget{classNeuralNetwork_a1e52155b916d5f6ce5c0ab2a40b8209f}\label{classNeuralNetwork_a1e52155b916d5f6ce5c0ab2a40b8209f}} 
+void {\bfseries calc\+Errors} (Row\+Vector \&output)
+\item 
+\mbox{\Hypertarget{classNeuralNetwork_a136ab1f732461a3e969e64b051c3b0bc}\label{classNeuralNetwork_a136ab1f732461a3e969e64b051c3b0bc}} 
+void {\bfseries update\+Weights} ()
+\item 
+\mbox{\Hypertarget{classNeuralNetwork_a6fcb4e1f3ef927d77185977fdfc4f0c0}\label{classNeuralNetwork_a6fcb4e1f3ef927d77185977fdfc4f0c0}} 
+void {\bfseries train} (std\+::vector$<$ Row\+Vector $\ast$ $>$ data)
+\end{DoxyCompactItemize}
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classNeuralNetwork_a82479e20f0334649a2065bbaaac347c5}\label{classNeuralNetwork_a82479e20f0334649a2065bbaaac347c5}} 
+std\+::vector$<$ Row\+Vector $\ast$ $>$ {\bfseries neuron\+Layers}
+\item 
+\mbox{\Hypertarget{classNeuralNetwork_aa9decbed85d951c94bac0e3a4eefd8bf}\label{classNeuralNetwork_aa9decbed85d951c94bac0e3a4eefd8bf}} 
+std\+::vector$<$ Row\+Vector $\ast$ $>$ {\bfseries cache\+Layers}
+\item 
+\mbox{\Hypertarget{classNeuralNetwork_af9742b0a8838c3705413208698870e26}\label{classNeuralNetwork_af9742b0a8838c3705413208698870e26}} 
+std\+::vector$<$ Row\+Vector $\ast$ $>$ {\bfseries deltas}
+\item 
+\mbox{\Hypertarget{classNeuralNetwork_a057a5937d870397025d0e4d44d8d9879}\label{classNeuralNetwork_a057a5937d870397025d0e4d44d8d9879}} 
+std\+::vector$<$ Matrix $\ast$ $>$ {\bfseries weights}
+\item 
+\mbox{\Hypertarget{classNeuralNetwork_a85061596aa012484d87cba264717006f}\label{classNeuralNetwork_a85061596aa012484d87cba264717006f}} 
+Scalar {\bfseries learning\+Rate}
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+Neural\+\_\+\+Net.\+h\end{DoxyCompactItemize}
