@@ -1,0 +1,119 @@
+---
+title: "portfolio_3"
+author: "Henry Bourne"
+date: "2023-02-06"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Kernel Principal Component Analysis
+First we will generate our training dataset that we will use for this task and visualize it:
+```{r}
+library(plotly)
+library(Rfast)
+n <- 1000
+d <- 3
+C0 <- rmvnorm(n/2, rep(0,d), diag(rep(0.06, d)))
+C1 <- rvmf(n/2, mu = c(1, 1, 1) / sqrt(10), k = 1)
+D <- data.frame(rbind(C0, C1), "class"= c(rep(0,n/2), rep(1,n/2) ) )
+
+library("gg3D")
+ggplot(D, aes(x=X1, y=X2, z=X3, color=class)) + 
+  theme_void() +
+  axes_3D(theta= 0, phi =0) +
+  stat_3D(theta=0, phi=0) +   
+  labs_3D(theta=-13, phi=10,  labs=c("X1", "X2", "X3"), 
+            angle=c(0,0,0),
+            hjust=c(0,2,2), 
+            vjust=c(2,2,-2)) +
+  ggtitle("Our Generated Dataset")
+```
+As you can see this dataset is clearly not linearly separable, however, it is indeed separable. We will use this dataset in our task to perform classification using PCA and KPCA and perform an analysis on classification performance. Let's now generate the test dataset which we will use later to evaluate the performance of our trained classifiers:
+```{r}
+n.test <- 200 
+C0.test <- rmvnorm(n.test/2, rep(0,d), diag(rep(0.06, d)))
+C1.test <- rvmf(n.test/2, mu = c(1, 1, 1) / sqrt(10), k = 1)
+Test <- data.frame(rbind(C0.test, C1.test), "class"= c(rep(0,n.test/2), rep(1,n.test/2) ) )
+```
+
+## PCA vs KPCA
+In this subsection we will perform binary classification using data dimensionality reduction performed by PCA and KPCA. We will then compare their performance. 
+
+Let's now move onto performing our principal component analyses. First lets carry out PCA on the data matrix, note that we won't scale or center the data as its already centered and scaled. By not scaling we get the bonus of preserving variance in our transformation:
+```{r}
+pc <- prcomp(~ . -class, D, scale. = FALSE, retx=TRUE)
+pc
+```
+Let's produce a scree plot and select the number of principal components we want to use:
+```{r}
+var_prcnt = pc$sdev^2 / sum(pc$sdev^2)
+
+qplot(c(1:3), var_prcnt) + 
+  geom_line() + 
+  xlab("Principal Component") + 
+  ylab("Variance Explained") +
+  ggtitle("Scree Plot") +
+  ylim(0, 1)
+```
+We see that the variance accounted for by each principal component is roughly the same, which makes sense as looking at the plot above the variance is roughly the same in every direction. Hence, we will keep all three principal components for the rest of the analysis.
+
+Now let's perform KPCA, using the radial basis kernel function and again we will not scale or center the data:
+```{r}
+library(kernlab)
+kpc.0 <- kpca(~ . -class, D, kernel="rbfdot")
+head(pcv(kpc.0))
+# We only print first 6 rows
+#TODO: comment on dimensionality of component vectors
+```
+Let's again create a scree plot in order to help us select the number of principal components we would like to keep:
+```{r}
+var_prcnt = eig(kpc.0)^2 / sum(eig(kpc.0)^2)
+
+qplot(c(1:length(eig(kpc.0))), var_prcnt) + 
+  geom_line() + 
+  xlab("Principal Component") + 
+  ylab("Variance Explained") +
+  ggtitle("Scree Plot") +
+  ylim(0, 1)
+```
+From the scree plot it's very clear that the first three principal components contain nearly all the variance, hence, we will use only the first three components. Let's update our KPCA to reflect this choice:
+```{r}
+kpc.0 <- kpca(~ . -class, data=D, kernel="rbfdot", features=3)
+```
+
+Let's now train a logistic model on the transformed data from our PCA
+```{r}
+D.rt <- data.frame(pc$x, "class"=D[,4])
+model.pc <- glm(class~ ., family=binomial(link='logit'), data=D.rt)
+model.pc
+```
+And now on our transformed data from our KPCA:
+```{r}
+D.rt <- data.frame(rotated(kpc.0), "class"=D[,4])
+model.kpc.0 <- glm(class~ ., family=binomial(link='logit'), data=D.rt)
+model.kpc.0
+```
+Let's now test our models' performance on the testing data:
+```{r}
+# Let's first obtain our predictions for the test data and calculate the accuracy for PCA
+Test.rt <- data.frame(as.matrix(Test[,-4]) %*% pc$rotation, "class" = Test[,4])
+preds.pc <- predict(model.pc, Test.rt, type="response")
+preds.pc <- ifelse(preds.pc > 0.5,1,0)
+acc.pc <- 1-mean(preds.pc != Test[,4])
+
+# Let's now obtain our predictions for the test data and calculate the accuracy for KPCA
+Test.rt <- predict(kpc.0,Test)
+Test.rt <- data.frame("X1" = Test.rt[,1], "X2" = Test.rt[,2], "X3" = Test.rt[,3], "class" = Test[,4])
+preds.kpc.0 <- predict(model.kpc.0, Test.rt, type="response")
+preds.kpc.0 <- ifelse(preds.kpc.0 > 0.5,1,0)
+acc.kpc.0 <- 1-mean(preds.kpc.0 != Test[,4])
+
+
+# Let's now print the accuracies we obtained
+acc.pc # accuracy using PCA
+acc.kpc.0 # accuracy using KPCA
+```
+We note that the 
