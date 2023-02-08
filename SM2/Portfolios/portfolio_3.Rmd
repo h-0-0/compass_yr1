@@ -7,17 +7,17 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(ZVCV)
 ```
 
 # Kernel Principal Component Analysis
 First we will generate our training dataset that we will use for this task and visualize it:
 ```{r}
-library(plotly)
 library(Rfast)
 n <- 1000
 d <- 3
-C0 <- rmvnorm(n/2, rep(0,d), diag(rep(0.06, d)))
-C1 <- rvmf(n/2, mu = c(1, 1, 1) / sqrt(10), k = 1)
+C0 <- rmvnorm(n/2, rep(0,d), diag(rep(0.07, d)))
+C1 <- rvmf(n/2, mu = c(1, 1, 1) / sqrt(10), k = 1) + rmvnorm(n/2, rep(0,d), diag(rep(0.005, d)))
 D <- data.frame(rbind(C0, C1), "class"= c(rep(0,n/2), rep(1,n/2) ) )
 
 library("gg3D")
@@ -34,8 +34,8 @@ ggplot(D, aes(x=X1, y=X2, z=X3, color=class)) +
 As you can see this dataset is clearly not linearly separable, however, it is indeed separable. We will use this dataset in our task to perform classification using PCA and KPCA and perform an analysis on classification performance. Let's now generate the test dataset which we will use later to evaluate the performance of our trained classifiers:
 ```{r}
 n.test <- 200 
-C0.test <- rmvnorm(n.test/2, rep(0,d), diag(rep(0.06, d)))
-C1.test <- rvmf(n.test/2, mu = c(1, 1, 1) / sqrt(10), k = 1)
+C0.test <- rmvnorm(n.test/2, rep(0,d), diag(rep(0.07, d)))
+C1.test <- rvmf(n.test/2, mu = c(1, 1, 1) / sqrt(10), k = 1) + rmvnorm(n.test/2, rep(0,d), diag(rep(0.005, d)))
 Test <- data.frame(rbind(C0.test, C1.test), "class"= c(rep(0,n.test/2), rep(1,n.test/2) ) )
 ```
 
@@ -66,7 +66,6 @@ library(kernlab)
 kpc.0 <- kpca(~ . -class, D, kernel="rbfdot")
 head(pcv(kpc.0))
 # We only print first 6 rows
-#TODO: comment on dimensionality of component vectors
 ```
 Let's again create a scree plot in order to help us select the number of principal components we would like to keep:
 ```{r}
@@ -116,4 +115,192 @@ acc.kpc.0 <- 1-mean(preds.kpc.0 != Test[,4])
 acc.pc # accuracy using PCA
 acc.kpc.0 # accuracy using KPCA
 ```
-We note that the 
+We see that the classification accuracy obtained on the test set by performing binary logistic regression on the dimensionality reduction given by KPCA is much higher than that given by PCA. Note, however, that we have applied KPCA here very naively with no investigation into which kernel we should use and with which hyperparameters. In this next section we will carry out this investigation. 
+
+## Tuning Hyperparameters
+We will now compare classification performance of fitting a logistic regression on transformed data from KPCA where we perform KPCA using different kernels and hyper-parameters. In particular there are 7 kernel functions we will investigate:    
+
+- Radial basis kernel function  
+
+- Laplacian kernel function
+
+- Linear kernel function    
+
+- Polynomial kernel function    
+
+
+Each of these also have their own hyper-parameters. What we will do is first investigate the optimal choice of hyper-parameters and features to be kept for each kernel and then compare the performance of the kernels using their optimal hyperparameters. We will start by choosing optimal hyper-parameters for the rbf kernel, we will select the step size by calculating the kaiser criterion:
+```{r, warning=FALSE}
+# We calculate the median heuristic
+median_heuristic <- medianTune(as.matrix(D[,-4])); median_heuristic
+# We create list of hyperparameters
+sigma <- c(0.01, 0.1, 0.5, 1, 2, 3) * median_heuristic
+
+# We perform KPCA using rbf kernel with each hyper-parameter,
+# then calculate and store their performance on the test set after fitting a logistic regression
+accs.rbf <- rep(NA, length(sigma))
+names(accs.rbf) = paste0( "Sigma=" , paste(signif(sigma, 4)))
+for(i in 1:length(sigma)){
+  # We initialize list with hyper-parameters for this iteration 
+  kpar = list(sigma=sigma[i])
+  
+  # We do KPCA
+  kpc.rbf <- kpca(~ . -class, D, kernel="rbfdot", kpar=kpar)
+  
+  # We calc Keiser criterion
+  k <- max(which(eig(kpc.rbf) > sum(eig(kpc.rbf))/length(eig(kpc.rbf))))
+  
+  # We narrow down features according to Keiser criterion
+  kpc.rbf <- kpca(~ . -class, D, kernel="rbfdot", kpar=kpar, features = k)
+
+  # We carry out logistic regression
+  D.rt <- data.frame(rotated(kpc.rbf), "class"=D[,4])
+  model.kpc.rbf <- glm(class~ ., family=binomial(link='logit'), data=D.rt)
+  
+  # We perform testing
+  Test.rt <- predict(kpc.rbf,Test)
+  Test.rt <- data.frame(Test.rt, "class" = Test[,4])
+  colnames(Test.rt) <- colnames(D.rt)
+  preds.kpc.rbf <- predict(model.kpc.rbf, Test.rt, type="response")
+  preds.kpc.rbf <- ifelse(preds.kpc.rbf > 0.5,1,0)
+  
+  # We calculate accuracy of testing
+  accs.rbf[i] <- 1-mean(preds.kpc.rbf != Test[,4])
+}
+accs.rbf
+```
+We see that the largest accuracy on the test set is obtained when the bandwidth sigma=0.704 (4 s.f.), which is the value of the median heuristic. So we will take this to be the best value for the bandwidth when using the RBF kernel. 
+
+Now we will do the same but for the 
+```{r, warning=FALSE}
+# We create list of hyperparameters
+sigma <- c(0.01, 0.1, 0.5, 1, 2, 3, 5) * median_heuristic
+
+# We perform KPCA using laplacian kernel with each hyper-parameter,
+# then calculate and store their performance on the test set after fitting a logistic regression
+accs.laplace <- rep(NA, length(sigma))
+names(accs.laplace) = paste0( "Sigma=" , paste(signif(sigma, 4)))
+for(i in 1:length(sigma)){
+  # We initialize list with hyper-parameters for this iteration 
+  kpar = list(sigma=sigma[i])
+  
+  # We do KPCA
+  kpc.laplace <- kpca(~ . -class, D, kernel="laplacedot", kpar=kpar)
+  
+  # We calc Keiser criterion
+  k <- max(which(eig(kpc.laplace) > sum(eig(kpc.laplace))/length(eig(kpc.laplace))))
+  
+  # We narrow down features according to Kaiser criterion
+  kpc.laplace <- kpca(~ . -class, D, kernel="laplacedot", kpar=kpar, features = k)
+
+  # We carry out logistic regression
+  D.rt <- data.frame(rotated(kpc.laplace), "class"=D[,4])
+  model.kpc.laplace <- glm(class~ ., family=binomial(link='logit'), data=D.rt)
+  
+  # We perform testing
+  Test.rt <- predict(kpc.laplace,Test)
+  Test.rt <- data.frame(Test.rt, "class" = Test[,4])
+  colnames(Test.rt) <- colnames(D.rt)
+  preds.kpc.laplace <- predict(model.kpc.laplace, Test.rt, type="response")
+  preds.kpc.laplace <- ifelse(preds.kpc.laplace > 0.5,1,0)
+  
+  # We calculate accuracy of testing
+  accs.laplace[i] <- 1-mean(preds.kpc.laplace != Test[,4])
+}
+accs.laplace
+```
+Tuning the bandwidth for the Laplace kernel gives us slightly different results with sigma= 2.112 giving the best results, which is different to the sigma given by the median heuristic. 
+
+Let's now tune the polynomial kernel:
+```{r, warning=FALSE}
+# We create list of hyper-parameters
+degree <- c(1,2,4,6,8,10)
+
+# We perform KPCA using polynomial kernel with each hyper-parameter,
+# then calculate and store their performance on the test set after fitting a logistic regression
+accs.poly <- rep(NA, length(degree))
+names(accs.poly) = paste0( "Degree=" , paste(signif(degree, 4)))
+for(i in 1:length(degree)){
+  # We initialize list with hyper-parameters for this iteration 
+  kpar = list(degree=degree[i])
+  
+  # We do KPCA
+  kpc.poly <- kpca(~ . -class, D, kernel="polydot", kpar=kpar)
+  
+  # We calc Keiser criterion
+  k <- max(which(eig(kpc.poly) > sum(eig(kpc.poly))/length(eig(kpc.poly))))
+  
+  # We narrow down features according to Kaiser criterion
+  kpc.poly <- kpca(~ . -class, D, kernel="polydot", kpar=kpar, features = k)
+
+  # We carry out logistic regression
+  D.rt <- data.frame(rotated(kpc.poly), "class"=D[,4])
+  model.kpc.poly <- glm(class~ ., family=binomial(link='logit'), data=D.rt)
+  
+  # We perform testing
+  Test.rt <- predict(kpc.poly,Test)
+  Test.rt <- data.frame(Test.rt, "class" = Test[,4])
+  colnames(Test.rt) <- colnames(D.rt)
+  preds.kpc.poly <- predict(model.kpc.poly, Test.rt, type="response")
+  preds.kpc.poly <- ifelse(preds.kpc.poly > 0.5,1,0)
+  
+  # We calculate accuracy of testing
+  accs.poly[i] <- 1-mean(preds.kpc.poly != Test[,4])
+}
+accs.poly
+```
+We see that the optimal degree to use when working with the polynomial kernel is 4.
+
+Finally we would also like to compare the above kernels with the linear kernel, however, the linear kernel has no hyperparameters to tune so we will move directly onto the analysis.
+
+## Comparing kernels
+Let's now use out optimal hyper-parameters for each of the kernels and then compare the performance of logistic regression on the resulting dimensionality reduction given by KPCA. 
+```{r, warning=FALSE}
+kernels <- c("rbfdot", "laplacedot", "polydot", "vanilladot")
+hyper_params <- c(median_heuristic, 3* median_heuristic, 4, NA)
+n_c <- rep(NA, length(kernels))
+accs.kernels <- rep(NA, length(kernels))
+names(accs.kernels) = paste0( "kernel=" , kernels)
+names(n_c) = paste0( "kernel=" , kernels)
+for(i in 1:length(kernels)){
+  # We initialize list with hyper-parameters for this iteration 
+  if((kernels[i] == "rbfdot") | (kernels[i] == "laplacedot") ){
+    kpar = list(sigma=hyper_params[i])
+  }
+  else if(kernels[i] == "polydot"){
+    kpar = list(degree=hyper_params[i])
+  }
+  else{
+    kpar = list()
+  }
+  
+  # We do KPCA
+  kpc <- kpca(~ . -class, D, kernel=kernels[i], kpar=kpar)
+  
+  # We calc Keiser criterion
+  k <- max(which(eig(kpc) > sum(eig(kpc))/length(eig(kpc))))
+  n_c[i] <- k
+  
+  # We narrow down features according to Kaiser criterion
+  kpc <- kpca(~ . -class, D, kernel=kernels[i], kpar=kpar, features = k)
+
+  # We carry out logistic regression
+  D.rt <- data.frame(rotated(kpc), "class"=D[,4])
+  model.kpc <- glm(class~ ., family=binomial(link='logit'), data=D.rt)
+  
+  # We perform testing
+  Test.rt <- predict(kpc,Test)
+  Test.rt <- data.frame(Test.rt, "class" = Test[,4])
+  colnames(Test.rt) <- colnames(D.rt)
+  preds.kpc <- predict(model.kpc, Test.rt, type="response")
+  preds.kpc <- ifelse(preds.kpc > 0.5,1,0)
+  
+  # We calculate accuracy of testing
+  accs.kernels[i] <- 1-mean(preds.kpc != Test[,4]) 
+}
+n_c
+accs.kernels
+```
+Our results tell us that the laplacian kernel achieves the highest classification accuracy and also uses the largest number of principal components (105), close in performance are the RBF kernel and polynomial kernel both achieving an accuracy 0.01 below that achieved by the laplacian kernel. However, note the number of features needed by the RBF kernel and polynomial kernel are substantially lower at only 9. Using the linear kernel gave the worst performance by far, note also that the linear kernel is akin to carrying out regular PCA. So by using a (non-linear) kernel we are able to model variance non-linearly and are hence able to get a feature space where the two classes in our dataset are linearly seperable.   
+
+
