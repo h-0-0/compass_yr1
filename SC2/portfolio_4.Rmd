@@ -1,0 +1,53 @@
+---
+title: "portfolio_4"
+output: pdf_document
+date: "2023-02-16"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# The Command Line
+In this portfolio we will cover working with the command line. We are going to skip quickly over the super basics and then start listing some useful command and what they do. After describing the basics we will then dive into the more advanced. This portfolio serves as a good reference point for when working with the command line.
+
+## The Basics
+__ls__ can be used to list current contents of the directory, there are lots of variations of this command that you can use to list in different ways, a good explanation of all these commands is found here "https://www.freecodecamp.org/news/the-linux-ls-command-how-to-list-files-in-a-directory-with-options/".
+
+__cp__ can be used to copy files like so: _cp <path of file you want to copy> <path of where you want to copy to>_.
+
+__rm__ can be used to remove a file like so: _rm <path of file to be removed>_.
+
+Note we need to use the __-r__ flag with the above commands if we want to remove or copy a folder with all its contents, it stands for recursive. 
+
+__mv__ can be used to move a file like so: _mv <path of file you want to move> <path of where you want to move it to>_.
+
+__cat__ can be used to print the contents of a file to the terminal. Similarly __head__ can be used to print out the start of a file and __tail__ for the end of a file, we can then use the __-n__ flag followed by a number to change the number of files printed. We can use __tac__ to print out each line from bottom to top, __rev__ to print out the file in reverse, __uniq__ prints out the file without lines that are repeated, __sort__ to sort a file alphabetically (by default, can use flags to sort by other things). 
+
+We can use __*__ called wildcard to pattern match, eg. _cat name*_ will print out all files (in current directory) that start with name and _cat *.txt_ will print all files (in current directory) that end with the .txt extension.
+
+__less__ can be used to open a "file viewer", to exit type q.
+
+The following are a bunch of text editors that can be used: __nano__, __micro__, __emacs__, __jove__, __vim__. Let's look at how we can use nano. If we type _nano <name of file>_ then it will open the file in nano, if the file doesn't exist it will create the file and open it. Here are some of the basic commands in nano: _ctrl-o_ is save, _ctrl-w_ is search, _ctrl-x_ is used to exit nano.
+
+__man__ can be used to launch the command line manual where we can check for command line commands. 
+
+__grep__ is used to search inside files like so: _grep "<string you want to find>" <path of file you want to look inside>_. We can use flags to do thing such as count the number of times the string appears (_-c_), give the line numbers (_-n_), etc. 
+
+__find__ lets us search for files like so: _find <path of where to look> <what type of file> "<the match you are looking for>"_. Note that __.__ is used to represent our current location and __~__ is your home directory. Also note that we can use flag **-iname** if we want find to be case insensitive. We can also use __fzf__ which stands for fuzzy find and we can use it similarly to find but we can find similar matches without having to use wildcards. 
+
+We can use __>__ to write the output of a command to a file like so: _head <file name> > <name of file where you want to write output>_, this will write the "head" of the file you name to a new file. We can use __>>__ to append to a file instead. 
+
+We can use multiple commands together by using the pipe operator __|__, eg. _cat <name of file> | sort_ which would feed the print out of the file you choose to the sort function before printing it to the terminal. 
+
+## More Advanced
+Now we will move onto looking at some more "advanced" things we can do with the command line. This will include working with remote computers and shell scripts.
+
+To work 
+
+
+
+
+
+
+
