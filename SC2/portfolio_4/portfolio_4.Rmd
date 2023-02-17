@@ -43,9 +43,47 @@ We can use multiple commands together by using the pipe operator __|__, eg. _cat
 ## More Advanced
 Now we will move onto looking at some more "advanced" things we can do with the command line. This will include working with remote computers and shell scripts.
 
-To work 
+To work remotely we use something called __ssh__ (stands for secure shell) which is a program for opening a command line session on a remote computer. It opens a shell to communicate with a remote machine on the same network, using an encrypted secure connection. You can log in using a username and host name (eg. _ssh <user name>@<host name>_) or an IP address (eg. _ssh <user name>@<IP address>_), there also exist other methods of logging in. After doing this you will be prompt to enter a password. You can see who else is logged in using __w__ and leave ssh using the command __exit__. We can use __scp__ to "secure copy" files to and from another computer like so: _scp <name of file you want to copy> <user name>@<host name>:<path where you want to copy to>_ to copy file to other computer and _scp <user name>@<host name>:<name of file you want to copy> <path where you want to copy to>_. to copy from another computer to yours. 
+
+We can also create scripts where we can write lines containing commands and then run the script to execute all the commands contained in the script. To do this we create a file with the ".sh" extension and we place a sequence of commands (one per line), we can then run the file using __bash__ (a popular shell program) like so: _bash <name of script>.sh_. A command that is useful when creating such scripts is __echo__ which works like print in most programming languages: __echo "<text you want to print>"__. 
 
 
+## Into action
+Let's now put some of what we've been talking about into action, I have created a text file (named "odyssey.txt") containing the odyssey by homer (translated to english) and we will use it to put into practice some shell commands. We will use r markdown code chunks to write shell scripts and execute them using bash. Let's start by printing out the beginning of the odyssey:
+```{r, engine = 'bash'}
+head odyssey.txt
+```
+Let's now print out the end in reverse:
+```{r, engine = 'bash'}
+tail odyssey.txt | rev
+```
+Wow! Let's now count the number of times "blue" is said:
+```{r, engine = 'bash'}
+grep "blue" odyssey.txt -c
+```
+It's said 7 times! which is interesting because in Greek times they didn't have a word for blue, for example if we directly translate the color attested to a stormy dark blue see in greek writing we would find it translates to "wine-dark" in English. So here the translator has clearly opted to use the word blue instead of the other descriptors the ancient greeks would have used so the text makes more sense. Now let's create a file containing all the lines where the word blue is used and call it "blue", then print out this newly created file:
+```{r, engine='bash'}
+grep "blue" odyssey.txt > blue.txt
+cat blue.txt
+```
+Now we have read this file we are done with it, let's now delete it:
+```{r, engine='bash'}
+ls
+echo ""
+rm blue.txt
+ls
+```
+We also used ls in our script to print out the files in the directory before and after deleting "blue.txt" to check that its been removed. We also used echo to print nothing to the console to separate the directory contents for before and after deletion. Looking at the output we see that "blue.txt" has in fact dissapeared! Let's now print the newline, word and byte counts for the odyssey using wc: 
+```{r, engine='bash'}
+wc odyssey.txt
+```
+We didn't explain what __wc__ was earlier, let's use the help of man to do this for us (ie. let's look it up in the manual):
+```{r, engine='bash'}
+man wc
+```
+That wraps up this portfolio!
+
+In the next portfolio we will be covering High Performance Computing (HPC) where we will use everything we've been talking about here and in particular ssh to perform work on a high performance computer. 
 
 
 
