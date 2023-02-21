@@ -79,7 +79,7 @@ def update_results(model_name, epochs, batch_size, learning_rate, train_losses, 
     # Check if model already exists in results dataframe
     if model_exists(model_name, results_df):
         print("Model already exists in results, will remove old results")
-        remove_results(model_name, file_name)
+        remove_results(model_name, file_name= file_name)
     # Add to results
     results_df = add_to_results(results_df, model_name, epochs, batch_size, learning_rate, train_losses, test_losses, train_accs, test_accs)
     # Save results
@@ -90,7 +90,8 @@ def remove_results(model_name, file_name="results"):
     # Load results
     results_df = load_results(file_name)
     # Remove results
-    results_df = results_df[results_df['Model Name'] != model_name]
+    print(results_df)
+    results_df = results_df[results_df["Model Name"] != model_name]
     # Save results
     save_results(results_df, file_name)
 

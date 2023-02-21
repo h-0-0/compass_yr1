@@ -28,35 +28,21 @@ class FC_FF_NN(nn.Module):
 class CNN(nn.Module):
     def __init__(self):
         super(CNN, self).__init__()
-        self.network = nn.Sequential(
-            
-            nn.Conv2d(3, 32, kernel_size = 3, padding = 1),
+        self.conv = nn.Sequential(
+            nn.Conv2d(in_channels=1, out_channels=16, kernel_size=3, stride=1, padding=0),
             nn.ReLU(),
-            nn.Conv2d(32,64, kernel_size = 3, stride = 1, padding = 1),
+            nn.MaxPool2d(kernel_size=2),
+            nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, stride=1, padding=0),
             nn.ReLU(),
-            nn.MaxPool2d(2,2),
-        
-            nn.Conv2d(64, 128, kernel_size = 3, stride = 1, padding = 1),
-            nn.ReLU(),
-            nn.Conv2d(128 ,128, kernel_size = 3, stride = 1, padding = 1),
-            nn.ReLU(),
-            nn.MaxPool2d(2,2),
-            
-            nn.Conv2d(128, 256, kernel_size = 3, stride = 1, padding = 1),
-            nn.ReLU(),
-            nn.Conv2d(256,256, kernel_size = 3, stride = 1, padding = 1),
-            nn.ReLU(),
-            nn.MaxPool2d(2,2),
-            
-            nn.Flatten(),
-            nn.Linear(82944,1024),
-            nn.ReLU(),
-            nn.Linear(1024, 512),
-            nn.ReLU(),
-            nn.Linear(512,6)
+            nn.MaxPool2d(kernel_size=2)
         )
+        self.fc = nn.Linear(32 * 5 * 5, 10) 
+        self.flatten = nn.Flatten()
         self.device = None
 
     # Compute forward pass
-    def forward(self, xb):
-        return self.network(xb)
+    def forward(self, x):
+        out = self.conv(x)
+        out = self.flatten(out)
+        out = self.fc(out)
+        return out

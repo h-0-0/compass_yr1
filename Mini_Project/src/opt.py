@@ -83,8 +83,7 @@ def train(model, train_dataloader, test_dataloader,
     # Perfrom multiple epochs of training
     for t in range(epochs):
         # Print epoch number
-        if(verbose==True):
-            print(f"Epoch {t+1}\n-------------------------------")
+        print(f"Epoch {t+1}\n-------------------------------")
 
         # Perform training and save loss and accuracy
         train_loss, train_acc = train_loop(train_dataloader, model, loss_fn, optimizer)

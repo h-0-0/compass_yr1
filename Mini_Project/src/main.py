@@ -65,14 +65,15 @@ def main(data_name="MNIST", model_name="FF_FC_NN", batch_size=64, learning_rate=
 main(
     data_name="MNIST", 
     model_name="simple_FC_FF_NN",
-    batch_size=64, 
-    learning_rate=1e-3, 
-    epochs=2, 
+    batch_size=50, 
+    learning_rate=0.00005, 
+    epochs=20, 
     load_model=False,
     save_model=True
     )
 
 import plot
 plot.plot_loss(results.load_results(), "simple_FC_FF_NN")
+plot.plot_loss(results.load_results(), "simple_CNN")
 
 # TODO: change results so is for certain dataset, or add column to dataframe containing dataset name
