@@ -4,6 +4,7 @@ import data
 import simple
 import opt
 import results
+import plot
 
 # Given model_name detects what model to create
 def get_model(model_name):
@@ -19,8 +20,9 @@ def handle_device(model, device):
     model.to(device)
     model.device = device
 
-# Main function
-def main(data_name="MNIST", model_name="FF_FC_NN", batch_size=64, learning_rate=1e-3, epochs=5, load_model=False, save_model=False):
+# Run an experiment
+def run_exp(data_name="MNIST", model_name="FF_FC_NN", batch_size=64, learning_rate=1e-3, epochs=5, load_model=False, save_model=False):
+    print("---------------------------- New Experiment ----------------------------")
     # Use GPU if available else use CPU
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print("Using {} device".format(device))
@@ -51,7 +53,7 @@ def main(data_name="MNIST", model_name="FF_FC_NN", batch_size=64, learning_rate=
     )
     
     # We add the results to the results dataframe
-    results.update_results(model_name, epochs, batch_size, learning_rate, train_losses, test_losses, train_accs, test_accs)
+    results.update_results(data_name, model_name, epochs, batch_size, learning_rate, train_losses, test_losses, train_accs, test_accs)
 
     # Save model if save_name is given
     if(save_model==True):
@@ -61,19 +63,39 @@ def main(data_name="MNIST", model_name="FF_FC_NN", batch_size=64, learning_rate=
         # Save model
         torch.save(model, "saved_models/"+model_name+".pth")
         print("Saved PyTorch Model State to saved_models/"+model_name+".pth")
+    return data_name, model_name
 
-main(
-    data_name="MNIST", 
-    model_name="simple_FC_FF_NN",
-    batch_size=50, 
-    learning_rate=0.00005, 
-    epochs=20, 
-    load_model=False,
-    save_model=True
-    )
+# Main function
+def main():
+    # Create empty lists to store data and model names
+    data_names = []
+    model_names = []
+    # Run experiments
+    # data_name, model_name = run_exp(
+    #     data_name="MNIST", 
+    #     model_name="FC_FF_NN",
+    #     batch_size=64, 
+    #     learning_rate=0.01, 
+    #     epochs=20, 
+    #     load_model=False,
+    #     save_model=True
+    #     )
+    # data_names.append(data_name)
+    # model_names.append(model_name)
 
-import plot
-plot.plot_loss(results.load_results(), "simple_FC_FF_NN")
-plot.plot_loss(results.load_results(), "simple_CNN")
+    data_name, model_name = run_exp(
+        data_name="MNIST", 
+        model_name="CNN",
+        batch_size=64, 
+        learning_rate=0.008, 
+        epochs=15, 
+        load_model=False,
+        save_model=True
+        )
+    data_names.append(data_name)
+    model_names.append(model_name)
 
-# TODO: change results so is for certain dataset, or add column to dataframe containing dataset name
+    # Create default plots from results
+    plot.plot_default(data_names, model_names)
+
+main()
