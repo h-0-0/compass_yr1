@@ -1,0 +1,69 @@
+---
+title: "portfolio_5"
+output: pdf_document
+date: "2023-02-23"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# High Performance Computing (HPC)
+In this document we will be going over what HPC is
+
+## What is a HPC?
+
+
+## Logging in to bristol HPC
+First lets specify the login details for both the HPC's avaliable at Bristol. For BlueCrystal Phase 4:    
+
+  - Username: Your UoB username   
+  
+  - Password: Your UoB password   
+  
+  - Hostname: bc4login.acrc.bris.ac.uk    
+
+For BluePebble:   
+
+  - Username: Your UoB username   
+  
+  - Password: Your UoB password   
+  
+  - Hostname: bp1-login.acrc.bris.ac.uk    
+  
+We use __ssh__ to log in. For BlueCrystal Phase 4 we use: **ssh -X <username>@bc4login.acrc.bris.ac.uk** , and for BluePebble: **ssh -X <username>@bp1-login.acrc.bris.ac.uk**.
+
+
+
+#TODO: workflow, queing system
+
+## Software
+To check what software is available on the HPC you can type __module avail__ which will list all the software available. If you want to search for a certain piece of software you can use __module spider <what you are looking for> __. If software you need isn't available you can either try compiling from source, pip installing (or whatever equivalent for the language you are using) or you can contact the HPC team to get them to perform the installation. 
+
+Now some commands for managing the software in your environment, to add software: __module add <module name>__, to remove software: __module del <module name>__, to list all currently added software: __module list__. 
+
+
+
+#TODO: user spaces
+
+
+~mw16387/quota for better view of user space
+
+#TODO: submitting jobs
+__sacct -X__ instead of squeue
+add monitoring jobs
+
+#TODO: When Your Job is Finished
+
+# Job scripts
+#SBATCH --account=<research group name> should be added using nano
+include example script where you compile and run a programme in c++ and python
+
+# Parallel 
+include array jobs here
+
+# Downloading data
+use the scp command, eg. for BluePebble __scp <user name>@bp1-login.acrc.bris.ac.uk:<path of file you want to copy> .__ will copy from BluePebble to your current directory. 
+
+## Example
+Create example using non running code chunks for running a DL model on it, then fill out stuff above to get number of pages up
