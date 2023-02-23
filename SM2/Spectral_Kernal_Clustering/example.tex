@@ -1,0 +1,484 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% University of Bristol presentation theme based on the PowerPoint template
+%
+% Copyright (c) 2012, 2020 David A.W. Barton (david.barton@bristol.ac.uk)
+% All rights reserved.
+%
+% The latest version of this theme can be found at
+%   https://github.com/db9052/UoB-beamer-theme
+% 
+% Redistribution and use in source and binary forms, with or without
+% modification, are permitted provided that the following conditions are met:
+%
+%     * Redistributions of source code must retain the above copyright
+%       notice, this list of conditions and the following disclaimer.
+%     * Redistributions in binary form must reproduce the above copyright
+%       notice, this list of conditions and the following disclaimer in the
+%       documentation and/or other materials provided with the distribution.
+%     * Neither the name of the University of Bristol nor the names of its
+%       contributors may be used to endorse or promote products derived from
+%       this software without specific prior written permission.
+% 
+% THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+% AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+% IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+% ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+% DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+% (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+% LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+% ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+% (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+% THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass[aspectratio=169]{beamer}
+    % Possible aspect ratios are 16:9, 16:10, 14:9, 5:4, 4:3 (default) and 3:2
+    % (Remember to remove the colon, i.e., 16:9 becomes the option 169)
+
+\usetheme{UoB}
+% If lualatex is used then Rockwell, Latin Modern math, and Arial are used as
+% per the UoB style. If pdflatex is used then Concrete, Euler math, and
+% Helvetica are used as the closest alternatives. 
+\usepackage{amsmath, amsthm, amssymb}
+
+\usepackage{biblatex} %Imports biblatex package
+\addbibresource{refs.bib} %Import the bibliography file
+\usepackage{cleveref}
+\setbeamertemplate{theorems}[numbered] 
+\newtheorem{prop}{Proposition}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\title{Linking Spectral Clustering and K-PCA}
+\author{Henry Bourne}
+\date{24/02/2023}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Lectures to include
+
+% Lectures available (see \lecture commands below):
+%   01: Introductory slides
+
+\ifdefined\uselecture
+  % Automatically generate specific lecture slides: run (lua/pdf)latex with
+  % latex -jobname "slides-01" "\def\uselecture{01}\input{slides.tex}"
+  % latex -jobname "handout-01" "\def\uselecture{01}\PassOptionsToClass{handout}{beamer}\input{slides.tex}"
+  \expandafter\includeonlylecture\expandafter{\uselecture}
+\else
+  % Default lecture to output - comment out to get all lectures
+  \includeonlylecture{01}
+\fi
+
+% Uncomment to get title slides for each lecture
+% \AtBeginLecture{
+%   \subtitle{\insertlecture}
+%   \setcounter{framenumber}{0}
+%   \begin{frame}
+%     \titlepage
+%   \end{frame}
+% }
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Start of the slides
+
+\begin{document}
+
+% Available frame options:
+%   leftcolor, rightcolor: set the colour of the left or right panel
+%   leftimage, rightimage: put a (cropped) image in the left or right panel
+%   div: set the location of the divider between left and right panels
+%   urlcolor: set the colour of the url
+
+% Other commands available:
+%   \logo{X}: choose the logo to display (logo, white logo, or black logo)
+%   \urltext{X}: change the url for each slide
+
+% All standard University of Bristol colours are available:
+%   UniversityRed, CoolGrey, BrightAqua, BrightBlue, BrightOrange, BrightPurple,
+%   BrightPink, BrightLime, DarkAqua, DarkBlue, DarkOrange, DarkPurple,
+%   DarkPink, DarkLime
+
+\begin{frame}[leftcolor=BrightAqua,rightcolor=DarkAqua,div=0.8\paperwidth]
+  \titlepage
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\lecture{Lecture 1}{01}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}{Contents}
+  \tableofcontents
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{K-means Clustering}
+\subsection{What is it?}
+\begin{frame}{K-means Clustering}
+  \begin{itemize}
+    \item Given a set of data points $\mathbf{X} = \{x_{1},\ldots,x_{n}\}$, where each $x_{i} \in \mathbb{R}^{d}$, find $k$ clusters of data points.
+    \item The clusters are defined by the $k$ cluster centers $\mu_{1},\ldots,\mu_{k}$, where each $\mu_{j} \in \mathbb{R}^{d}$.
+    \item Where we assign each data point $x_{i}$ to the cluster with the closest cluster centre:
+      \begin{equation*}
+        S_{j} = \{x_{i} \in \mathbf{X} : \|x_{i} - \mu_{j}\| < \|x_{i} - \mu_{l}\| \text{ for all } l \neq j\}, \: j \in \{1,\ldots,k\}
+      \end{equation*}
+    \item The goal is to find the cluster centers $\mu_{1},\ldots,\mu_{k}$ that minimise the within-cluster sum of squares:
+      \begin{equation*}
+        \sum_{j=1}^{k} \sum_{i=1}^{n} \mathbf{I}_{\{x_{i} \in S_{j}\}} \|x_{i} - \mu_{j}\|^{2}
+      \end{equation*}
+  \end{itemize}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Where does it fall short?}
+\begin{frame}{Where k-means Clustering Falls Short}
+  \begin{itemize}
+    \item The clusters are defined by the cluster centers $\mu_{1},\ldots,\mu_{k}$, which are fixed points.
+    \item This means that the clusters are not allowed to change shape.
+    \item This is a problem when the ("true") clusters are not spherical.
+    \item If the data is not linearly separable then it will be impossible to achieve a good clustering.
+  \end{itemize}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}{Contents}
+  \tableofcontents
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Spectral Clustering}
+\begin{frame}{Spectral Clustering}
+  \begin{itemize}
+    \item Spectral clustering works by transforming the data into a new space where the clusters are more clearly defined and then performing k-means clustering in this new space. 
+    \item Spectral clustering originally comes from the field of graph theory, where the aim is to identify communities of nodes in a graph from the edges connecting them.
+    \item This can be approximately solved by finding the eigenvectors of the Laplacian matrix of the graph.
+    \item We will skip over the details of where Spectral clustering comes from (which can be found in the lecture notes) and instead focus on how we perform Spectral clustering on data.
+  \end{itemize}
+\end{frame}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}{Spectral Clustering: The Gram Matrix}
+  We obtain the transformation of the data as follows, first we find the symmetric semi positive definite Gram matrix, $M$, defined as:
+  \begin{equation*}
+    M_{i,j} = K(x_{i},x_{j})
+  \end{equation*}
+  where $K$ is a kernel function (we will talk more about this shortly). Introducing some notation for the row sums:
+  \begin{equation*}
+    D_{i} = \sum_{j} M_{i,j}
+  \end{equation*}
+  we then normalize the Gram matrix to obtain the following:
+  \begin{equation} \label{eq:normalized_gram_matrix}
+    \hat{M}_{i,j} = \frac{M_{i,j}}{\sqrt{D_{i}D_{j}}}
+  \end{equation}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}{Spectral Clustering: The Kernel}
+  Now let's talk about kernels. Assuming we know the definition of a kernel, let's introduce the kernel that we will use in this lecture, \textbf{the Gaussian kernel}:
+  \begin{equation} \label{eq:gaussian_kernel}
+    K(x,y) = \exp\left(-\frac{\|x-y\|}{\sigma^{2}}\right)
+  \end{equation}
+  where $\sigma$ is a hyperparameter that controls the width of the Gaussian, it is called the \textbf{bandwidth} and its choice can have a significant impact on the performance of the algorithm.
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}{Spectral Clustering: Normalizing}
+  In \cref{eq:normalized_gram_matrix} we defined the normalized Gram matrix, the corresponding "normalized kernel" for this Gram matrix is:
+  \begin{equation} \label{eq:normalized_kernel}
+    \hat{K}(x,y) = \frac{K(x,y)}{\sqrt{E_{x}[K(x,x)] E_{y}[K(y,y)]}}
+  \end{equation}
+  where expectations are over the empirical distribution of the data. Note, this is in fact a positive definite kernel as shown in \cite{bengio2003learning}. 
+  \\ \hfill \break
+  This normalized kernel will be popping up again later.
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}{Spectral Clustering: Embedding}
+  Now all is left is to compute the principal m eigenvectors of the normalized Gram matrix, $\hat{M}$, and use these as the new features for the data:
+  \begin{equation*}
+    \hat{M} \alpha_{k} = \lambda_{k} \alpha_{k}
+  \end{equation*}
+  where $\alpha_{k}$ are the eigenvectors and $\lambda_{k}$ are the eigenvalues.
+  \\ \hfill \break
+  Let $A$ be the matrix where each row corresponds to one of the first $m$ eigenvectors, then $A \in \mathbb{R}^{m \times n}$. Then for each data point $x_{i}$ its embedding is the $i$th column of $A$. 
+  \\ \hfill \break
+  For further information on where exactly this algorithm comes from and how it relates to the graph min-cut problem please refer to \cite{ng2001spectral}.
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}{Contents}
+  \tableofcontents
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Kernel PCA}
+\begin{frame}{Kernel PCA}
+  Kernel PCA (or K-PCA) generalizes PCA to be able to perform non-linear transformations of the data. When performing K-PCA we project the data into a new feature space using some transform $\phi$, we then use a kernel trick. 
+  \\ \hfill \break
+  Let's say we have some transform function $\phi$, we would like to perform PCA on the data in this new feature space, $\phi(x)$. To do this we need to find the covariance matrix of the data:
+  \begin{equation} \label{eq:kernel_pca_covariance}
+    C = E_{x} \left[\phi(x)\phi(x)^{T}\right] 
+  \end{equation}
+  Once we've found the covariance matrix we need to find the eigenvectors and eigenvalues of this matrix:
+  \begin{equation*}
+    C v_{k} = \lambda_{k} v_{k}
+  \end{equation*}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}{Kernel PCA: The Kernel}
+  Using the same kernel K as before (\cref{eq:gaussian_kernel}) we will as before first "normalise" the kernel:
+  \begin{equation} \label{eq:kernel_normalization_kpca}
+    \hat{K}(x,y) = K(x,y) - E_{x}[K(x,y)] - E_{y}[K(x,y)] + E_{x}[E_{y}[K(x,y)]]
+  \end{equation}
+  this means the feature space points now have an expected value of zero (under the empirical distribution of the data). A derivation of this "normalized" kernel is provided in \cite{bengio2003learning}.
+  \\ \hfill \break
+  The Gram matrix associated with this kernel is therefore normalized, again we will denote this normalized gram matrix as $\hat{M}$. 
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}{Kernel PCA: Gram and Covariance Matrices}
+  As we mentioned earlier we need the find the eigenvectors and eigenvalues of the covariance matrix defined in \cref{eq:kernel_pca_covariance}. We can actually avoid doing this by finding the eigenvectors and eigenvalues of the Gram matrix. 
+  From Corollary 4.1 in the lecture notes we have:
+  \begin{align*}
+    &{}\lambda_{k} = \frac{\gamma_{k}}{n}, \\
+    &v_{k} = \frac{\phi(X)^{T} \alpha_{k}}{\gamma_{k}^{1/2}}
+  \end{align*}
+  (Note that our definition of $\hat{K}$ is the same as that of $K$ in the lecture notes, hence it's suitable to use this corollary) From this corollary we can see that we can completely avoid computing the covariance matrix and its eigenvalues and eigenvectors. 
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}{Kernel PCA: Training}
+  So all we need to do to train a K-PCA model is solve the following for its eigenvectors and eigenvalues:
+  \begin{equation*}
+    \hat{M} \alpha_{k} = \gamma_{k} \alpha_{k}
+  \end{equation*}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}{Kernel PCA: Test Points Projection}
+  Then to project a point x on the k-th eigenvector of the covariance matrix (Not Gram matrix!) we compute:
+  \begin{equation*}
+    \pi_{k}(x) = v_{k} \cdot \hat{\phi}(x) = \frac{1}{\gamma_{k}} \sum_{i} \alpha_{ki} \hat{K}(x_{i},x)
+  \end{equation*}
+  where $\hat{\phi}(x)$ is the centered version of $\phi(x)$, and $a_{k}$ is the normalization factor. 
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}{Contents}
+  \tableofcontents
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Learning Eigenfunctions of similarity}
+\subsection{The General Problem}
+\begin{frame}{The General Problem}
+  Consider the following Hilbert space, $\mathcal{H}$: 
+  \\ \hfill \break
+  A set of real valued functions in $\mathbb{R}^{d}$ equipped with an inner product defined with a density $p(x)$:
+  \begin{equation*}
+    \langle f,g \rangle := \int f(x)g(x)p(x)dx
+  \end{equation*}
+  Note, this also defines a norm over functions:
+  \begin{equation*}
+    \|f\|^{2} := \langle f,f \rangle
+  \end{equation*}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}{The General Problem}
+  \begin{itemize}
+    \item Let $\mathbf{K}$ be the linear operator corresponding to the kernel $K(x,y)$.
+    \item The eigenfunctions of the linear operator $\mathbf{K}$ are defined by the solutions of:
+      \begin{align*}
+        \mathbf{K}f_{k} = \lambda_{k} f_{k}
+      \end{align*}
+    \item where $f \in \mathcal{H}$, $\lambda_{k} \in \mathbb{R}$ and:
+      \begin{align*}
+        (\mathbf{K}f_{k})(x) := \int K(x,y)f_{k}(y)p(y)dy
+      \end{align*}
+  \end{itemize}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}{The General Problem}
+  \begin{itemize}
+    \item By Mercers theorem, K can be expanded in terms of an orthonormal basis formed by its eigenfunctions:
+      \begin{align}
+        K(x,y) = \sum_{k=1}^{\infty} \lambda_{k} f_{k}(x) f_{k}(y)
+      \end{align}
+    \item (with $|\lambda_{1}| \geq |\lambda_{2}| \geq \ldots$ by convention)
+    \item Because we choose the eigenfunctions to be orthonormal, we have:
+      \begin{align*}
+        \langle f_{k},f_{l} \rangle = \delta_{k,l}
+      \end{align*}
+  \end{itemize}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Spectral Clustering \texorpdfstring{$\subset$}{TEXT} General Problem}
+\begin{frame}{Spectral Clustering \texorpdfstring{$\subset$}{TEXT} General Problem}
+  The following proposition tells us that spectral clustering is the same as finding the principal eigenfunctions if we chose $p(x)$ to be the empirical distribution of the data:
+  \begin{prop}[proposition 3 from \cite{bengio2003learning}] \label{prop:sc}
+  If we choose $p(x)$ to be the empirical distribution of the data, then:
+  \begin{equation}
+    \mathbf{A}_{ik} = f_{k} (x_{i}) 
+  \end{equation}
+  where $A_{ik}$ is the embedding obtained with spectral clustering and $f_{k}$ is the $k$th principal eigenfunction of the kernel $K(x,y)$.
+  \end{prop}
+  Note: here $K$ could be a normalized kernel such as that we defined for spectral clustering earlier (\cref{eq:normalized_kernel})
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}{Proof: \cref{prop:sc}}
+  First let's introduce a lemma that will help us prove the proposition:
+  \begin{lemma}[Proposition 1 in \cite{bengio2003learning}] \label{lemma:prop1}
+    The principal eigenfunction of the linear operator corresponding to kernel K is the norm-1 function f that minimizes the following reconstruction error:
+    \begin{align*}
+      E(f, \lambda) = \int (K(x,y) - \lambda f(x) f(y))^{2} p(x) p(y) dx dy
+    \end{align*}
+  \end{lemma}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}{Proof: \cref{prop:sc}}
+  This has a solution that satisfies:
+  \begin{align} \label{eq:sol_that_satisfies}
+    \int K(x,y) f(y) p(y) dy = \lambda f(x)
+  \end{align}
+  where $\lambda$ is the largest eigenvalue and therefore $f (=f_{1})$ is the principal eigenfunction.
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}{Proof: \cref{prop:sc}}
+  Substituting into \cref{eq:sol_that_satisfies} the empirical density and considering the values of $x$ for each of our data points, we have:
+  \begin{align*}
+    \frac{1}{n} \sum_{j} K(x_{i},x_{j}) f_{1}(x_{j}) = \lambda_{1} f_{1}(x_{i})
+  \end{align*}
+  Letting $u_{j}=f(x_{j})$ and $M_{ij} = K(x_{i},x_{j})$, then the above can be written as:
+  \begin{align*}
+    M u = n \lambda u 
+  \end{align*}
+  This is the same as the eigenvalue problem we have to solve for spectral clustering up to scaling the eigenvalue by $n$. 
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}{Proof: \cref{prop:sc}}
+  Therefore for the principal eigenvector we have:
+  \begin{align*}
+    A_{i1} = f_{1} (x_{i})
+  \end{align*}
+  How about the other eigenvalues? let's first introduce what we will call the \textbf{$k$-th residual kernel} to simplify notation:
+  \begin{align}
+    K_{k}(x,y) = K(x,y) - \sum_{i=1}^{k} \lambda_{k} f_{k} (x) f_{k} (y) 
+  \end{align}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}{Proof: \cref{prop:sc}}
+  To obtain the principal $m$ eigenvectors we simply consider the $k$-th residual kernel for $k \in \{1,...,m\}$ and solve the eigenvalue problem for that kernel.
+  \\ \hfill \break
+  (ie. subbing into \cref{eq:sol_that_satisfies} the empirical density and $f_{k}, \lambda_{k}$)
+  \\ \hfill \break
+  We then have: $A_{ik} = f_{k} (x_{i})$ for $k \in \{1,...,m\}$.
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Kernel PCA \texorpdfstring{$\subset$}{TEXT} General Problem}
+\begin{frame}{Kernel PCA \texorpdfstring{$\subset$}{TEXT} General Problem}
+  The following proposition tells us that kernel PCA is the same as finding the principal eigenfunctions if we chose $p(x)$ to be the empirical distribution of the data:
+  \begin{prop}[proposition 4 from \cite{bengio2003learning}] \label{prop:kpca}
+  Let $\pi_{k}(x)$ be the projection of $x$ onto the $k$th principal component obtained be KPCA where the Hilbert space inner product weighing function $p(x)$ is the empirical density. Then:
+  \begin{equation*}
+    \pi_{k} (x) = \lambda_{k} f_{k} (x)
+  \end{equation*}  
+  where $\lambda_{k}$ and $f_{k}$ are k-th leading eigenvalue and eigenfunction of $\hat{K}$ (as defined in \cref{eq:kernel_normalization_kpca}). 
+  \end{prop}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}{Proof: \cref{prop:kpca}}
+  Let's start with the eigenfunction equation:
+  \begin{align*}
+    &{} \hat{K} f_{k} = \lambda_{k} f_{k} \\
+    & \iff \hat{K} \hat{K} f_{k} = \lambda_{k} \hat{K} f_{k} \\
+    & \iff \int \hat{K}(x,y) \int \hat{K}(y,z) f_{k}(z) p(z) p(y) dz dy = \lambda_{k} \int \hat{K}(x,y) f_{k}(y) p(y) dy \\
+    & \iff \int f_{k}(z) (\int \hat{K}(x,y) \hat{K}(y,z) p(y) dy) p(z) dz = \lambda_{k} \int \hat{K}(x,y) f_{k}(y) p(y) dy \\ 
+  \end{align*}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}{Proof: \cref{prop:kpca}}
+  Now plugging in our definiton of $\hat{K}(x,y) = \sum_{i} \hat{\phi}_{i}(x) \hat{\phi}_{i} (y)$ (where $\hat{\phi}(x)$ is the centered version of $\phi(x)$):
+  \begin{align*}
+    \iff &{} \int f_{k}(z) (\int \sum_{i} \hat{\phi}_{i}(x) \hat{\phi}_{i} (y) \sum_{j} \hat{\phi}_{j}(y) \hat{\phi}_{j} (z) p(y) dy) p(z) dz \\
+    &= \lambda_{k} \int \sum_{i} \hat{\phi}_{i}(x) \hat{\phi}_{i} (y) f_{k}(y) p(y) dy 
+  \end{align*} 
+  Recall that the covariance matrix, $C$, of data x when projected in feature space $\hat{\phi}(x)$ is given by:
+  \begin{align*}
+    C_{ij} = E( \hat{\phi}(x) \hat{\phi}(x)^{T})
+  \end{align*}
+  therefore:
+  \begin{align*}
+    C_{ij} = \int \hat{\phi}_{i}(y) \hat{\phi}_{j}(y) p(y) dy 
+  \end{align*}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}{Proof: \cref{prop:kpca}}
+  Now plugging this in and pulling sums out of integrals we have:
+  \begin{align*}
+    &{}\sum_{i} \hat{\phi}_{i}(x) \sum_{j} C_{ij} \int \hat{\phi}_{j}(z) f_{k}(z) p(z) dz = \lambda_{k} \sum_{i} \hat{\phi}_{i}(x) \int f_{k} (y) \hat{\phi}_{i}(y) p(y) dy \\
+    & \iff \hat{\phi}(x) \cdot (C \langle f_{k}, \hat{\phi} \rangle) = \hat{\phi}(x) \cdot (\lambda_{k} \langle f_{k}, \hat{\phi} \rangle)   
+  \end{align*}
+  therefore we must have:
+  \begin{align*}
+    C \langle f_{k}, \hat{\phi} \rangle = \lambda_{k} \langle f_{k}, \hat{\phi} \rangle
+  \end{align*}
+  letting $v_{k} = \langle f_{k}, \hat{\phi} \rangle$ we have:
+  \begin{align*}
+    C v_{k} = \lambda_{k} v_{k}
+  \end{align*}
+  so $v_{k}$ is the k-th eigenvector of the covariance matrix, $C$.  
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}{Proof: \cref{prop:kpca}}
+  Finally the projection of x onto the k-th principal component is given by:
+  \begin{align*}
+    \pi_{k} (x) &{}= v_{k} \cdot \hat{\phi}(x) \\
+    &= (\int f_{k} (y) \hat{\phi}(y) p(y) dy) \cdot \hat{\phi}(x) \\
+    &= \int f_{k} (y) \hat{\phi}(y) \cdot \hat{\phi}(x) p(y) dy \\
+    &= \int f_{k} (y) \hat{K}(x,y) p(y) dy \\
+    &= \lambda_{k} f_{k} (x)
+  \end{align*}
+  Hence the proposition is proven.
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Spectral Clustering \texorpdfstring{$=$}{TEXT} Kernel PCA}
+\begin{frame}{Spectral Clustering \texorpdfstring{$=$}{TEXT} Kernel PCA}
+  Combining the results of \cref{prop:sc} and \cref{prop:kpca} we have that spectral clustering is the same as kernel PCA up to scaling of the eigenvalues and a different normalization of the kernel (\cref{eq:normalized_kernel} vs \cref{eq:kernel_normalization_kpca}).
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}{Contents}
+  \tableofcontents
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Remarks}
+\begin{frame}{Remarks}
+  What do we gain from knowing this link?
+  \begin{itemize}
+    \item We can generalize and embedding to a mapping, eg. for spectral clustering we can embed new points 
+  \end{itemize}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}{Contents}
+  \tableofcontents
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+  \frametitle{Bibliography}
+  \printbibliography
+  \end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\end{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
