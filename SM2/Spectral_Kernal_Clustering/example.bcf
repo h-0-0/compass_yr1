@@ -2188,6 +2188,8 @@
     <bcf:citekey order="4">bengio2003learning</bcf:citekey>
     <bcf:citekey order="5">bengio2003learning</bcf:citekey>
     <bcf:citekey order="6">bengio2003learning</bcf:citekey>
+    <bcf:citekey order="7">bengio2003learning</bcf:citekey>
+    <bcf:citekey order="8">bengio2003learning</bcf:citekey>
   </bcf:section>
   <!-- SORTING TEMPLATES -->
   <bcf:sortingtemplate name="nty">

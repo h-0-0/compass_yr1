@@ -310,6 +310,16 @@
 \end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Learning the Leading Eigenfunctions}
+\begin{frame}{Learning the Leading Eigenfunctions}
+  \begin{itemize}
+    \item How do we actually find these eigenfunctions?
+    \item A method for finding them is given in \cite{bengio2003learning} in proposition 1 and 2.
+    \item We won't cover it here for the sake of brevity. 
+  \end{itemize}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Spectral Clustering \texorpdfstring{$\subset$}{TEXT} General Problem}
 \begin{frame}{Spectral Clustering \texorpdfstring{$\subset$}{TEXT} General Problem}
   The following proposition tells us that spectral clustering is the same as finding the principal eigenfunctions if we chose $p(x)$ to be the empirical distribution of the data:
@@ -463,9 +473,12 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Remarks}
 \begin{frame}{Remarks}
-  What do we gain from knowing this link?
+  What do we gain from knowing this link between spectral clustering and K-PCA?
   \begin{itemize}
-    \item We can generalize and embedding to a mapping, eg. for spectral clustering we can embed new points 
+    \item We can generalize an embedding to a mapping, eg. for spectral clustering we can embed new points.
+    \item Using the eigenfunction method we can change the probability distribution of the data, $p(x)$, eg. we could use a smoothed version.
+    \item We don't necessarily have to compute and store the Gram matrix if we use the eigenfunction method.
+    \item They also introduce an unsupervised stochastic method for learning eigenfunctions in \cite{bengio2003learning}, using this method we can actually recursively build higher and higher level representations of the data, similarly to what happens in deep learning.
   \end{itemize}
 \end{frame}
 
