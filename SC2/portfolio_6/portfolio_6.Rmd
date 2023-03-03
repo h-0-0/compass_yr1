@@ -1,0 +1,31 @@
+---
+title: "portfolio_6"
+output: pdf_document
+date: "2023-03-02"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# OpenMP
+OpenMP let's us carry out parallel programming in C, C++ and Fortran. We will focus on using it in conjunction with C++. First to define the number of threads used in OpenMP we type the command __export OMP\_NUM\_THREADS= < number of threads you want >__ into bash. Let's now print the contents of the C++ file "openmp.cpp" which has some functions that carry out parallel programming using openmp. It is all very well commented and will explain how openmp works if you read it from top to bottom:
+```{r, engine='bash'}
+cat openmp.cpp
+```
+Let's now run the script to see if our functions all work:
+```{r,engine='bash'}
+g++ -fopenmp openmp.cpp -o openmp
+./openmp 
+```
+Yay! it looks like everything is working!
+
+When using OpenMP it is important that we think about how we are using it. To make good use of parallelization we have to think carefully about how we are carrying out computation and what the best way of dividing that computation up into threads is. 
+
+A typical style of parallel calculation is a map/reduce style calculation. This is where we split something up and map something (eg. elements of an array) to a function, calculate everything in parallel and then reduce all the outputs of your parallel computation into your result. 
+
+To maximize performance when working with OpenMP it is important to keep the following in mind: avoid working with global variables whenever possible (as it is either unpredictable or slow (or both!) ), do as much as you can using thread private variables (ie. try combine results from threads only at the end), avoid critical regions as much as possible (slows your code down) and finally try and use OpenMP reductions instead of writing your own. Some side notes are: benchmark your code (time how fast it is and see how modifications to your code affect run time) and compare run times for different numbers of threads (as you increase the number of threads you may get speed ups, but there will reach a point where the overhead of dealing with more threads becomes burdensome and there are no computational gains to increasing the number of threads).
+
+A useful tool for benchmarking is __hyperfine__, if you just add it before the bit of code you want to run it will track computation.
+
+Finally, before you use any of this OpenMP first go and try running your code with the following flag: __-O3__. Which will run your code in an optimized way, if its fast enough then there might be no need for manually paralyzing the code yourself!

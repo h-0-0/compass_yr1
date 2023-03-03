@@ -9,9 +9,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # High Performance Computing (HPC)
-In this document we will be going over what HPC is
-
-## What is a HPC?
+In this document we will be going over some of the basics of how to use bristols HPC's, it will serve as a reference guide for me later on. At the end I also provide a job script for running in parallel multiple python jobs which I used to obtain the encoded version of a dataset for a long list of encoders, saving me lots of time!
 
 
 ## Logging in to bristol HPC
@@ -42,28 +40,63 @@ To check what software is available on the HPC you can type __module avail__ whi
 
 Now some commands for managing the software in your environment, to add software: __module add <module name>__, to remove software: __module del <module name>__, to list all currently added software: __module list__. 
 
+If you are using python chances are that not all the packages you need to use will be avaliable on BluePebble, in that case you will need to set up and activate a virtual environment where you can then __pip install__ the packages you need. To create a virtual environment (in your current directory) type __python3 -m venv ./mypyenvb__, to then activate it type __source ~/<path to where you stored the virtual environment>/mypyenvb/bin/activate__. 
 
+## User spaces
+There are two user spaces home and work. Home has much smaller amount of memory and number of files you can store than work. To change to home type __cd /user/home/<username>_, and to change to work type __cd /user/work/<username>__. To get a good view as to the state of your home and work spaces type __~mw16387/quota__. Really should just be in work space, unless you are doing some testing of some kind.
 
-#TODO: user spaces
+## Submitting jobs
+To copy your folder to BluePebble use scp eg. __scp -r <path to file you want to copy> bp:<path to where you want it copies in BluePebble>__ (only works if you got the ssh trick set up). To submit a job script use __sbatch <path to job script>__. To monitor your submitted jobs use __sacct -X__. To log into a node and check info type __squeue -j <job number>__ and from this get the node name (NODELIST column) then __ssh <node name>__ to log onto the node and __top__ to perform live monitoring. 
 
+## When Your Job is Finished
+Check the slurm scripts using cat to check what happened during the job. To copy files back to your computer use scp again __scp -r bp:<path to files you want copied in BluePebble> <path to where you want to copy files to on your computer>__
 
-~mw16387/quota for better view of user space
-
-#TODO: submitting jobs
-__sacct -X__ instead of squeue
-add monitoring jobs
-
-#TODO: When Your Job is Finished
-
-# Job scripts
-#SBATCH --account=<research group name> should be added using nano
-include example script where you compile and run a programme in c++ and python
-
-# Parallel 
-include array jobs here
-
-# Downloading data
-use the scp command, eg. for BluePebble __scp <user name>@bp1-login.acrc.bris.ac.uk:<path of file you want to copy> .__ will copy from BluePebble to your current directory. 
+## Parallel 
+There are multiple ways you can carry out running parallel programs and is quite task specific, refer to "https://www.acrc.bris.ac.uk/protected/hpc-docs/training/intro-to-hpc-slurm/run_parallel.html" for more info. We will note that one method is submitting array jobs, this simply submits multiple jobs at once using one job script, good if what your doing is perfectly parrallel, an example of how to do this is included at the end. 
 
 ## Example
-Create example using non running code chunks for running a DL model on it, then fill out stuff above to get number of pages up
+I have downloaded a repo from github that can be used to generate encoded datasets of popular computer vision benchmarks. I copied this library to BluePebble, setup a python environment as detailed above, installed all the required packages into my environment and then submitted the below job script. The job script specifies an array of jobs where each job will run the specified dataset (given after the --dataset_name argument where I call python, here its CIFAR100) through an encoder. We specify the list of encoders in the array called "LS" and use the index value of the current job to select an encoder from the list. Running these jobs in parrallel will save alot of time. Another important thing to note is that we specify that we want this job carried out on GPUs as tensor multiplication is carried out much faster on a GPU than a CPU. 
+```{r, engine='bash', eval=FALSE}
+#!/bin/bash
+#
+#
+#SBATCH --partition=gpu
+#SBATCH --gres=gpu:2
+#SBATCH --job-name=gpujob
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --time=0:05:00
+#SBATCH --mem=2G
+#SBATCH --array 1-27
+#SBATCH --account MATH021322
+
+
+# Define executable
+export EXE=/bin/hostname
+
+# Change into working directory
+cd "${SLURM_SUBMIT_DIR}"
+
+# Define list of encoders we want to use
+LS=('resnet18' 'resnet34' 'resnet50' 'resnet101' 'resnet152' 'RN50_clip' 'RN101_clip' 'RN50x4_clip' 'RN50x16_clip' 'ViT-B/32_clip' 'ViT-B/16_clip' 'ViT-L/14_clip' 'RN50x64_clip' 'ViT-B/32' 'ViT-B/16' 'BiT-S-R50x1' 'BiT-S-R50x3' 'BiT-S-R101x1' 'BiT-S-R101x3' 'BiT-S-R152x2' 'BiT-S-R152x4' 'BiT-M-R50x1' 'BiT-M-R50x3' 'BiT-M-R101x1' 'BiT-M-R101x3' 'BiT-M-R152x2' 'BiT-M-R152x4')
+
+# Execute code
+${EXE}
+
+# Do some stuff
+echo JOB ID: ${SLURM_JOBID}
+echo SLURM ARRAY ID: ${SLURM_ARRAY_TASK_ID}
+echo Working Directory: $(pwd)
+
+echo Start Time: $(date)
+
+# Use this to create virtual env (keeping this here for my reference later on):
+# python3 -m venv ./mypyenvb
+# We activate the virtual environment
+source ~/tmp/mypyenvb/bin/activate
+python dataset_encoder.py --pretrained_encoder 1 --regime latent_ER --dataset_name CIFAR100 --dataset_encoder_name ${LS[${SLURM_ARRAY_TASK_ID}]}
+
+
+echo End Time: $(date)
+```
+Once the jobs were carried out I checked the slurm output to check the jobs all went smoothly and used scp to copy the results back to my computer. This job script will also serve as a good template for carrying out multiple Deep Learning related jobs later down the line such as carrying out various experiments.  
