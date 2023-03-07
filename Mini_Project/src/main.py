@@ -83,17 +83,30 @@ def main():
     # data_names.append(data_name)
     # model_names.append(model_name)
 
+    # data_name, model_name = run_exp(
+    #     data_name="MNIST", 
+    #     model_name="CNN",
+    #     batch_size=64, 
+    #     learning_rate=0.008, 
+    #     epochs=15, 
+    #     load_model=False,
+    #     save_model=True
+    #     )
+    # data_names.append(data_name)
+    # model_names.append(model_name)
+
     data_name, model_name = run_exp(
         data_name="MNIST", 
-        model_name="CNN",
-        batch_size=64, 
+        model_name="testing_CNN",
+        batch_size=5, 
         learning_rate=0.008, 
-        epochs=15, 
+        epochs=2, 
         load_model=False,
         save_model=True
         )
     data_names.append(data_name)
     model_names.append(model_name)
+
 
     # Create default plots from results
     plot.plot_default(data_names, model_names)

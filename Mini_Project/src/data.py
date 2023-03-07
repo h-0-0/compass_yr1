@@ -45,14 +45,14 @@ def get_data_loader(name, batch_size, device):
     return train_dataloader, test_dataloader
 
 
-def get_data_loader_encoder(name, batch_size, device):
+def get_data_loader_encoder(data_name, encoder_name, batch_size, device):
     # We generate arguments for retrieving and loading the encoded data (and runs data through encoder if not already encoded)
-    args_generator = ArgsGenerator(dataset_name=name, 
-                                    dataset_encoder_name='RN50_clip',
+    args_generator = ArgsGenerator(dataset_name=data_name, 
+                                    dataset_encoder_name=encoder_name,
                                     permute_task_order = False ,
                                     n_classes = None, 
-                                    n_tasks = 2, 
-                                    epochs = 100, 
+                                    n_tasks = 1, 
+                                    epochs = 10, 
                                     batch_size = batch_size, 
                                     encoding_batch_size = batch_size, 
                                     encode_with_continuum = True, 
@@ -70,16 +70,12 @@ def get_data_loader_encoder(name, batch_size, device):
     args_model = ModelContainer.Options()
 
     # This returns a continual learning scenario for the training and testing data 
+    # a scenario is an iterable of tasksets, where a taskset is an iterable of (x, y, t) tuples
     scenario, scenario_test = prepare_scenarios(args_generator, args_model) 
-    # print(f"scenario: {scenario}, scenario_test: {scenario_test}")
+    print(f"scenario: {scenario}, scenario_test: {scenario_test}")
+    print(f"Number of classes in scenario: {scenario.nb_classes}.")
+    print(f"Number of tasks in scenario: {scenario.nb_tasks}.")
+    return scenario, scenario_test
 
-    # We create a generator that will 
-    scenario_generator = ClassOrderGenerator(scenario)
-    for task_id, (train_taskset, test_taskset) in enumerate(zip(scenario, scenario_test)):
-        train_dataloader = DataLoader(train_taskset, batch_size=batch_size, shuffle=True)
-        test_dataloader = DataLoader(test_taskset, batch_size=batch_size, shuffle=True)
-        # x,y,t = train_taskset[0]
-        # print(f"task {task_id}, x in {x.shape}, y {y}")  
-    return train_dataloader, test_dataloader
 
 #TODO: create two versions of encoded data loader: one for continual scenario and one for full data
