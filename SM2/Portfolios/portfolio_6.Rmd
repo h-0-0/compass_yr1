@@ -1,0 +1,70 @@
+---
+title: "portfolio_6"
+output: pdf_document
+date: "2023-03-08"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Generalized Additive Models
+For this task we will be using the wesdr dataset from the gss package. The dataset records wether or not diabetic patients developed retinopathy (_ret_ column) (0=no, 1=yes) along with three predictor variables: duration of disease in tears (dur),  glycosylated hemoglobin - the percentage of hemoglobin bound to glucuse in the blood (gly) and body mass index (bmi):
+```{r}
+library(gss)
+data(wesdr)
+head(wesdr)
+```
+Let's now split our data into a training and testing set:
+```{r}
+n.test <- round(0.15 * nrow(wesdr))
+test_ind <- sample(seq_len(nrow(wesdr)), size = n.test)
+
+train <- wesdr[-test_ind, ]
+test <- wesdr[test_ind, ]
+```
+
+Let's now fit a GAM model, where we will choose the penalty parameters, $\{ \lambda_{j} \}_{j=1}^{p}$, using Generalized Cross Validation (GCV) which is the method gam uses by default:
+```{r} 
+library(mgcv)
+fit <- gam(ret~s(dur)+s(gly)+s(bmi), data = train)
+```
+Let's now plot our estimated functions:
+```{r}
+plot(fit)
+```
+From the above we see that the model for gly is linear, however, the models for the two other features are non-linear. Especially the model for the feature dur, it could be argued that perhaps a linear model would be suitable for the bmi. So for this dataset it appears that using a GAM is a reasonable choice (as opposed to picking a GLM for example). 
+
+Let's now evaluate the performance of our fitted GAM by evaluating its performance on the test set:
+```{r}
+preds <- predict(fit, newdata = test)
+diff <- as.vector(test[,"ret"]) - preds
+mse <- mean((diff)^2)
+mse
+```
+Let's now fit a GLM and compare its performance on the test set versus the GAM:
+```{r}
+fit2 <- gam(ret~dur+gly+bmi, data = train)
+
+preds2 <- predict(fit2, newdata = test)
+diff2 <- as.vector(test[,"ret"]) - preds2
+mse2 <- mean((diff2)^2)
+mse2
+```
+Comparing the mse's we see that the mse achieved by fitting a GLM is smaller than that obtained by fitting a GAM. This suggests that modelling all the features using linear models is perhaps a better option and that the bmi and dur features are better modeled linearly. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
