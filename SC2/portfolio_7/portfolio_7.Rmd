@@ -1,0 +1,31 @@
+---
+title: "portfolio_7"
+output: pdf_document
+date: "2023-03-09"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Intel TBB
+Before jumping into what intel TBB is and how we can use it we will first talk about some other stuff. This other stuff will let us write functions that are generalizable and more easily parrallizable, namely by using mapping and reducing functions. Then we will discuss how we can then parrallize these functions using intel TBB. 
+
+## Preliminaries
+First let's get into the preliminaries. We are going to print out the contents of a c++ file which will defne some usefull functions (namely map and reduce) and explain how it all works:
+```{r, engine='bash'}
+cat main.cpp
+```
+Let's now run the above to see if it works (notice we specify we want to use C++ version 14 and that we want to optimize the compilation (-O3)):
+```{r, engine='bash'}
+g++ -O3 --std=c++14 main.cpp -o main
+./main
+```
+
+## Parrallelizing
+Ok, now we've covered the preliminaries let's now talk about how we would go about paralelizing some of the above using intel TBB. Intel TBB is an efficient task-based scheduler that supports multi-level parallelism.
+
+
+
+
+
