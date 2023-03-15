@@ -1,0 +1,104 @@
+---
+title: "Assessment_2"
+output: pdf_document
+date: "2023-03-15"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Kernel Methods For Regression
+
+## Part 1
+
+### Question 1
+The Gaussian kernel is an example of an kernel for which the model is identifiable. The model is unidentifiable for the kernel: $k(x,y)=1$ for $x,y \in \mathbb{R}^{p}$. This kernel is positive semi-definite and by the Moore-Aronszajn theorem there exists a unique RKHS for which k is the reproducing kernel. In this RKHS all the functions are constant, let's pick two functions $f_{1}, f_{2} \in H_{k}$ where $f_{1} (x) = c$, $f_{2} (x) = d$ for all $x \in \mathcal{X}$. Then if we let the $\alpha$ we use with $f_{2}$, $\alpha_{2} = \alpha_{1} -d +c$, where $\alpha_{1}$ is the $\alpha$ we use with $f_{1}$, then these are the same model. Hence our model is unidentifiable. 
+
+### Question 2
+We have for some $f \in H_{k}$: $f = f_{1} +f_{2}$, for some $f_{1} \in \tilde{H}, f_{2} \in \tilde{H}^{\bot}$. By orthogonality:
+$$
+|| f_{1} +f_{2} ||^{2} = ||f_{1}||^{2} + ||f_{2}||^{2}
+$$
+And by the reproducing property:
+$$
+\frac{1}{2n} \sum_{i=1}^{n} \log f(y_{i} ; g^{-1}(\alpha + (f_{1} +f_{2})(x_{i}^{0})), \phi)
+$$
+$$
+= \frac{1}{2n} \sum_{i=1}^{n} \log f(y_{i} ; g^{-1} (\alpha + f_{1}(x_{i}^{0})), \phi)
+$$
+Combining the above,
+$$
+\frac{1}{2n} \sum_{i=1}^{n} \log f(y_{i} ; g^{-1} (\alpha + (f_{1} + f_{2})(x_{i}^{0})), \phi) - \lambda ||f_{1} + f_{2}||^{2} 
+$$
+$$
+= \frac{1}{2n} \sum_{i=1}^{n} \log f(y_{i} ; g^{-1} (\alpha + f_{1}(x_{i}^{0})), \phi) - \lambda ||f_{1}||^{2} + \lambda ||f_{2}||^{2}
+$$
+$$
+\geq \frac{1}{2n} \sum_{i=1}^{n} \log f(y_{i}; g^{-1} (\alpha + f_{1} (x_{i}^{0})), \phi) - \lambda ||f_{1}||^{2}
+$$
+Hence, we have that $\hat{f}_{\lambda} \in \tilde{H}$ and therefore can write $\hat{f}_{\lambda}$ as a linear combination of $k(x_{1}^{0}, \cdot), ..., k(x_{n}^{0}, \cdot)$ therefore we can write:
+$$
+\hat{f}_{\lambda} = \sum_{i=1}^{n} \hat{\beta}_{\lambda, i} k(x_{i}^{0}, \cdot)
+$$
+
+### Question 3
+We have that,
+$$
+\begin{aligned}
+- \lambda || f ||^{2}_{H_{k}} &{}= - \lambda || \sum_{i=1}^{n} \beta_{\lambda, i} k(x_{i}^{0}, \cdot) ||_{H_{k}}^{2} \\
+&= - \lambda <\sum_{i-1}^{n} \beta_{\lambda, i} k(x_{i}^{0}, \cdot) , \sum_{j=1}^{n} \beta_{\lambda, j} k(x_{j}^{0}, \cdot)>_{k}
+&= - \lambda \sum_{i-1}^{n} \beta_{\lambda, i} <k(x_{i}^{0}, \cdot) , \sum_{j=1}^{n} \beta_{\lambda, j} k(x_{j}^{0}, \cdot)>_{k}
+&= - \lambda \sum_{i-1}^{n} \sum_{j=1}^{n} \beta_{\lambda, i}  \beta_{\lambda, j} <k(x_{i}^{0}, \cdot) , k(x_{j}^{0}, \cdot)>_{k}
+&= - \lambda \sum_{i-1}^{n} \sum_{j=1}^{n} \beta_{\lambda, i}  \beta_{\lambda, j} k(x_{i}^{0}, x_{j}^{0})
+&= -\lambda \beta_{\lambda}^{T} K \beta_{\lambda} 
+\end{aligned}
+$$
+Where $K= [k(x_{i}^{0}, x_{j}^{0})]_{i,j}$. Hence we can rewrite (2) as:
+$$
+\frac{1}{2n} \sum_{i=1}^{n} \log f(y_{i}; g^{-1} (\alpha + \beta_{\lambda}^{T} \cdot K^{(i)} ), \phi) -\lambda \beta_{\lambda}^{T} K \beta_{\lambda} 
+$$
+
+### Question 4
+Let $m<n+2$, consider the optimization problem posed in the previous question, the Nyonstrom method involves reducing the dimension of the gram matrix, K, hence reducing the dimensionality of the optimization problem. We will approximate the kernel, k, by $\tilde{k}^{(m)}$ such that the matrix $\tilde{K}^{(m)}$ obtained by replacing k with $\tilde{k}^{(m)}$ has rank $\leq m$. We will let,
+$$
+\tilde{k}^{(m)} (x,x') = k_{m}(x)^{T} (K_{m})^{-1} k_{m}(x')
+$$
+where $K_{m}$ is the first m rows and columns of K and
+$$
+k_{m}(x) = (k(x_{1}^{0}, x), ..., k(x_{m}^{0}, x))
+$$
+hence leaving the following optimization problem,
+$$
+\arg \max_{\alpha \in \mathbb{R}, \phi \in (0, \inf), \beta_{\lambda}' \in \mathbb{R}^{m}} \frac{1}{2n} \sum_{i=1}^{n} \log f(y_{i} ; g^{-1}(\alpha + \beta_{\lambda}'^{T} \cdot K^{(i)} ), \phi ) - \lambda \beta_{\lambda}'^{T} \tilde{K}^{(m)} \beta_{\lambda}'
+$$
+where we write $\beta_{\lambda}'$ for our now lower dimensional  $\beta_{\lambda}$.
+
+### Question 5
+Let's first find the spectral decomposition of $\tilde{K}^{(m)}$,
+$$
+\tilde{K}^{(m)} = S \Lambda S^{-1}
+$$
+Then we can write,
+$$
+\begin{aligned}
+\beta_{\lambda}'^{T} \tilde{K}^{(m)} \beta_{\lambda}' &{}= \beta_{\lambda}'^{T} S^{-T} \Lambda S^{-1} \beta_{\lambda}' 
+&= || \Lambda^{\frac{1}{2}} S^{-1} \beta_{\lambda}' ||_{2}^{2}
+\end{aligned}
+$$
+Glmnet estimates parameters that minimize the following:
+$$
+- \log f(y_{i}; g^{-1}(\alpha + \beta_{glm}^{T} K^{(i)} ), \phi) + \lambda || \beta_{glm} ||_{2}^{2} 
+$$
+which is the same as maximizing optimization problem as ours, except for if we instead try to find the minimum of the negative of our optimization problem and if we substitute for $\beta_{glm}$. We have that,
+$$
+\beta_{glm} = \Lambda^{\frac{1}{2}} S \beta_{\lambda}'
+$$
+$$
+\Rightarrow \beta_{\lambda}' = S^{-1} \Lambda^{-\frac{1}{2}} \beta_{glm}
+$$
+Therefore we can find our value for $\beta_{\lambda}'$ using the estimate we get from glmnet. 
+
+## Part 2
+
+### Question 6
