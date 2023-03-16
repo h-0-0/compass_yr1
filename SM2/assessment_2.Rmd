@@ -5,7 +5,7 @@ date: "2023-03-15"
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, error=TRUE)
 ```
 
 # Kernel Methods For Regression
@@ -90,7 +90,7 @@ $$
 $$
 
 ### Question 5
-#TODO: change Km0 to inverse?
+#TODO: change Km0 to inverse? also gammas should be transpose?
 Let's first find the spectral decomposition of $K_{m}^{0}$,
 $$
 K_{m}^{0} = S \Lambda S^{-1}
@@ -133,7 +133,7 @@ test <- wesdr[test_ind, ]
 
 ### Question 6
 We are going to use a binomial distribution as we are modelling a response variable that is either 0 or 1, we are going to set $\alpha=0$ so that we are using the ridge penalty and we will use the radial basis kernel function for which the model is identifiable. 
-```{r, eval=FALSE}
+```{r}
 library(glmnet)
 library(kernlab)
 
@@ -153,8 +153,7 @@ fit_model <- function(X, y, lambda, sigma, m){
     K_mn[i,j] <- gaussian_kernel(X_m[i,], X[j,], sigma)
     }
   }
-  input <- K_m_inverse %*% K_mn
-  print(dim(input))
+  input <- t(K_m_inverse %*% K_mn)
   results <- glmnet(input, y, family = "binomial" , alpha = 0, lambda = lambda)  
   gamma_glm <- results$beta
   
@@ -163,12 +162,207 @@ fit_model <- function(X, y, lambda, sigma, m){
   L <- diag(eig$values)
   
   gamma <- solve(S) %*% sqrt(solve(L)) %*% gamma_glm
+  list(gamma = gamma, results= results)
 }
 
 X <- as.matrix(train[,-4])
 y <- train[,4]
-fit_model(X, y, 0.1, 1, nrow(train)-5)
+head(fit_model(X, y, 0.1, 1, 50))
 ```
 
+### Question 7
+Let's fit our model using a grid of parameters to see for which parameters it works and doesnt't and to identify which (if any) parameters lead to errors. 
+```{r}
+# Define the parameter values to search over
+lambda_range <- c(0.001, 0.01, 0.1, 0.5, 1.0, 2, 5, 10, 100, 1000, 10000)
+sigma_range <- c(0.01, 0.1, 1.0)
+m_range <- c(2, 5, 10, 20, 100, 400)
 
+# Generate all combinations of parameters
+param_combinations <- expand.grid(lambda_range, sigma_range, m_range)
+
+# Loop through each parameter combination and calculate the score
+for (i in 1:nrow(param_combinations)) {
+  lambda_val <- param_combinations[i, 1]
+  sigma_val <- param_combinations[i, 2]
+  m_val <- param_combinations[i, 3]
+  cat("Current parameters: lambda=", lambda_val, ", sigma=", sigma_val, ", m=", m_val, "\n")
+  # Call function to calculate score using the current parameters
+  gamma <- fit_model(X, y, lambda_val, sigma_val, m_val)
+}
+```
+From the above we see that it works for a large range of values for lambda and sigma, however, when m get's too large we are getting an error. This is happening when we try and invert our matrix $K_{m}$, we can fix this by adding some small $\epsilon$ to the diagonal of this matrix, let's modify our function to include this:
+```{r}
+fit_model <- function(X, y, lambda, sigma, m, eps=0.0001){
+  n <- nrow(X)
+  rbf <- rbfdot(sigma = sigma)
+  K <- kernelMatrix(rbf, X)
+  K_m_inverse <- solve(K[1:m, 1:m] + diag(m) * eps)
+  K_mn <- matrix(0, m, n)
+  X_m <- X[1:m,]
+  for (i in 1:m) {
+    for (j in 1:n) {
+    K_mn[i,j] <- gaussian_kernel(X_m[i,], X[j,], sigma)
+    }
+  }
+  input <- t(K_m_inverse %*% K_mn)
+  results <- glmnet(input, y, family = "binomial" , alpha = 0, lambda = lambda)  
+  gamma_glm <- results$beta
+  
+  eig <- eigen(K_m_inverse)
+  S <- eig$vectors
+  L <- diag(eig$values)
+  
+  gamma <- solve(S) %*% sqrt(solve(L)) %*% gamma_glm
+  list(gamma = gamma, results= results)
+}
+```
+Let's now try our grid search to see if our function now works for large values of m:
+```{r}
+# Define the parameter values to search over
+lambda_range <- c(0.001, 0.01, 0.1, 0.5, 1.0, 2, 5, 10, 100, 1000, 10000)
+sigma_range <- c(0.01, 0.1, 1.0)
+m_range <- c(2, 5, 10, 20, 100, 400)
+
+# Generate all combinations of parameters
+param_combinations <- expand.grid(lambda_range, sigma_range, m_range)
+
+# Loop through each parameter combination and calculate the score
+for (i in 1:nrow(param_combinations)) {
+  lambda_val <- param_combinations[i, 1]
+  sigma_val <- param_combinations[i, 2]
+  m_val <- param_combinations[i, 3]
+  cat("Current parameters: lambda=", lambda_val, ", sigma=", sigma_val, ", m=", m_val, "\n")
+  # Call function to calculate score using the current parameters
+  gamma <- fit_model(X, y, lambda_val, sigma_val, m_val)
+}
+```
+It does! we have solved our problem.
+
+### Question 8
+This function will compute the approximate solution to (2) for any $c \in C$ and integer $m \leq n+2$ where lambda is chosen using 10-fold cross validation using the missclassification error, here is the function and it ran on an example so we can check it works:
+```{r}
+fit_model_cv_l <- function(X, y, sigma, m, eps=0.0001){
+  n <- nrow(X)
+  rbf <- rbfdot(sigma = sigma)
+  K <- kernelMatrix(rbf, X)
+  K_m_inverse <- solve(K[1:m, 1:m] + diag(m) * eps)
+  K_mn <- matrix(0, m, n)
+  X_m <- X[1:m,]
+  for (i in 1:m) {
+    for (j in 1:n) {
+    K_mn[i,j] <- gaussian_kernel(X_m[i,], X[j,], sigma)
+    }
+  }
+  input <- t(K_m_inverse %*% K_mn)
+  cv <- cv.glmnet(input, y, family = "binomial" , alpha = 0)
+  lambda <- cv$lambda.min
+  fit_model(X, y, lambda, sigma, m)
+}
+
+X <- as.matrix(train[,-4])
+y <- train[,4]
+head(fit_model_cv_l(X, y, 1, 50))
+```
+
+### Question 9
+Let's now make it so that sigma is also chosen by cross-validation, here is the function:
+```{r}
+predict_our_model <- function(fit, X, sigma, m){
+  n <- nrow(X)
+  rbf <- rbfdot(sigma = sigma)
+  K <- kernelMatrix(rbf, X)
+  K_m_inverse <- solve(K[1:m, 1:m])
+  K_mn <- matrix(0, m, n)
+  X_m <- X[1:m,]
+  for (i in 1:m) {
+    for (j in 1:n) {
+    K_mn[i,j] <- gaussian_kernel(X_m[i,], X[j,], sigma)
+    }
+  }
+  input <- t(K_m_inverse %*% K_mn)
+  
+  predict(fit$results, newx=input)
+}
+
+fit_model_cv_l_sigma <- function(X, y, m, sigma_list=c(0.01, 0.1, 1.0)) {
+  
+  # initialize variables to store the best parameter and misclassification error
+  best_param <- NULL
+  best_error <- Inf
+  best_fit <- NULL
+  
+  # loop over the parameter values
+  for (i in 1:length(sigma_list)) {
+    
+    # set the parameter value
+    sigma <- sigma_list[i]
+    
+    # carry out cross-validation using the misclassification error
+    folds <- cut(seq(1,nrow(X)), breaks=10, labels=FALSE)
+    misclass_error <- rep(NA, 10)
+    for (j in 1:10) {
+      test_idx <- which(folds == j)
+      train_idx <- which(folds != j)
+      train_data <- X[train_idx, ]
+      test_data <- X[test_idx, ]
+      train_y <- y[train_idx]
+      test_y <- y[test_idx]
+      fit <- fit_model_cv_l(train_data, train_y, sigma, m)
+      pred <- predict_our_model(fit, test_data, sigma, m)
+      misclass_error[j] <- mean(pred != test_y)
+    }
+    mean_misclass_error <- mean(misclass_error)
+    
+    # check if the current parameter gives a lower mean misclassification error than the previous best
+    if (mean_misclass_error < best_error) {
+      best_param <- sigma_list[i]
+      best_error <- mean_misclass_error
+      best_fit <- fit
+    }
+  }
+  
+  # return the best parameter value and misclassification error as a list
+  best_fit[["sigma"]] = best_param
+  best_fit[["MisclassError"]] = best_error
+  return(best_fit)
+}
+
+X <- as.matrix(train[,-4])
+y <- train[,4]
+head(fit_model_cv_l_sigma(X, y, 50))
+```
+Again we run it on an example to check it works. 
+
+### Question 10
+Let's now fit our model for different values of m and calculate the error on the test set:
+```{r}
+X_test <- as.matrix(test[,-4])
+y_test <- test[,4]
+
+m_list <- c(10,20,40,50)
+misclass_error <- rep(NA, length(m_list))
+for(i in 1:length(m_list)){
+  m <- m_list[i]
+  results <- fit_model_cv_l_sigma(X, y, m)
+  pred <- predict_our_model(results, X_test, results$sigma, m)
+  misclass_error[i] <- mean(pred != y_test)
+}
+misclass_error
+```
+For some reason the fit of the model I am getting is very bad, but I couldn't find what was wrong before hand in time!
+#TODO: check misclassification error being computed correctly, also maybe change how error calculated? cross entropy?
+#TODO: actually, think I just need to round outputs to 0 or 1
+### Question 11
+Let's now find the GAM estimate of model (1), where we will choose the penalty parameters, $\{ \lambda_{j} \}_{j=1}^{p}$, using Generalized Cross Validation (GCV) which is the method gam uses by default:
+```{r}
+library(mgcv)
+fit <- gam(ret~s(dur)+s(gly)+s(bmi), data = train)
+preds <- predict(fit, newdata = test[,-4])
+preds
+test[,4]
+misclass_error <- mean(pred != test[,4])
+misclass_error
+```
+#TODO: comment on this result after fiddling with error calc. 
 
