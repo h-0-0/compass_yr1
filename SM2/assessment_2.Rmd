@@ -47,10 +47,10 @@ We have that,
 $$
 \begin{aligned}
 - \lambda || f ||^{2}_{H_{k}} &{}= - \lambda || \sum_{i=1}^{n} \beta_{\lambda, i} k(x_{i}^{0}, \cdot) ||_{H_{k}}^{2} \\
-&= - \lambda <\sum_{i-1}^{n} \beta_{\lambda, i} k(x_{i}^{0}, \cdot) , \sum_{j=1}^{n} \beta_{\lambda, j} k(x_{j}^{0}, \cdot)>_{k}
-&= - \lambda \sum_{i-1}^{n} \beta_{\lambda, i} <k(x_{i}^{0}, \cdot) , \sum_{j=1}^{n} \beta_{\lambda, j} k(x_{j}^{0}, \cdot)>_{k}
-&= - \lambda \sum_{i-1}^{n} \sum_{j=1}^{n} \beta_{\lambda, i}  \beta_{\lambda, j} <k(x_{i}^{0}, \cdot) , k(x_{j}^{0}, \cdot)>_{k}
-&= - \lambda \sum_{i-1}^{n} \sum_{j=1}^{n} \beta_{\lambda, i}  \beta_{\lambda, j} k(x_{i}^{0}, x_{j}^{0})
+&= - \lambda <\sum_{i-1}^{n} \beta_{\lambda, i} k(x_{i}^{0}, \cdot) , \sum_{j=1}^{n} \beta_{\lambda, j} k(x_{j}^{0}, \cdot)>_{k} \\
+&= - \lambda \sum_{i-1}^{n} \beta_{\lambda, i} <k(x_{i}^{0}, \cdot) , \sum_{j=1}^{n} \beta_{\lambda, j} k(x_{j}^{0}, \cdot)>_{k} \\
+&= - \lambda \sum_{i-1}^{n} \sum_{j=1}^{n} \beta_{\lambda, i}  \beta_{\lambda, j} <k(x_{i}^{0}, \cdot) , k(x_{j}^{0}, \cdot)>_{k} \\
+&= - \lambda \sum_{i-1}^{n} \sum_{j=1}^{n} \beta_{\lambda, i}  \beta_{\lambda, j} k(x_{i}^{0}, x_{j}^{0}) \\
 &= -\lambda \beta_{\lambda}^{T} K \beta_{\lambda} 
 \end{aligned}
 $$
@@ -68,37 +68,107 @@ where $K_{m}$ is the first m rows and columns of K and
 $$
 k_{m}(x) = (k(x_{1}^{0}, x), ..., k(x_{m}^{0}, x))
 $$
-hence leaving the following optimization problem,
+Let's now rewrite f using our new kernel:
 $$
-\arg \max_{\alpha \in \mathbb{R}, \phi \in (0, \inf), \beta_{\lambda}' \in \mathbb{R}^{m}} \frac{1}{2n} \sum_{i=1}^{n} \log f(y_{i} ; g^{-1}(\alpha + \beta_{\lambda}'^{T} \cdot K^{(i)} ), \phi ) - \lambda \beta_{\lambda}'^{T} \tilde{K}^{(m)} \beta_{\lambda}'
+\begin{aligned}
+f_{\lambda}(x) &{} \approx \beta_{\lambda}^{T} \tilde{k}^{(m)}(x) \\
+&= \beta_{\lambda}^{T} K(X_{1:m}, X)^{T} (K_{m}^{0})^{-1} K(X_{1:m}, x) \\
+&= \gamma (K_{m}^{0})^{-1} K(X_{1:m}, x)
+\end{aligned}
 $$
-where we write $\beta_{\lambda}'$ for our now lower dimensional  $\beta_{\lambda}$.
+where $K(A,B) = [k(a_{i}, b_{j})]_{i,j}$, X is our data matrix where $X_{1:m}$ means the data matrix including only the first m datapoints and we let $\gamma = \beta_{\lambda}^{T} K(X_{1:m}, X)^{T}$. Let's now rewrite the penalty:
+$$
+\begin{aligned}
+- \lambda \beta_{\lambda}^{T} K \beta_{\lambda} &{} \approx - \lambda \beta_{\lambda}^{T} \tilde{K}^{(m)} \beta_{\lambda} \\
+&= - \lambda \beta_{\lambda}^{T} K(X_{1:m}, X)^{T} (K_{m}^{0})^{-1} K(X_{1:m}, X) \beta_{\lambda} \\
+&= - \lambda \gamma (K_{m}^{0})^{-1} \gamma^{T}
+\end{aligned}
+$$
+This leaves us with the following optimization problem,
+$$
+\arg \max_{\alpha \in \mathbb{R}, \phi \in (0, \inf), \gamma \in \mathbb{R}^{m}} \frac{1}{2n} \sum_{i=1}^{n} \log f(y_{i} ; g^{-1}(\alpha + \gamma (K_{m}^{0})^{-1} K(X_{1:m}, x_{i}^{0}) ), \phi ) - \lambda \gamma (K_{m}^{0})^{-1} \gamma^{T}
+$$
 
 ### Question 5
-Let's first find the spectral decomposition of $\tilde{K}^{(m)}$,
+#TODO: change Km0 to inverse?
+Let's first find the spectral decomposition of $K_{m}^{0}$,
 $$
-\tilde{K}^{(m)} = S \Lambda S^{-1}
+K_{m}^{0} = S \Lambda S^{-1}
 $$
 Then we can write,
 $$
 \begin{aligned}
-\beta_{\lambda}'^{T} \tilde{K}^{(m)} \beta_{\lambda}' &{}= \beta_{\lambda}'^{T} S^{-T} \Lambda S^{-1} \beta_{\lambda}' 
-&= || \Lambda^{\frac{1}{2}} S^{-1} \beta_{\lambda}' ||_{2}^{2}
+\gamma^{T} K_{m}^{0} \gamma &{}= \gamma^{T} S^{-T} \Lambda S^{-1} \gamma 
+&= || \Lambda^{\frac{1}{2}} S^{-1} \gamma ||_{2}^{2}
 \end{aligned}
 $$
-Glmnet estimates parameters that minimize the following:
+Glmnet estimates parameters that minimize the following (if using the ridge penalty):
 $$
-- \log f(y_{i}; g^{-1}(\alpha + \beta_{glm}^{T} K^{(i)} ), \phi) + \lambda || \beta_{glm} ||_{2}^{2} 
+- \frac{1}{n} \sum_{i=1}^{n} \log f(y_{i}; g^{-1}(\alpha + \gamma X_{i} ), \phi) + \frac{\lambda}{2} || \gamma_{glm} ||_{2}^{2} 
 $$
-which is the same as maximizing optimization problem as ours, except for if we instead try to find the minimum of the negative of our optimization problem and if we substitute for $\beta_{glm}$. We have that,
+which is the same as maximizing optimization problem as ours, except for if we instead try to find the minimum of the negative of our optimization problem, a factor of two and if we substitute for $\gamma_{glm}$. We have that,
 $$
-\beta_{glm} = \Lambda^{\frac{1}{2}} S \beta_{\lambda}'
+\gamma_{glm} = \Lambda^{\frac{1}{2}} S \gamma
 $$
 $$
-\Rightarrow \beta_{\lambda}' = S^{-1} \Lambda^{-\frac{1}{2}} \beta_{glm}
+\Rightarrow \gamma = S^{-1} \Lambda^{-\frac{1}{2}} \gamma_{glm}
 $$
-Therefore we can find our value for $\beta_{\lambda}'$ using the estimate we get from glmnet. 
+Therefore we can find our value for $\gamma$ using the estimate we get from glmnet where for $X_{i}$ we use $(K_{m}^{0})^{-1} K(X_{1:m}, x_{i}^{0})$.
 
 ## Part 2
+We are going to use the wesdr dataset:
+```{r}
+library(gss)
+data(wesdr)
+head(wesdr)
+```
+Let's now split it into a testing and training set:
+```{r}
+n.test <- round(0.15 * nrow(wesdr))
+test_ind <- sample(seq_len(nrow(wesdr)), size = n.test)
+
+train <- wesdr[-test_ind, ]
+test <- wesdr[test_ind, ]
+```
 
 ### Question 6
+We are going to use a binomial distribution as we are modelling a response variable that is either 0 or 1, we are going to set $\alpha=0$ so that we are using the ridge penalty and we will use the radial basis kernel function for which the model is identifiable. 
+```{r, eval=FALSE}
+library(glmnet)
+library(kernlab)
+
+gaussian_kernel <- function(x, y, sigma) {
+  exp(-sum((x - y)^2) / (2*sigma^2))
+}
+
+fit_model <- function(X, y, lambda, sigma, m){
+  n <- nrow(X)
+  rbf <- rbfdot(sigma = sigma)
+  K <- kernelMatrix(rbf, X)
+  K_m_inverse <- solve(K[1:m, 1:m])
+  K_mn <- matrix(0, m, n)
+  X_m <- X[1:m,]
+  for (i in 1:m) {
+    for (j in 1:n) {
+    K_mn[i,j] <- gaussian_kernel(X_m[i,], X[j,], sigma)
+    }
+  }
+  input <- K_m_inverse %*% K_mn
+  print(dim(input))
+  results <- glmnet(input, y, family = "binomial" , alpha = 0, lambda = lambda)  
+  gamma_glm <- results$beta
+  
+  eig <- eigen(K_m_inverse)
+  S <- eig$vectors
+  L <- diag(eig$values)
+  
+  gamma <- solve(S) %*% sqrt(solve(L)) %*% gamma_glm
+}
+
+X <- as.matrix(train[,-4])
+y <- train[,4]
+fit_model(X, y, 0.1, 1, nrow(train)-5)
+```
+
+
+
