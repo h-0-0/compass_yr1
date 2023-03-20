@@ -28,8 +28,22 @@ def get_data(name, device):
             download=True,
             transform=ToTensor()
         )
+    elif(name == "CIFAR100"):
+        training_data = datasets.CIFAR100(
+            root="data",
+            train=True,
+            download=True,
+            transform=ToTensor()
+        )
+
+        test_data = datasets.CIFAR100(
+            root="data",
+            train=False,
+            download=True,
+            transform=ToTensor()
+        )
     else:
-        raise Exception("Not given valid dataset name must be: MNIST")
+        raise Exception("Not given valid dataset name must be: MNIST or CIFAR100")
     
     return training_data, test_data
 
@@ -72,10 +86,11 @@ def get_data_loader_encoder(data_name, encoder_name, batch_size, device):
     # This returns a continual learning scenario for the training and testing data 
     # a scenario is an iterable of tasksets, where a taskset is an iterable of (x, y, t) tuples
     scenario, scenario_test = prepare_scenarios(args_generator, args_model) 
-    print(f"scenario: {scenario}, scenario_test: {scenario_test}")
-    print(f"Number of classes in scenario: {scenario.nb_classes}.")
-    print(f"Number of tasks in scenario: {scenario.nb_tasks}.")
-    return scenario, scenario_test
+    train_taskset = scenario[0]
+    train_dataloader = DataLoader(train_taskset, batch_size=batch_size, shuffle=True)
+    test_taskset = scenario_test[0]
+    test_dataloader = DataLoader(test_taskset, batch_size=batch_size, shuffle=True)
+    return train_dataloader, test_dataloader
 
 
-#TODO: create two versions of encoded data loader: one for continual scenario and one for full data
+#TODO: create versions of get dataloader for continuous scenarios

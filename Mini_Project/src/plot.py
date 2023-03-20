@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import results
+import os
 
 # Plot training and testing loss over time for a given model
 def plot_loss(results_df, model_name, path=False):
@@ -20,6 +21,9 @@ def plot_loss(results_df, model_name, path=False):
     if path == False:
         plt.show()
     else:
+        # Check if path exists
+        if not os.path.exists(path):
+            os.makedirs(path)
         plt.savefig(path + model_name + "_loss.png")
         plt.clf()
 
@@ -41,6 +45,8 @@ def plot_accuracy(results_df, model_name, path=False):
     if path == False:
         plt.show()
     else:
+        if not os.path.exists(path):
+            os.makedirs(path)
         plt.savefig(path + model_name + "_acc.png")
         plt.clf()
 

@@ -13,7 +13,7 @@ def train_loop(dataloader, model, loss_fn, optimizer):
     # Get size of dataset, keep track of loss and accuracy and start training loop
     size = len(dataloader.dataset)
     train_loss, correct = 0, 0
-    for batch, (X, y) in enumerate(dataloader):
+    for batch, (X, y, *ignore) in enumerate(dataloader):
         # Move data to device that model is on
         X  = X.to(model.device)
         y = y.to(model.device)
@@ -49,7 +49,7 @@ def test_loop(dataloader, model, loss_fn):
     test_loss, correct = 0, 0
 
     with torch.no_grad():
-        for X, y in dataloader:
+        for X, y, *ignore in dataloader:
             # Move data to device that model is on
             X  = X.to(model.device)
             y = y.to(model.device)

@@ -7,13 +7,20 @@ import results
 import plot
 
 # Given model_name detects what model to create
-def get_model(model_name):
+def get_model(model_name, data_name, encoder_name):
     if("FC_FF_NN" in model_name):
-        return simple.FC_FF_NN()
+        return simple.FC_FF_NN(data_name, encoder_name)
     elif("CNN" in model_name):
-        return simple.CNN()
+        return simple.CNN(data_name, encoder_name)
     else:
         raise Exception("No valid models found in: "+model_name) 
+
+# Given model_name detects if it contains the name of one of our encoders
+def is_encoder(model_name):
+    if("RN50_clip" in model_name):
+        return "RN50_clip"
+    else:
+        return False
 
 # Function that puts model on device and adds device to model
 def handle_device(model, device):
@@ -21,14 +28,18 @@ def handle_device(model, device):
     model.device = device
 
 # Run an experiment
-def run_exp(data_name="MNIST", model_name="FF_FC_NN", batch_size=64, learning_rate=1e-3, epochs=5, load_model=False, save_model=False):
-    print("---------------------------- New Experiment ----------------------------")
+def run_exp(data_name="MNIST", model_name="RN50_clip_FF_FC_NN", batch_size=64, learning_rate=1e-3, epochs=5, load_model=False, save_model=False):
+    print("\n \n \n---------------------------- New Experiment ----------------------------")
     # Use GPU if available else use CPU
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print("Using {} device".format(device))
 
     # Load data
-    train_dataloader, test_dataloader = data.get_data_loader("MNIST", 64, device)
+    encoder_name = is_encoder(model_name)
+    if(encoder_name!=False):
+        train_dataloader, test_dataloader = data.get_data_loader_encoder(data_name, encoder_name, batch_size, device)
+    else:
+        train_dataloader, test_dataloader = data.get_data_loader(data_name, batch_size, device)
 
     # Create model or load model
     if(load_model!=False):
@@ -40,7 +51,7 @@ def run_exp(data_name="MNIST", model_name="FF_FC_NN", batch_size=64, learning_ra
         handle_device(model, device)
         print("Loaded PyTorch Model State from saved_models/"+load_model+".pth")
     else:
-        model = get_model(model_name)
+        model = get_model(model_name, data_name, encoder_name)
         handle_device(model, device)
 
     # Train model
@@ -71,36 +82,36 @@ def main():
     data_names = []
     model_names = []
     # Run experiments
-    # data_name, model_name = run_exp(
-    #     data_name="MNIST", 
-    #     model_name="FC_FF_NN",
-    #     batch_size=64, 
-    #     learning_rate=0.01, 
-    #     epochs=20, 
-    #     load_model=False,
-    #     save_model=True
-    #     )
-    # data_names.append(data_name)
-    # model_names.append(model_name)
-
-    # data_name, model_name = run_exp(
-    #     data_name="MNIST", 
-    #     model_name="CNN",
-    #     batch_size=64, 
-    #     learning_rate=0.008, 
-    #     epochs=15, 
-    #     load_model=False,
-    #     save_model=True
-    #     )
-    # data_names.append(data_name)
-    # model_names.append(model_name)
+    data_name, model_name = run_exp(
+        data_name="CIFAR100", 
+        model_name="FC_FF_NN",
+        batch_size=64, 
+        learning_rate=0.01, 
+        epochs=30, 
+        load_model=False,
+        save_model=True
+        )
+    data_names.append(data_name)
+    model_names.append(model_name)
 
     data_name, model_name = run_exp(
-        data_name="MNIST", 
-        model_name="testing_CNN",
-        batch_size=5, 
+        data_name="CIFAR100", 
+        model_name="CNN",
+        batch_size=64, 
         learning_rate=0.008, 
-        epochs=2, 
+        epochs=30, 
+        load_model=False,
+        save_model=True
+        )
+    data_names.append(data_name)
+    model_names.append(model_name)
+
+    data_name, model_name = run_exp(
+        data_name="CIFAR100", 
+        model_name="RN50_clip_FC_FF_NN",
+        batch_size=64, 
+        learning_rate=0.01, 
+        epochs=30, 
         load_model=False,
         save_model=True
         )

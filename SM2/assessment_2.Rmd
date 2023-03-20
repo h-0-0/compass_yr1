@@ -73,38 +73,37 @@ $$
 \begin{aligned}
 f_{\lambda}(x) &{} \approx \beta_{\lambda}^{T} \tilde{k}^{(m)}(x) \\
 &= \beta_{\lambda}^{T} K(X_{1:m}, X)^{T} (K_{m}^{0})^{-1} K(X_{1:m}, x) \\
-&= \gamma (K_{m}^{0})^{-1} K(X_{1:m}, x)
+&= \gamma^{T} (K_{m}^{0})^{-1} K(X_{1:m}, x)
 \end{aligned}
 $$
-where $K(A,B) = [k(a_{i}, b_{j})]_{i,j}$, X is our data matrix where $X_{1:m}$ means the data matrix including only the first m datapoints and we let $\gamma = \beta_{\lambda}^{T} K(X_{1:m}, X)^{T}$. Let's now rewrite the penalty:
+where $K(A,B) = [k(a_{i}, b_{j})]_{i,j}$, X is our data matrix where $X_{1:m}$ means the data matrix including only the first m datapoints and we let $\gamma^{T} = \beta_{\lambda}^{T} K(X_{1:m}, X)^{T}$. Let's now rewrite the penalty:
 $$
 \begin{aligned}
 - \lambda \beta_{\lambda}^{T} K \beta_{\lambda} &{} \approx - \lambda \beta_{\lambda}^{T} \tilde{K}^{(m)} \beta_{\lambda} \\
 &= - \lambda \beta_{\lambda}^{T} K(X_{1:m}, X)^{T} (K_{m}^{0})^{-1} K(X_{1:m}, X) \beta_{\lambda} \\
-&= - \lambda \gamma (K_{m}^{0})^{-1} \gamma^{T}
+&= - \lambda \gamma^{T} (K_{m}^{0})^{-1} \gamma
 \end{aligned}
 $$
 This leaves us with the following optimization problem,
 $$
-\arg \max_{\alpha \in \mathbb{R}, \phi \in (0, \inf), \gamma \in \mathbb{R}^{m}} \frac{1}{2n} \sum_{i=1}^{n} \log f(y_{i} ; g^{-1}(\alpha + \gamma (K_{m}^{0})^{-1} K(X_{1:m}, x_{i}^{0}) ), \phi ) - \lambda \gamma (K_{m}^{0})^{-1} \gamma^{T}
+\arg \max_{\alpha \in \mathbb{R}, \phi \in (0, \inf), \gamma \in \mathbb{R}^{m}} \frac{1}{2n} \sum_{i=1}^{n} \log f(y_{i} ; g^{-1}(\alpha + \gamma^{T} (K_{m}^{0})^{-1} K(X_{1:m}, x_{i}^{0}) ), \phi ) - \lambda \gamma^{T} (K_{m}^{0})^{-1} \gamma
 $$
 
 ### Question 5
-#TODO: change Km0 to inverse? also gammas should be transpose?
-Let's first find the spectral decomposition of $K_{m}^{0}$,
+Let's first find the spectral decomposition of $(K_{m}^{0})^{-1}$,
 $$
-K_{m}^{0} = S \Lambda S^{-1}
+(K_{m}^{0})^{-1} = S \Lambda S^{-1}
 $$
 Then we can write,
 $$
 \begin{aligned}
-\gamma^{T} K_{m}^{0} \gamma &{}= \gamma^{T} S^{-T} \Lambda S^{-1} \gamma 
+\gamma^{T} (K_{m}^{0})^{-1} \gamma &{}= \gamma^{T} S^{-T} \Lambda S^{-1} \gamma 
 &= || \Lambda^{\frac{1}{2}} S^{-1} \gamma ||_{2}^{2}
 \end{aligned}
 $$
 Glmnet estimates parameters that minimize the following (if using the ridge penalty):
 $$
-- \frac{1}{n} \sum_{i=1}^{n} \log f(y_{i}; g^{-1}(\alpha + \gamma X_{i} ), \phi) + \frac{\lambda}{2} || \gamma_{glm} ||_{2}^{2} 
+- \frac{1}{n} \sum_{i=1}^{n} \log f(y_{i}; g^{-1}(\alpha + \gamma^{T} X_{i} ), \phi) + \frac{\lambda}{2} || \gamma_{glm} ||_{2}^{2} 
 $$
 which is the same as maximizing optimization problem as ours, except for if we instead try to find the minimum of the negative of our optimization problem, a factor of two and if we substitute for $\gamma_{glm}$. We have that,
 $$
@@ -268,21 +267,22 @@ head(fit_model_cv_l(X, y, 1, 50))
 ### Question 9
 Let's now make it so that sigma is also chosen by cross-validation, here is the function:
 ```{r}
-predict_our_model <- function(fit, X, sigma, m){
-  n <- nrow(X)
+predict_our_model <- function(fit, train_X, test_X, sigma, m, eps=0.0001){
+  n <- nrow(test_X)
   rbf <- rbfdot(sigma = sigma)
-  K <- kernelMatrix(rbf, X)
-  K_m_inverse <- solve(K[1:m, 1:m])
+  K <- kernelMatrix(rbf, train_X)
+  K_m_inverse <- solve(K[1:m, 1:m] + diag(m) * eps)
   K_mn <- matrix(0, m, n)
-  X_m <- X[1:m,]
+  X_m <- train_X[1:m,]
   for (i in 1:m) {
     for (j in 1:n) {
-    K_mn[i,j] <- gaussian_kernel(X_m[i,], X[j,], sigma)
+    K_mn[i,j] <- gaussian_kernel(X_m[i,], test_X[j,], sigma)
     }
   }
   input <- t(K_m_inverse %*% K_mn)
   
-  predict(fit$results, newx=input)
+  out <- predict(fit$results, newx=input)
+  ifelse(out>0.5, 1, 0)
 }
 
 fit_model_cv_l_sigma <- function(X, y, m, sigma_list=c(0.01, 0.1, 1.0)) {
@@ -309,7 +309,7 @@ fit_model_cv_l_sigma <- function(X, y, m, sigma_list=c(0.01, 0.1, 1.0)) {
       train_y <- y[train_idx]
       test_y <- y[test_idx]
       fit <- fit_model_cv_l(train_data, train_y, sigma, m)
-      pred <- predict_our_model(fit, test_data, sigma, m)
+      pred <- predict_our_model(fit, X, test_data, sigma, m)
       misclass_error[j] <- mean(pred != test_y)
     }
     mean_misclass_error <- mean(misclass_error)
@@ -340,29 +340,28 @@ Let's now fit our model for different values of m and calculate the error on the
 X_test <- as.matrix(test[,-4])
 y_test <- test[,4]
 
-m_list <- c(10,20,40,50)
+m_list <- c(10, 25, 50, 100, 200, 400)
 misclass_error <- rep(NA, length(m_list))
 for(i in 1:length(m_list)){
   m <- m_list[i]
   results <- fit_model_cv_l_sigma(X, y, m)
-  pred <- predict_our_model(results, X_test, results$sigma, m)
+  pred <- predict_our_model(results, X, X_test, results$sigma, m)
   misclass_error[i] <- mean(pred != y_test)
 }
+m_list
 misclass_error
 ```
-For some reason the fit of the model I am getting is very bad, but I couldn't find what was wrong before hand in time!
-#TODO: check misclassification error being computed correctly, also maybe change how error calculated? cross entropy?
-#TODO: actually, think I just need to round outputs to 0 or 1
+We see that for different values of m we are getting similar values for the missclassification error (basically the same), also note that this misclassification error is not particularly small. This suggests that if lambda and sigma are chosen well, then the choice of m is not particularly important. Which means we should set m small when trying to fit our model as we will achieve similar performance as if we use a large m but with less computation needed. 
+
 ### Question 11
 Let's now find the GAM estimate of model (1), where we will choose the penalty parameters, $\{ \lambda_{j} \}_{j=1}^{p}$, using Generalized Cross Validation (GCV) which is the method gam uses by default:
 ```{r}
 library(mgcv)
 fit <- gam(ret~s(dur)+s(gly)+s(bmi), data = train)
 preds <- predict(fit, newdata = test[,-4])
-preds
-test[,4]
+preds <- ifelse(preds >0.5, 1, 0)
 misclass_error <- mean(pred != test[,4])
 misclass_error
 ```
-#TODO: comment on this result after fiddling with error calc. 
+This missclassification error is the same as that achieved by our model, with much less computation involved partly down to the smaller number of hyper-parameters, which are chosen by cross validation (which is costly). 
 
