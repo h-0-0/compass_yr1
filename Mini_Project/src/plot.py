@@ -52,15 +52,23 @@ def plot_accuracy(results_df, model_name, path=False):
 
 # Given a list of data sets used and model names ran in a session create and save all default plots
 def plot_default(data_names, model_names):
-    zipped = zip(data_names, model_names)
-    zipped = sorted(zipped, key=lambda x: x[1])
-    curr = ""
-    for (data_name, model_name) in zipped:
-        if(data_name != curr):
-            # Load new results
-            results_df = results.load_results(data_name)
-            path = "plots/"+ data_name +"/" 
-            curr = data_name
+    if(type(data_names) == list):
+        zipped = zip(data_names, model_names)
+        zipped = sorted(zipped, key=lambda x: x[1])
+        curr = ""
+        for (data_name, model_name) in zipped:
+            if(data_name != curr):
+                # Load new results
+                results_df = results.load_results(data_name)
+                path = "plots/"+ data_name +"/" 
+                curr = data_name
+            # Plot loss and accuracy for each model
+            plot_loss(results_df, model_name, path=path)
+            plot_accuracy(results_df, model_name, path=path)
+    else:
+        # Load new results
+        results_df = results.load_results(data_names)
+        path = "plots/"+ data_names +"/" 
         # Plot loss and accuracy for each model
-        plot_loss(results_df, model_name, path=path)
-        plot_accuracy(results_df, model_name, path=path)
+        plot_loss(results_df, model_names, path=path)
+        plot_accuracy(results_df, model_names, path=path)

@@ -35,15 +35,27 @@ def get_data(name, device):
             download=True,
             transform=ToTensor()
         )
-
         test_data = datasets.CIFAR100(
             root="data",
             train=False,
             download=True,
             transform=ToTensor()
         )
+    elif(name == "CIFAR10"):
+        training_data = datasets.CIFAR10(
+            root="data",
+            train=True,
+            download=True,
+            transform=ToTensor()
+        )
+        test_data = datasets.CIFAR10(
+            root="data",
+            train=False,
+            download=True,
+            transform=ToTensor()
+        )   
     else:
-        raise Exception("Not given valid dataset name must be: MNIST or CIFAR100")
+        raise Exception("Not given valid dataset name must be: MNIST, CIFAR10 or CIFAR100")
     
     return training_data, test_data
 

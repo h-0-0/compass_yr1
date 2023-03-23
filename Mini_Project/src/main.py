@@ -30,6 +30,7 @@ def handle_device(model, device):
 # Run an experiment
 def run_exp(data_name="MNIST", model_name="RN50_clip_FF_FC_NN", batch_size=64, learning_rate=1e-3, epochs=5, load_model=False, save_model=False):
     print("\n \n \n---------------------------- New Experiment ----------------------------")
+    print("Data: "+data_name, "Model: "+model_name, "Batch size: "+str(batch_size), "Learning rate: "+str(learning_rate), "Epochs: "+str(epochs), "Load model: "+str(load_model), "Save model: "+str(save_model), sep="\n")
     # Use GPU if available else use CPU
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print("Using {} device".format(device))
@@ -78,48 +79,38 @@ def run_exp(data_name="MNIST", model_name="RN50_clip_FF_FC_NN", batch_size=64, l
 
 # Main function
 def main():
-    # Create empty lists to store data and model names
-    data_names = []
-    model_names = []
     # Run experiments
     data_name, model_name = run_exp(
         data_name="CIFAR100", 
         model_name="FC_FF_NN",
         batch_size=64, 
         learning_rate=0.01, 
-        epochs=30, 
+        epochs=100, 
         load_model=False,
         save_model=True
         )
-    data_names.append(data_name)
-    model_names.append(model_name)
+    plot.plot_default(data_name, model_name)
 
     data_name, model_name = run_exp(
         data_name="CIFAR100", 
         model_name="CNN",
         batch_size=64, 
         learning_rate=0.008, 
-        epochs=30, 
+        epochs=100, 
         load_model=False,
         save_model=True
         )
-    data_names.append(data_name)
-    model_names.append(model_name)
+    plot.plot_default(data_name, model_name)
 
     data_name, model_name = run_exp(
         data_name="CIFAR100", 
         model_name="RN50_clip_FC_FF_NN",
         batch_size=64, 
         learning_rate=0.01, 
-        epochs=30, 
+        epochs=100, 
         load_model=False,
         save_model=True
         )
-    data_names.append(data_name)
-    model_names.append(model_name)
-
-
-    # Create default plots from results
-    plot.plot_default(data_names, model_names)
+    plot.plot_default(data_name, model_name)
 
 main()
