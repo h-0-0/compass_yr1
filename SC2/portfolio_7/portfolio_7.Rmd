@@ -23,9 +23,13 @@ g++ -O3 --std=c++14 main.cpp -o main
 ```
 
 ## Parrallelizing
-Ok, now we've covered the preliminaries let's now talk about how we would go about paralelizing some of the above using intel TBB. Intel TBB is an efficient task-based scheduler that supports multi-level parallelism.
-
-
-
-
-
+Ok, now we've covered the preliminaries let's now talk about how we would go about paralelizing some of the above using intel TBB. Intel TBB is an efficient task-based scheduler that supports multi-level parallelism. We will try and do the same thing we did before, but this time we will parallelize everything, let's print out the code which explains how to use intel tbb:
+```{r, engine='bash'}
+cat main_tbb.cpp
+```
+Let's now run the above code to see if it works:
+```{r, engine='bash'}
+g++ -O3 --std=c++14 main_tbb.cpp -o main_tbb -ltbb
+./main_tbb
+```
+It works! and we can see "the gods" appears 120 times! which is in agreement with what we got previously.
