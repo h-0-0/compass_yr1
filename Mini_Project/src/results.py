@@ -38,13 +38,13 @@ def load_results(data_name):
     return results_df
 
 # Function to add to results dataframe
-def add_to_results(results_df, model_name, epochs, batch_size, learning_rate, train_losses, test_losses, train_accs, test_accs):
+def add_to_results(results_df, model_name, start_end_epochs, batch_size, learning_rate, train_losses, test_losses, train_accs, test_accs):
     # Add results to dictionary
     new_results = {
-        "Model Name": [model_name]*epochs,
-        "Epoch": [i for i in range(epochs)],
-        "Batch Size": [batch_size]*epochs,
-        "Learning Rate": [learning_rate]*epochs,
+        "Model Name": [model_name]*(start_end_epochs[1]- start_end_epochs[0]),
+        "Epoch": [i for i in range(start_end_epochs[0], start_end_epochs[1])],
+        "Batch Size": [batch_size]*(start_end_epochs[1]- start_end_epochs[0]),
+        "Learning Rate": [learning_rate]*(start_end_epochs[1]- start_end_epochs[0]),
         "Train Loss": train_losses,
         "Test Loss": test_losses,
         "Train Accuracy": train_accs,
@@ -63,7 +63,7 @@ def model_exists(results_df, model_name):
         return False
 
 # Function that loads results, adds to results dataframe and saves results
-def update_results(data_name, model_name, epochs, batch_size, learning_rate, train_losses, test_losses, train_accs, test_accs):
+def update_results(data_name, model_name, start_end_epochs, batch_size, learning_rate, train_losses, test_losses, train_accs, test_accs):
     # Check if results folder exists and create if not
     if not os.path.exists("results"):
         os.makedirs("results")
@@ -77,11 +77,11 @@ def update_results(data_name, model_name, epochs, batch_size, learning_rate, tra
     # Load results
     results_df = load_results(data_name)
     # Check if model already exists in results dataframe
-    if model_exists(results_df, model_name):
-        print("Model already exists in results, will remove old results")
+    if model_exists(results_df, model_name) and start_end_epochs[0] == 0:
+        print("Model already exists in results and was trained from scratch, will remove old results")
         results_df = remove_results(results_df, model_name)
     # Add to results
-    results_df = add_to_results(results_df, model_name, epochs, batch_size, learning_rate, train_losses, test_losses, train_accs, test_accs)
+    results_df = add_to_results(results_df, model_name, start_end_epochs, batch_size, learning_rate, train_losses, test_losses, train_accs, test_accs)
     # Save results
     save_results(results_df, data_name)
 

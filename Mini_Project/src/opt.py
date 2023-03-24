@@ -66,14 +66,11 @@ def test_loop(dataloader, model, loss_fn):
     return test_loss, test_acc
 
 # Function that trains neural network over multiple epochs
-def train(model, train_dataloader, test_dataloader, 
-        learning_rate = 1e-3, epochs = 5, 
-        loss_fn=nn.CrossEntropyLoss(), optimizer=None
+def train(model, train_dataloader, test_dataloader, optimizer, 
+        learning_rate = 1e-3, epochs = (0,5), 
+        loss_fn=nn.CrossEntropyLoss()
         ):
-    # If no optimizer is given, use SGD 
-    if(optimizer is None):
-        optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
-
+    
     # Initialize arrays to keep track of losses and accuracy's 
     train_losses = []
     test_losses = []
@@ -81,7 +78,8 @@ def train(model, train_dataloader, test_dataloader,
     test_accs = []
 
     # Perfrom multiple epochs of training
-    for t in range(epochs):
+    starting_epoch, end_epoch = epochs
+    for t in range(starting_epoch, end_epoch):
         # Print epoch number
         print(f"Epoch {t+1}\n-------------------------------")
 
@@ -95,4 +93,4 @@ def train(model, train_dataloader, test_dataloader,
         test_losses.append(test_loss)
         test_accs.append(test_acc)
     print("Done!")
-    return train_losses, test_losses, train_accs, test_accs
+    return train_losses, test_losses, train_accs, test_accs, optimizer
