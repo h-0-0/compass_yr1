@@ -38,7 +38,11 @@ class FC_FF_NN(nn.Module):
                 nn.ReLU(),
                 nn.Linear(512, 512),
                 nn.ReLU(),
-                nn.Linear(512, 10),
+                nn.Linear(512, 256),
+                nn.ReLU(),
+                nn.Linear(256, 128),
+                nn.ReLU(),
+                nn.Linear(128, 10),
             )
             self.device = None
 
@@ -98,24 +102,23 @@ class CNN(nn.Module):
         elif(data_name == "CIFAR10"):
             # We customize the input size depending on the encoder used,
             # if no encoder is used we use the original input size of the dataset
-            if(encoder_name == False):
-                in_features = 32*32*3
+            if (encoder_name == False):
+                in_channels = 3
+            elif(encoder_name == "RN50_clip"):
+                in_channels = 1
             else:
-                if(encoder_name == "RN50_clip"):
-                    in_features = 1024
-                else:
-                    raise Exception("Not given valid encoder name must be: RN50_clip")
+                raise Exception("Not given valid encoder name must be: RN50_clip")
             
             super(CNN, self).__init__()
             self.conv = nn.Sequential(
-                nn.Conv2d(in_channels=1, out_channels=16, kernel_size=3, stride=1, padding=0),
+                nn.Conv2d(in_channels=in_channels, out_channels=16, kernel_size=3, stride=1, padding=0),
                 nn.ReLU(),
                 nn.MaxPool2d(kernel_size=2),
                 nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, stride=1, padding=0),
                 nn.ReLU(),
                 nn.MaxPool2d(kernel_size=2)
             )
-            self.fc = nn.Linear(32 * 5 * 5, 10) 
+            self.fc = nn.Linear(32 * 6 * 6, 10) 
             self.flatten = nn.Flatten()
             self.device = None
 
@@ -140,7 +143,9 @@ class CNN(nn.Module):
             )
             self.fc = nn.Sequential(
                 nn.Linear(512, 256),
+                nn.ReLU(),
                 nn.Linear(256, 128),
+                nn.ReLU(),
                 nn.Linear(128, 100)
             )
             self.flatten = nn.Flatten()

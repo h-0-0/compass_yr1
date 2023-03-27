@@ -29,9 +29,9 @@ echo Start Time: $(date)
 # python3 -m venv ./mypyenvb
 # We activate the virtual environment
 source ../mypyenv/bin/activate
-# python main.py --data_name="CIFAR10" --model_name="FC_FF_NN" --batch_size=64 --learning_rate=0.01 --epochs=100 --no-load_model --save_model
+python main.py --data_name="CIFAR10" --model_name="FC_FF_NN" --batch_size=64 --learning_rate=0.01 --epochs=100 --no-load_model --save_model
 # python main.py --data_name="CIFAR10" --model_name="CNN" --batch_size=64 --learning_rate=0.008 --epochs=100 --no-load_model --save_model
-python main.py --data_name="CIFAR10" --model_name="RN50_clip_FC_FF_NN" --batch_size=64 --learning_rate=0.01 --epochs=100 --no-load_model --save_model
+# python main.py --data_name="CIFAR10" --model_name="RN50_clip_FC_FF_NN" --batch_size=64 --learning_rate=0.01 --epochs=100 --no-load_model --save_model
 
 
 echo End Time: $(date)
