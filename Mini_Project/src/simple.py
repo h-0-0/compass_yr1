@@ -17,6 +17,7 @@ class FC_FF_NN(nn.Module):
                 nn.Linear(512, 512),
                 nn.ReLU(),
                 nn.Linear(512, 10),
+                nn.Softmax()
             )
             self.device = None
 
@@ -43,6 +44,7 @@ class FC_FF_NN(nn.Module):
                 nn.Linear(256, 128),
                 nn.ReLU(),
                 nn.Linear(128, 10),
+                nn.Softmax()
             )
             self.device = None
 
@@ -69,6 +71,7 @@ class FC_FF_NN(nn.Module):
                 nn.Linear(256, 128),
                 nn.ReLU(),
                 nn.Linear(128, 100),
+                nn.Softmax()
             )
             self.device = None
         else:
@@ -95,7 +98,10 @@ class CNN(nn.Module):
                 nn.ReLU(),
                 nn.MaxPool2d(kernel_size=2)
             )
-            self.fc = nn.Linear(32 * 5 * 5, 10) 
+            self.fc = nn.Sequential(
+                nn.Linear(32 * 5 * 5, 10),
+                nn.Softmax(),
+            )
             self.flatten = nn.Flatten()
             self.device = None
 
@@ -108,19 +114,41 @@ class CNN(nn.Module):
                 in_channels = 1
             else:
                 raise Exception("Not given valid encoder name must be: RN50_clip")
-            
             super(CNN, self).__init__()
             self.conv = nn.Sequential(
-                nn.Conv2d(in_channels=in_channels, out_channels=16, kernel_size=3, stride=1, padding=0),
+                nn.Conv2d(in_channels=in_channels, out_channels=32, kernel_size=(3,3), stride=1, padding=0),
                 nn.ReLU(),
-                nn.MaxPool2d(kernel_size=2),
-                nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, stride=1, padding=0),
+                nn.MaxPool2d(kernel_size=(2,2)),
+                nn.Conv2d(in_channels=32, out_channels=64, kernel_size=(3,3), stride=1, padding=0),
                 nn.ReLU(),
-                nn.MaxPool2d(kernel_size=2)
+                nn.MaxPool2d(kernel_size=(2,2)),
+                nn.Conv2d(in_channels=64, out_channels=128, kernel_size=(3,3), stride=1, padding=0),
+                nn.ReLU(),
+                nn.MaxPool2d(kernel_size=(2,2))
             )
-            self.fc = nn.Linear(32 * 6 * 6, 10) 
+            self.fc = nn.Sequential(
+                nn.Linear(512, 256),
+                nn.ReLU(),
+                nn.Linear(256, 128),
+                nn.ReLU(),
+                nn.Linear(128, 10),
+                nn.Softmax()
+            )
             self.flatten = nn.Flatten()
             self.device = None
+            # super(CNN, self).__init__()
+            # self.conv = nn.Sequential(
+            #     nn.Conv2d(in_channels=in_channels, out_channels=16, kernel_size=3, stride=1, padding=0),
+            #     nn.ReLU(),
+            #     nn.MaxPool2d(kernel_size=2),
+            #     nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, stride=1, padding=0),
+            #     nn.ReLU(),
+            #     nn.MaxPool2d(kernel_size=2)
+            # )
+            # self.fc = nn.Linear(32 * 6 * 6, 10) 
+            # nn.Softmax(),
+            # self.flatten = nn.Flatten()
+            # self.device = None
 
         elif(data_name == "CIFAR100"):
             if (encoder_name == False):
@@ -146,7 +174,8 @@ class CNN(nn.Module):
                 nn.ReLU(),
                 nn.Linear(256, 128),
                 nn.ReLU(),
-                nn.Linear(128, 100)
+                nn.Linear(128, 100),
+                nn.Softmax()
             )
             self.flatten = nn.Flatten()
             self.device = None

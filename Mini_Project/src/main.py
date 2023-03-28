@@ -95,7 +95,7 @@ def run_exp(data_name="MNIST", model_name="RN50_clip_FF_FC_NN", batch_size=64, l
             'model_state_dict': model.state_dict(),
             'optimizer_state_dict': optimizer.state_dict(),
             }, 
-            "saved_models/"+model_name+".pth"
+            "saved_models/"+data_name+ "_"+ model_name+".pth"
             )
         print("Saved PyTorch Model State to saved_models/"+model_name+".pth")
     return data_name, model_name
