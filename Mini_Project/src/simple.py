@@ -16,8 +16,7 @@ class FC_FF_NN(nn.Module):
                 nn.ReLU(),
                 nn.Linear(512, 512),
                 nn.ReLU(),
-                nn.Linear(512, 10),
-                nn.Softmax()
+                nn.Linear(512, 10)
             )
             self.device = None
 
@@ -43,8 +42,7 @@ class FC_FF_NN(nn.Module):
                 nn.ReLU(),
                 nn.Linear(256, 128),
                 nn.ReLU(),
-                nn.Linear(128, 10),
-                nn.Softmax()
+                nn.Linear(128, 10)
             )
             self.device = None
 
@@ -70,8 +68,7 @@ class FC_FF_NN(nn.Module):
                 nn.ReLU(),
                 nn.Linear(256, 128),
                 nn.ReLU(),
-                nn.Linear(128, 100),
-                nn.Softmax()
+                nn.Linear(128, 100)
             )
             self.device = None
         else:
@@ -99,8 +96,7 @@ class CNN(nn.Module):
                 nn.MaxPool2d(kernel_size=2)
             )
             self.fc = nn.Sequential(
-                nn.Linear(32 * 5 * 5, 10),
-                nn.Softmax(),
+                nn.Linear(32 * 5 * 5, 10)
             )
             self.flatten = nn.Flatten()
             self.device = None
@@ -131,8 +127,7 @@ class CNN(nn.Module):
                 nn.ReLU(),
                 nn.Linear(256, 128),
                 nn.ReLU(),
-                nn.Linear(128, 10),
-                nn.Softmax()
+                nn.Linear(128, 10)
             )
             self.flatten = nn.Flatten()
             self.device = None
@@ -146,7 +141,6 @@ class CNN(nn.Module):
             #     nn.MaxPool2d(kernel_size=2)
             # )
             # self.fc = nn.Linear(32 * 6 * 6, 10) 
-            # nn.Softmax(),
             # self.flatten = nn.Flatten()
             # self.device = None
 
@@ -174,8 +168,7 @@ class CNN(nn.Module):
                 nn.ReLU(),
                 nn.Linear(256, 128),
                 nn.ReLU(),
-                nn.Linear(128, 100),
-                nn.Softmax()
+                nn.Linear(128, 100)
             )
             self.flatten = nn.Flatten()
             self.device = None

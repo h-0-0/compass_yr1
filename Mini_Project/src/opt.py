@@ -94,3 +94,36 @@ def train(model, train_dataloader, test_dataloader, optimizer,
         test_accs.append(test_acc)
     print("Done!")
     return train_losses, test_losses, train_accs, test_accs, optimizer
+
+# Function that trains neural network over multiple epochs in CL scenario
+def train_CL(model, train_scenario, test_scenario, optimizer, 
+        learning_rate = 1e-3, epochs = 5, 
+        loss_fn=nn.CrossEntropyLoss()
+        ):
+    
+    # Initialize arrays to keep track of losses and accuracy's 
+    train_losses = []
+    test_losses = []
+    train_accs = []
+    test_accs = []
+
+    # Perfrom multiple epochs of training
+    for task_id, (train_dataset, test_dataset) in enumerate(zip(train_scenario, test_scenario)):
+        # Print task number
+        print(f"Task {task_id}\n-------------------------------")
+        train_dataloader = DataLoader(train_dataset)
+        test_dataloader = DataLoader(test_dataset)
+
+        for t in range(epochs):
+            # Perform training and save loss and accuracy
+            train_loss, train_acc = train_loop(train_dataloader, model, loss_fn, optimizer)
+            train_losses.append(train_loss)
+            train_accs.append(train_acc)
+
+            # Perform testing and save loss and accuracy
+            test_loss, test_acc = test_loop(test_dataloader, model, loss_fn)
+            test_losses.append(test_loss)
+            test_accs.append(test_acc)
+
+    print("Done!")
+    return train_losses, test_losses, train_accs, test_accs, optimizer

@@ -51,7 +51,13 @@ def plot_accuracy(results_df, model_name, path=False):
         plt.clf()
 
 # Given a list of data sets used and model names ran in a session create and save all default plots
-def plot_default(data_names, model_names):
+def plot_default(data_names, model_names, is_CL: bool=False):
+    # Use different path if we are plotting CL results
+    if(is_CL):
+        CL_ext="_CL"
+    else:
+        CL_ext=""
+
     if(type(data_names) == list):
         zipped = zip(data_names, model_names)
         zipped = sorted(zipped, key=lambda x: x[1])
@@ -59,16 +65,16 @@ def plot_default(data_names, model_names):
         for (data_name, model_name) in zipped:
             if(data_name != curr):
                 # Load new results
-                results_df = results.load_results(data_name)
-                path = "plots/"+ data_name +"/" 
+                results_df = results.load_results(data_name, CL_ext=CL_ext)
+                path = "plots/"+ data_name + CL_ext +"/" 
                 curr = data_name
             # Plot loss and accuracy for each model
             plot_loss(results_df, model_name, path=path)
             plot_accuracy(results_df, model_name, path=path)
     else:
         # Load new results
-        results_df = results.load_results(data_names)
-        path = "plots/"+ data_names +"/" 
+        results_df = results.load_results(data_names, CL_ext=CL_ext)
+        path = "plots/"+ data_names + CL_ext +"/" 
         # Plot loss and accuracy for each model
         plot_loss(results_df, model_names, path=path)
         plot_accuracy(results_df, model_names, path=path)
