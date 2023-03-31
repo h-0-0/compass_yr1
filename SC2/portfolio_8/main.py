@@ -24,7 +24,7 @@ def main(args):
     training_loader, test_loader = data.get_data_loader("CIFAR10", 64, device)
 
     # Train the model 
-    trainer = pl.Trainer(accelerator="auto", devices=4, num_nodes=1, strategy="ddp", max_epochs=1, plugins=[SLURMEnvironment(requeue_signal=signal.SIGHUP)])
+    trainer = pl.Trainer(accelerator="auto", devices=4, num_nodes=1, strategy="ddp", max_epochs=500, plugins=[SLURMEnvironment(requeue_signal=signal.SIGHUP)])
     trainer.fit(model=autoencoder, train_dataloaders=training_loader)
 
     # Save the model
