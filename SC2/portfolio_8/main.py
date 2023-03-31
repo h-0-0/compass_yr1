@@ -11,7 +11,7 @@ import signal
 
 def main(args):
     # Set the latent dimension
-    l_dim = 16
+    l_dim = args.l_dim
 
     # Setup device
     device = "cuda" if cuda.is_available() else "cpu"
@@ -45,6 +45,7 @@ def main(args):
 
 if __name__ == "__main__":
     parser = ArgumentParser()
+    parser.add_argument("--l_dim", type=int, default=16)
     args = parser.parse_args()
     # TRAIN
     main(args)
