@@ -18,23 +18,31 @@ def main(args):
     print("Using device: ", device)
 
     # Setup model
-    autoencoder = vae.AutoEncoder(32, l_dim, num_input_channels=3)
+    if args.ae:
+        ED = vae.AutoEncoder(32, l_dim, num_input_channels=3)
+    elif args.vae:
+        ED = vae.VarAutoEncoder(32, l_dim, num_input_channels=3)
 
     # Setup data
     training_loader, test_loader = data.get_data_loader("CIFAR10", 64, device)
 
     # Train the model 
     trainer = pl.Trainer(accelerator="auto", devices=4, num_nodes=1, strategy="ddp", max_epochs=500, plugins=[SLURMEnvironment(requeue_signal=signal.SIGHUP)])
-    trainer.fit(model=autoencoder, train_dataloaders=training_loader)
+    trainer.fit(model=ED, train_dataloaders=training_loader)
 
     # Save the model
-    trainer.save_checkpoint("saved_models/autoencoder_"+ str(l_dim) + ".ckpt")
+    if not os.path.exists("saved_models"):
+        os.makedirs("saved_models")
+    if args.ae:
+        trainer.save_checkpoint("saved_models/autoencoder_"+ str(l_dim) + ".ckpt")
+    elif args.vae:
+        trainer.save_checkpoint("saved_models/varautoencoder_"+ str(l_dim) + ".ckpt")
 
     # Test the model 
-    trainer.test(model=autoencoder, dataloaders=test_loader)
+    trainer.test(model=ED, dataloaders=test_loader)
 
     # choose your trained nn.Module
-    encoder = autoencoder.encoder
+    encoder = ED.encoder
     encoder.eval()
 
 # TODO: check image reconstruction ability (Notebook)
@@ -46,6 +54,13 @@ def main(args):
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--l_dim", type=int, default=16)
+    parser.add_argument("--vae", action='store_true')
+    parser.set_defaults(vae=False)
+    parser.add_argument("--ae", action='store_true')
+    parser.set_defaults(ae=False)
     args = parser.parse_args()
+
+    if args.ae == args.vae:
+        raise ValueError("Please select either AE or VAE")
     # TRAIN
     main(args)

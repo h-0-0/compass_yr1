@@ -29,7 +29,7 @@ echo Start Time: $(date)
 # python3 -m venv ./mypyenvb
 # We activate the virtual environment
 source mypyenv/bin/activate
-python main.py --l_dim=256
+python main.py --l_dim=256 --ae
 # Can use below if you want to submit a job for execution in real time
 # srun python3 train.py
 
