@@ -50,7 +50,7 @@ def run_exp(data_name="MNIST", model_name="RN50_clip_FF_FC_NN", batch_size=64, l
             raise Exception("No saved_models folder found, cannot load model")
         # Load model
         model = get_model(model_name, data_name, encoder_name)
-        checkpoint = torch.load("saved_models/"+model_name+".pth")
+        checkpoint = torch.load("saved_models/"+ data_name+ "_"+model_name+".pth")
         model.load_state_dict(checkpoint['model_state_dict'])
 
         # optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
@@ -61,7 +61,7 @@ def run_exp(data_name="MNIST", model_name="RN50_clip_FF_FC_NN", batch_size=64, l
             raise Exception("Cannot load model from epoch: "+str(prev_epoch)+" and train for a total of: "+str(epochs)+" epochs")
 
         handle_device(model, device)
-        print("Loaded PyTorch Model State from saved_models/"+model_name+".pth")
+        print("Loaded PyTorch Model State from saved_models/"+ data_name + "_" + model_name+".pth")
     elif(load_model == False):
         model = get_model(model_name, data_name, encoder_name)
         # optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
@@ -72,7 +72,7 @@ def run_exp(data_name="MNIST", model_name="RN50_clip_FF_FC_NN", batch_size=64, l
         raise Exception("load_model must be a boolean, got: "+str(load_model)+" of type: "+str(type(load_model)))
 
     # Train model
-    train_losses, test_losses, train_accs, test_accs, optimizer = opt.train(
+    train_losses, test_losses, train_accs, test_accs, times, optimizer = opt.train(
         model, 
         train_dataloader, 
         test_dataloader, 
@@ -82,7 +82,7 @@ def run_exp(data_name="MNIST", model_name="RN50_clip_FF_FC_NN", batch_size=64, l
     )
     
     # We add the results to the results dataframe
-    results.update_results(data_name, model_name, (prev_epoch, epochs), batch_size, learning_rate, train_losses, test_losses, train_accs, test_accs)
+    results.update_results(data_name, model_name, (prev_epoch, epochs), batch_size, learning_rate, train_losses, test_losses, train_accs, test_accs, times)
 
     # Save model if save_name is given
     if(save_model==True):
@@ -97,13 +97,13 @@ def run_exp(data_name="MNIST", model_name="RN50_clip_FF_FC_NN", batch_size=64, l
             }, 
             "saved_models/"+data_name+ "_"+ model_name+".pth"
             )
-        print("Saved PyTorch Model State to saved_models/"+model_name+".pth")
+        print("Saved PyTorch Model State to saved_models/"+data_name+ "_"+model_name+".pth")
     return data_name, model_name
 
 # Run an experiment in CL scenario
-def run_exp_CL(data_name="MNIST", model_name="RN50_clip_FF_FC_NN", n_tasks=10, init_n_tasks=2, batch_size=64, learning_rate=1e-3, epochs=5, load_model=False, save_model=False):
+def run_exp_CL(data_name="MNIST", model_name="RN50_clip_FF_FC_NN", n_tasks=5, init_inc=2, batch_size=64, learning_rate=1e-3, epochs=5, load_model=False, save_model=False):
     print("\n \n \n---------------------------- New Experiment ----------------------------")
-    print("Data: "+data_name, "Model: "+model_name, "Batch size: "+str(batch_size), "Learning rate: "+str(learning_rate), "Epochs: "+str(epochs), "Load model: "+str(load_model), "Save model: "+str(save_model), sep="\n")
+    print("Data: "+data_name, "Model: "+model_name, "Number of tasks: "+str(n_tasks), "Number of classes in first task: " + str(init_inc), "Batch size: "+str(batch_size), "Learning rate: "+str(learning_rate), "Epochs: "+str(epochs), "Load model: "+str(load_model), "Save model: "+str(save_model), sep="\n")
 
     # Use GPU if available else use CPU
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -114,7 +114,7 @@ def run_exp_CL(data_name="MNIST", model_name="RN50_clip_FF_FC_NN", n_tasks=10, i
     if(encoder_name!=False):
         train_scenario, test_scenario = data.get_data_loader_encoder_CL(data_name, encoder_name, batch_size, device, n_tasks)
     else:
-        train_scenario, test_scenario = data.get_data_loader_CL(data_name, batch_size, device, n_tasks, init_n_tasks)
+        train_scenario, test_scenario = data.get_data_loader_CL(data_name, batch_size, device, n_tasks, init_inc)
 
     # Create model or load model
     if(load_model == True):
@@ -140,7 +140,7 @@ def run_exp_CL(data_name="MNIST", model_name="RN50_clip_FF_FC_NN", n_tasks=10, i
         raise Exception("load_model must be a boolean, got: "+str(load_model)+" of type: "+str(type(load_model)))
 
     # Train model
-    train_losses, test_losses, train_accs, test_accs, optimizer = opt.train_CL(
+    train_losses, test_losses, train_accs, test_accs, times, optimizer = opt.train_CL(
         model, 
         train_scenario,
         test_scenario, 
@@ -150,7 +150,7 @@ def run_exp_CL(data_name="MNIST", model_name="RN50_clip_FF_FC_NN", n_tasks=10, i
     )
     task_names = list(range(len(train_scenario)))
     # We add the results to the results dataframe
-    results.update_results(data_name, model_name, epochs, batch_size, learning_rate, train_losses, test_losses, train_accs, test_accs, task_names, init_n_tasks)
+    results.update_results(data_name, model_name, epochs, batch_size, learning_rate, train_losses, test_losses, train_accs, test_accs, times, task_names, init_inc)
 
     # Save model if save_name is given
     if(save_model==True):
@@ -186,7 +186,7 @@ def main(args, is_CL):
             data_name=args.data_name, 
             model_name=args.model_name,
             n_tasks=args.n_tasks,
-            init_n_tasks=args.init_n_tasks,
+            init_inc=args.init_inc,
             batch_size=args.batch_size, 
             learning_rate=args.learning_rate,
             epochs=args.epochs, 
@@ -219,7 +219,7 @@ if __name__ == "__main__":
 
     # Arguments related to CL, if n-tasks given will run CL experiment
     parser.add_argument("--n_tasks", type=int, help="Number of tasks", default=-1)
-    parser.add_argument("--init_n_tasks", type=int, help="Number of tasks to initialize with", default=2)
+    parser.add_argument("--init_inc", type=int, help="Number of classes for first task", default=2)
 
     args = parser.parse_args()
     # TRAIN

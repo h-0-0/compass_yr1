@@ -16,6 +16,7 @@ def create_results_df(is_CL: bool=False):
                 "Test Loss",
                 "Train Accuracy",
                 "Test Accuracy",
+                "Time"
             ]
         )
     else:
@@ -30,8 +31,9 @@ def create_results_df(is_CL: bool=False):
                 "Test Loss",
                 "Train Accuracy",
                 "Test Accuracy",
+                "Time",
                 "Task Name",
-                "Initial Number of Tasks"
+                "Number of Classes for Initial Task"
             ]
         )
     return results_df
@@ -56,7 +58,7 @@ def load_results(data_name, CL_ext=""):
     return results_df
 
 # Function to add to results dataframe
-def add_to_results(results_df, model_name, epochs, batch_size, learning_rate, train_losses, test_losses, train_accs, test_accs, task_names=False, init_n_tasks=False):
+def add_to_results(results_df, model_name, epochs, batch_size, learning_rate, train_losses, test_losses, train_accs, test_accs, times, task_names=False, init_inc=False):
     if(task_names==False):
         # Add results to dictionary
         new_results = {
@@ -68,6 +70,7 @@ def add_to_results(results_df, model_name, epochs, batch_size, learning_rate, tr
             "Test Loss": test_losses,
             "Train Accuracy": train_accs,
             "Test Accuracy": test_accs,
+            "Time": times,
         }
     else:
         # Add results to dictionary
@@ -80,8 +83,9 @@ def add_to_results(results_df, model_name, epochs, batch_size, learning_rate, tr
             "Test Loss": test_losses,
             "Train Accuracy": train_accs,
             "Test Accuracy": test_accs,
+            "Time": times,
             "Task Name": np_repeat(task_names, epochs),
-            "Initial Number of Tasks": [init_n_tasks]*len(task_names)*epochs
+            "Number of Classes for Initial Task": [init_inc]*len(task_names)*epochs
         }
     new_results = pd.DataFrame(new_results)
     # Add results to results dataframe
@@ -96,7 +100,7 @@ def model_exists(results_df, model_name):
         return False
 
 # Function that loads results, adds to results dataframe and saves results
-def update_results(data_name, model_name, start_end_epochs, batch_size, learning_rate, train_losses, test_losses, train_accs, test_accs, task_names=False, init_n_tasks=False):
+def update_results(data_name, model_name, start_end_epochs, batch_size, learning_rate, train_losses, test_losses, train_accs, test_accs, times, task_names=False, init_inc=False):
     # If task_names not False we assume we are in CL scenario, accordingly we set is_CL to True and adjust behaviour accordingly
     if task_names != False:
         is_CL = True
@@ -129,7 +133,7 @@ def update_results(data_name, model_name, start_end_epochs, batch_size, learning
         results_df = remove_results(results_df, model_name)
     
     # Add to results
-    results_df = add_to_results(results_df, model_name, start_end_epochs, batch_size, learning_rate, train_losses, test_losses, train_accs, test_accs, task_names=task_names, init_n_tasks=init_n_tasks)
+    results_df = add_to_results(results_df, model_name, start_end_epochs, batch_size, learning_rate, train_losses, test_losses, train_accs, test_accs, times, task_names=task_names, init_inc=init_inc)
     
     # Save results
     save_results(results_df, data_name, CL_ext=CL_ext)

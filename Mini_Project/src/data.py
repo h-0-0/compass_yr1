@@ -3,6 +3,7 @@ from torch.utils.data import Dataset
 from torchvision.transforms import ToTensor
 import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
+import numpy as np
 
 from latent_CL.Utils.utils import set_seed  
 from latent_CL.dataset_encoder import prepare_scenarios
@@ -71,21 +72,30 @@ def get_data_loader(name, batch_size, device):
     return train_dataloader, test_dataloader
 
 # Function to retrieve data and create data loaders in continuous learning setting which are called scenarios
-def get_data_loader_CL(name, batch_size, device, n_tasks, init_n_tasks=2):
+def get_data_loader_CL(name, batch_size, device, n_tasks, init_inc=2):
     # Get training and testing data
     training_data, test_data = get_data(name, device)
 
+    # Calculate the number of classes per task
+    _, y, _ = training_data.get_data()
+    n_classes = len(np.unique(y))
+    increment = (n_classes - init_inc)/(n_tasks-1)
+    if(increment != int(increment)):
+        raise Exception("Number of classes per task not evenly divisible for given number of tasks and initial increment")
+    else:
+        increment = int(increment)
+    
     # Create CL scenarios
     train_scenario = ClassIncremental(
         training_data,
-        increment=n_tasks,
-        initial_increment=init_n_tasks
+        increment=increment,
+        initial_increment=init_inc
     )
 
     test_scenario = ClassIncremental(
         test_data,
-        increment=n_tasks,
-        initial_increment=init_n_tasks
+        increment=increment,
+        initial_increment=init_inc
     )
 
     # We return our newly created CL scenarios
@@ -129,7 +139,7 @@ def get_data_loader_encoder_CL(data_name, encoder_name, batch_size, device, n_ta
                                     dataset_encoder_name=encoder_name,
                                     permute_task_order = False ,
                                     n_classes = None, 
-                                    n_tasks = 1, 
+                                    n_tasks = n_tasks, 
                                     k_shot = None, #number of shots per class in each new task;
                                     epochs = 10, 
                                     batch_size = batch_size, 

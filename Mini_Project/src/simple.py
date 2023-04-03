@@ -111,38 +111,52 @@ class CNN(nn.Module):
             else:
                 raise Exception("Not given valid encoder name must be: RN50_clip")
             super(CNN, self).__init__()
+            # Based on VGG16 architecture
             self.conv = nn.Sequential(
-                nn.Conv2d(in_channels=in_channels, out_channels=32, kernel_size=(3,3), stride=1, padding=0),
+                # Block 1
+                nn.Conv2d(in_channels=in_channels, out_channels=64, kernel_size=(3,3), stride=1, padding="same"),
+                nn.ReLU(),
+                nn.Conv2d(in_channels=64, out_channels=64, kernel_size=(3,3), stride=1, padding="same"),
                 nn.ReLU(),
                 nn.MaxPool2d(kernel_size=(2,2)),
-                nn.Conv2d(in_channels=32, out_channels=64, kernel_size=(3,3), stride=1, padding=0),
+                # Block 2
+                nn.Conv2d(in_channels=64, out_channels=128, kernel_size=(3,3), stride=1, padding="same"),
+                nn.ReLU(),
+                nn.Conv2d(in_channels=128, out_channels=128, kernel_size=(3,3), stride=1, padding="same"),
                 nn.ReLU(),
                 nn.MaxPool2d(kernel_size=(2,2)),
-                nn.Conv2d(in_channels=64, out_channels=128, kernel_size=(3,3), stride=1, padding=0),
+                # Block 3
+                nn.Conv2d(in_channels=128, out_channels=256, kernel_size=(3,3), stride=1, padding="same"),
+                nn.ReLU(),
+                nn.Conv2d(in_channels=256, out_channels=256, kernel_size=(3,3), stride=1, padding="same"),
+                nn.ReLU(),
+                nn.Conv2d(in_channels=256, out_channels=256, kernel_size=(3,3), stride=1, padding="same"),
+                nn.ReLU(),
+                nn.MaxPool2d(kernel_size=(2,2)),
+                # Block 4
+                nn.Conv2d(in_channels=256, out_channels=512, kernel_size=(3,3), stride=1, padding="same"),
+                nn.ReLU(),
+                nn.Conv2d(in_channels=512, out_channels=512, kernel_size=(3,3), stride=1, padding="same"),
+                nn.ReLU(),
+                nn.Conv2d(in_channels=512, out_channels=512, kernel_size=(3,3), stride=1, padding="same"),
+                nn.ReLU(),
+                nn.MaxPool2d(kernel_size=(2,2)),
+                # Block 5
+                nn.Conv2d(in_channels=512, out_channels=512, kernel_size=(3,3), stride=1, padding="same"),
+                nn.ReLU(),
+                nn.Conv2d(in_channels=512, out_channels=512, kernel_size=(3,3), stride=1, padding="same"),
+                nn.ReLU(),
+                nn.Conv2d(in_channels=512, out_channels=512, kernel_size=(3,3), stride=1, padding="same"),
                 nn.ReLU(),
                 nn.MaxPool2d(kernel_size=(2,2))
             )
             self.fc = nn.Sequential(
-                nn.Linear(512, 256),
-                nn.ReLU(),
-                nn.Linear(256, 128),
+                nn.Linear(512, 128),
                 nn.ReLU(),
                 nn.Linear(128, 10)
             )
             self.flatten = nn.Flatten()
             self.device = None
-            # super(CNN, self).__init__()
-            # self.conv = nn.Sequential(
-            #     nn.Conv2d(in_channels=in_channels, out_channels=16, kernel_size=3, stride=1, padding=0),
-            #     nn.ReLU(),
-            #     nn.MaxPool2d(kernel_size=2),
-            #     nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, stride=1, padding=0),
-            #     nn.ReLU(),
-            #     nn.MaxPool2d(kernel_size=2)
-            # )
-            # self.fc = nn.Linear(32 * 6 * 6, 10) 
-            # self.flatten = nn.Flatten()
-            # self.device = None
 
         elif(data_name == "CIFAR100"):
             if (encoder_name == False):
@@ -152,23 +166,32 @@ class CNN(nn.Module):
             else:
                 raise Exception("Not given valid encoder name must be: RN50_clip")
             super(CNN, self).__init__()
+
+            # 3 VGG blocks
             self.conv = nn.Sequential(
+                # Block 1
                 nn.Conv2d(in_channels=in_channels, out_channels=32, kernel_size=(3,3), stride=1, padding=0),
                 nn.ReLU(),
+                nn.Conv2d(in_channels=32, out_channels=32, kernel_size=(3,3), stride=1, padding=0),
+                nn.ReLU(),
                 nn.MaxPool2d(kernel_size=(2,2)),
+                # Block 2
                 nn.Conv2d(in_channels=32, out_channels=64, kernel_size=(3,3), stride=1, padding=0),
                 nn.ReLU(),
-                nn.MaxPool2d(kernel_size=(2,2)),
-                nn.Conv2d(in_channels=64, out_channels=128, kernel_size=(3,3), stride=1, padding=0),
+                nn.Conv2d(in_channels=64, out_channels=64, kernel_size=(3,3), stride=1, padding=0),
                 nn.ReLU(),
                 nn.MaxPool2d(kernel_size=(2,2))
+                # Block 3
+                # nn.Conv2d(in_channels=64, out_channels=128, kernel_size=(3,3), stride=1, padding=0),
+                # nn.ReLU(),
+                # nn.Conv2d(in_channels=128, out_channels=128, kernel_size=(3,3), stride=1, padding=0),
+                # nn.ReLU(),
+                # nn.MaxPool2d(kernel_size=(2,2))
             )
             self.fc = nn.Sequential(
-                nn.Linear(512, 256),
+                nn.Linear(1600, 256),
                 nn.ReLU(),
-                nn.Linear(256, 128),
-                nn.ReLU(),
-                nn.Linear(128, 100)
+                nn.Linear(256, 100)
             )
             self.flatten = nn.Flatten()
             self.device = None
@@ -181,3 +204,5 @@ class CNN(nn.Module):
         out = self.flatten(out)
         out = self.fc(out)
         return out
+
+# TODO: check VGG big results, maybe batch nomralization? maybe make fully connected layers in CNN and FC_FF_NN with encoder the same?

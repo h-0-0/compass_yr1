@@ -3,6 +3,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 from torchvision import datasets
 from torchvision.transforms import ToTensor
+import time
 
 # Performs one epoch of training
 def train_loop(dataloader, model, loss_fn, optimizer):
@@ -76,9 +77,11 @@ def train(model, train_dataloader, test_dataloader, optimizer,
     test_losses = []
     train_accs = []
     test_accs = []
+    times = []
 
     # Perfrom multiple epochs of training
     starting_epoch, end_epoch = epochs
+    training_start_time = time.time()
     for t in range(starting_epoch, end_epoch):
         # Print epoch number
         print(f"Epoch {t+1}\n-------------------------------")
@@ -88,12 +91,15 @@ def train(model, train_dataloader, test_dataloader, optimizer,
         train_losses.append(train_loss)
         train_accs.append(train_acc)
 
+        # Save time
+        times.append(time.time() - training_start_time)
+
         # Perform testing and save loss and accuracy
         test_loss, test_acc = test_loop(test_dataloader, model, loss_fn)
         test_losses.append(test_loss)
         test_accs.append(test_acc)
     print("Done!")
-    return train_losses, test_losses, train_accs, test_accs, optimizer
+    return train_losses, test_losses, train_accs, test_accs, times, optimizer
 
 # Function that trains neural network over multiple epochs in CL scenario
 def train_CL(model, train_scenario, test_scenario, optimizer, 
@@ -106,6 +112,10 @@ def train_CL(model, train_scenario, test_scenario, optimizer,
     test_losses = []
     train_accs = []
     test_accs = []
+    times = []
+
+    # Record starting time
+    training_start_time = time.time()
 
     # Perfrom multiple epochs of training
     for task_id, (train_dataset, test_dataset) in enumerate(zip(train_scenario, test_scenario)):
@@ -120,10 +130,13 @@ def train_CL(model, train_scenario, test_scenario, optimizer,
             train_losses.append(train_loss)
             train_accs.append(train_acc)
 
+            # Save time
+            times.append(time.time() - training_start_time)
+
             # Perform testing and save loss and accuracy
             test_loss, test_acc = test_loop(test_dataloader, model, loss_fn)
             test_losses.append(test_loss)
             test_accs.append(test_acc)
 
     print("Done!")
-    return train_losses, test_losses, train_accs, test_accs, optimizer
+    return train_losses, test_losses, train_accs, test_accs, times, optimizer

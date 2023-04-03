@@ -78,3 +78,5 @@ def plot_default(data_names, model_names, is_CL: bool=False):
         # Plot loss and accuracy for each model
         plot_loss(results_df, model_names, path=path)
         plot_accuracy(results_df, model_names, path=path)
+
+# TODO: make plot in CL have epochs and tasks on x axis - color coordinated?
