@@ -1,0 +1,212 @@
+\begin{appendices}
+
+
+\section{Proofs}
+
+\subsection{Proof of \Cref{eqn:wLS solution}} \label{proof:wLS solution}
+Let $\bm{X}$ be,
+\begin{equation}
+    \begin{pmatrix}
+        1 & x_{1}\\
+        \vdots & \vdots \\
+        1 & x_{n}
+    \end{pmatrix}
+\end{equation}
+we can write our linear model in matrix form,
+\begin{equation}
+    \bm{y} = \bm{Xw} + \bm{\epsilon}
+\end{equation}
+note that,
+\begin{equation}
+    \sum_{i \in D_{0}} (y_{i} - f(\bm{x}_{i};\bm{w}))^{2}
+    = || \bm{y} - \bm{Xw}||^{2}
+\end{equation}
+we can find the minimum by differentiating wrt. $\bm{w}$ and finding the solution when the gradient equals zero. However, first we expand our expression,
+\begin{align}
+    || \bm{y} - \bm{Xw}||^{2} 
+    {}& = (\bm{y} - \bm{Xw})^{T} (\bm{y}-\bm{Xw}) \\ 
+    & = \bm{y}^{T}\bm{y} - \bm{w}^{T} \bm{X}^{T} \bm{y} - \bm{y}^{T}\bm{Xw} + \bm{w}^{T} \bm{X}^{T} \bm{Xw}
+\end{align}
+we now can find the derivative wrt. $\bm{w}$,
+\begin{align}
+    \frac{\partial}{\partial \bm{w}} ||\bm{y} - \bm{Xw}||^{2} = -2 \bm{X}^{T} \bm{y} + 2 \bm{X}^{T} \bm{X} \bm{w}
+\end{align}
+now setting this to zero and solving,
+\begin{align}
+    {}&\Rightarrow \bm{X}^{T} \bm{X} \bm{w} = \bm{X}^{T} \bm{y} \\
+    & \Rightarrow \bm{w} = \bm{X}^{-1} \bm{X}^{-T} \bm{X}^{T} \bm{y} \\
+    & \Rightarrow \bm{w} = (\bm{X}^{T} \bm{X})^{-1} \bm{X}^{T} \bm{y}
+\end{align}
+hence proven.
+
+\subsection{Proof of \Cref{eqn:w-LS-R solution}} \label{proof:wLSR solution}
+We have that,
+\begin{equation}
+    \bm{w}_{LS-R} := (\phi(\bm{X})^{T} \phi(\bm{X}) + \lambda \bm{I})^{-1} \phi(\bm{X})^{T} \bm{y}
+\end{equation}
+we can rewrite our objective function as:
+\begin{align}
+    &{} (\bm{y} - \phi(\bm{X}) \bm{w})^{T} (\bm{y} - \phi(\bm{X}) \bm{w}) + \lambda \bm{w}^{T} \bm{w} \\
+    & = \bm{y}^{T} \bm{y} - \bm{w}^{T} \phi(\bm{X})^{T} \bm{y} - \bm{y}^{T} \phi(\bm{X}) \bm{w} + \bm{w}^{T} \phi(\bm{X})^{T} \phi(\bm{X}) \bm{w} + \lambda \bm{w}^{T} \bm{w}
+\end{align}
+now taking the partial derivative $\frac{\partial}{\partial \bm{w}}$ and setting the derivative to zero we have,
+\begin{align}
+    &{} 0 = -\phi(\bm{X})^{T} \bm{y} - \bm{y}^{T} \phi(\bm{X}) +2\phi(\bm{X})^{T} \phi(\bm{X}) \bm{w} + 2 \lambda \bm{w} \\
+    & \rightarrow 2 \lambda \bm{w} + 2 \phi(\bm{X})^{T} \phi(\bm{X}) \bm{w} = \phi(\bm{X})^{T} \bm{y} + \bm{y}^{T} \phi(\bm{X}) \\
+    & \rightarrow (\phi(\bm{X})^{T} \phi(\bm{X}) + \lambda \bm{I}) \bm{w} = \phi(\bm{X})^{T} \bm{y} \\
+    & \rightarrow \bm{w} = (\phi(\bm{X})^{T} \phi(\bm{X}) +\lambda \bm{I})^{-1} \phi(\bm{X})^{T} \bm{y} 
+\end{align}
+hence proven.
+
+\subsection{Proof of \texorpdfstring{$\bm{w}_{MAP} = \bm{w}_{LS-R}$}{TEXT} when \texorpdfstring{$\lambda = \frac{\sigma^{2}}{\sigma_{\bm{w}}^{2}}$}{TEXT}} \label{proof:w-MAP equals w-LS-R}
+Writing down the objective function of regularized LS, we have,
+\begin{align}
+    &{} \prod_{i \in D} N_{y_{i}} (f(\bm{x}_{i};\bm{w}), \sigma^{2}) \cdot N_{\bm{w}}(0,\sigma_{\bm{w}}^{2} \bm{I}) \\
+    & \propto \prod_{i \in D} N_{y_{i}} (f(\bm{x}_{i};\bm{w}),\sigma^{2}) \cdot \prod_{i \in \bm{w}} N_{\bm{w}_{i}} (0,\sigma_{\bm{w}}^{2}) \\
+    & = \frac{1}{2 \sigma^{2}} \sum_{i \in D} (y_{i} - f(\bm{x}_{i};\bm{w}))^{2} + \frac{1}{2 \sigma_{\bm{w}}^{2}} \sum_{i \in \bm{w}} w_{i}^{2} +c
+    & \propto \sum_{i \in D} (y_{i} -f(\bm{x}_{i}; \bm{w}))^{2} + \lambda \sum_{i \in \bm{w}} \bm{w}_{i}^{2} + c
+\end{align}
+Note: for the second step we took the negative log probability and for the third step we multiplied by $2 \sigma^{2}$. We note that what we ended up with is the objective function for regularized LS.
+
+\subsection{Proof of \Cref{eqn:complicated-integral}} \label{proof:complicated-integral}
+First we note,
+\begin{equation}
+    \mathbb{P}(\hat{y}| \bm{x}, \bm{w}) = N_{\hat{y}}(f(\bm{x};\bm{w}), \sigma^{2})
+\end{equation}
+also note that,
+\begin{align}
+    \mathbb{P}(\bm{w}|D) &{} \propto \mathbb{P}(D| \bm{w}) \cdot \mathbb{P}(\bm{w}) \\
+    & = N_{\hat{\bm{y}}}(\bm{f}(\bm{x}_{i} ;\bm{w}), \sigma^{2} \bm{I}) \cdot N_{\bm{w}}(0,\sigma_{\bm{w}}^{2} \bm{I}) \\
+    & \propto (\bm{y} - \bm{\phi w})^{T} (\sigma^{2} \bm{I})^{-1} (\bm{y} - \bm{\phi w}) + \bm{w}^{T} (\sigma_{\bm{w}}^{2} \bm{I})^{-1} \bm{w} \\
+    & = \frac{1}{\sigma^{2}} \bm{y}^{T} \bm{Iy} -\frac{2}{\sigma^{2}} \bm{y}^{T} \bm{\phi w} + \bm{w}^{T} \bm{\phi}^{T} \frac{1}{\sigma^{2}} \bm{\phi w} + \frac{1}{\sigma_{\bm{w}}^{2}} \bm{w}^{T} \bm{Iw} \\
+    & \propto - \frac{2}{\sigma^{2}} \bm{y}^{T} \bm{\phi w} + \frac{1}{\sigma^{2}} \bm{w}^{T} \bm{\phi}^{T} \bm{\phi w} + \frac{1}{\sigma_{bm{w}^{2}}} \bm{w}^{T} \bm{w} \\
+    & = \bm{w}^{T} (\frac{1}{\sigma_{\bm{w}}^{2}} \bm{I} + \frac{1}{\sigma^{2}} \bm{\phi}^{T} \bm{\phi}) \bm{w} - \frac{2}{\sigma^{2}} \bm{w}^{T} \bm{\phi}^{T} \bm{y}  \\
+    & = \frac{1}{\sigma^{2}} (\bm{w}^{T} (\frac{\sigma^{2}}{\sigma_{\bm{w}}^{2}} \bm{I} + \bm{\phi}^{T} \bm{\phi}) \bm{w} -2 \bm{w}^{T} \bm{\phi}^{T} \bm{y}) \\
+    & = \frac{1}{\sigma^{2}} ( (\bm{w}^{T} - (\lambda\bm{I} + \bm{\phi}^{T} \bm{\phi})^{-1} \bm{\phi}^{T} \bm{y})^{T}  (\frac{\sigma^{2}}{\sigma_{\bm{w}}^{2}} \bm{I} + \bm{\phi}^{T} \bm{\phi})  (\bm{w} - (\lambda \bm{I} + \bm{\phi}^{T} \bm{\phi})^{-1} \bm{\phi}^{T} \bm{y}) \\ & - (\bm{\phi}^{T} \bm{y})^{T} (\frac{\sigma^{2}}{\sigma_{\bm{w}}^{2}} \bm{I} + \bm{\phi}^{T} \bm{\phi})^{-1} \bm{\phi}^{T} \bm{y}  ) \\
+    & = N_{\bm{w}} (\bm{\phi} \bm{w}_{LS-R}, \frac{\sigma^{2}}{\sigma_{\bm{w}}^{2}} \bm{I} + \bm{\phi}^{T} \bm{\phi})
+\end{align}   
+therefore, with the help of 2.115 in PRML, we have,
+\begin{align}
+    &{} \int \mathbb{P} (\hat{y}|\bm{x},\bm{w}) \cdot \mathbb{P}(\bm{w}|D) d \bm{w} \\
+    & = \mathbb{P}(\hat{y}| \bm{x}, D) \\
+    & = N_{\hat{y}}(f(\bm{x};\bm{w}_{LS-R}), \sigma^{2} + \bm{\phi}^{T}(\bm{x}) \sigma^{2} (\bm{\phi} \bm{\phi}^{T} + \frac{\sigma^{2}}{\sigma_{\bm{w}}^{2}} \bm{I}) \bm{\phi}(\bm{x}))
+\end{align}
+
+\subsection{\texorpdfstring{$\mathbb{P}( \text{FP or FN} |f)$}{TEXT} minimized when \texorpdfstring{$f(\bm{x}) = \mathbb{P}(\bm{x},y=+1) - \mathbb{P}(\bm{x},y=-1)$}{TEXT} } \label{proof:bayes-optimal-classifier}
+We can write our objective as,
+\begin{equation}
+    \int_{\{\bm{x} : f(\bm{x}) \geq 0\}} \mathbb{P}(\bm{x},y=-1) d\bm{x} + \int_{\{\bm{x} : f(\bm{x}) \leq 0\}} \mathbb{P}(\bm{x},y=+1) d\bm{x}
+\end{equation}
+We want to pick $f(\bm{x})$ that minimizes the above, the $f(\bm{x})$ that minimizes the above objective is the one such that,
+\begin{equation}
+    f(\bm{x}) \geq 0 \; \; \text{if} \; \; \mathbb{P}(\bm{x},y=-1) \leq \mathbb{P}(\bm{x},y=+1) 
+\end{equation}
+and
+\begin{equation}
+    f(\bm{x}) \leq 0 \; \; \text{if} \; \; \mathbb{P}(\bm{x},y=+1) \leq \mathbb{P}(\bm{x},y=-1) 
+\end{equation}
+an $f(\bm{x})$ that satisfies these statements is,
+\begin{equation}
+    f(\bm{x}) = \mathbb{P}(\bm{x},y=+1) - \mathbb{P}(\bm{x},y=-1)
+\end{equation}
+if $f(\bm{x}) \geq 0$, then $\mathbb{P}(\bm{x},y=+1) \geq \mathbb{P}(\bm{x},y=-1)$, \\
+if $f(\bm{x}) \leq 0$, then $\mathbb{P}(\bm{x},y=+1) \leq \mathbb{P}(\bm{x},y=-1)$. Hence, proven.
+
+\subsection{The optimal prediction using squared loss is \texorpdfstring{$\hat{y} = \mathbb{E}_{\mathbb{P}(y| \bm{x})} (y)$}{TEXT}} \label{proof:squared-loss-optimal-classifier}
+We can rewrite the objective function as,
+\begin{align}
+    \int \mathbb{P} (y| \bm{x}) L(y,y_{0}) dy &{} = \int \mathbb{P} (y| \bm{x}) (y - y_{0})^{2} dy \\
+    & = \int \mathbb{P} (y| \bm{x}) (y^{2} +y_{0}^{2} -2yy_{0}) dy
+\end{align}
+taking the derivative of $\frac{\partial}{\partial y_{0}}$ and setting to 0 we get,
+\begin{align}
+    &{} 0 = \int \mathbb{P}(y| \bm{x}) (2y_{0} - 2y) dy \\
+    & \Rightarrow 0 = 2y_{0} \int \mathbb{P}(y|\bm{x}) dy - 2 \int \mathbb{P}(y| \bm{x}) y dy \\
+    & \Rightarrow 0 = 2y_{0} - 2 \mathbb{E}_{\mathbb{P}(y|\bm{x})} (y) \\
+    & \Rightarrow y_{0} = \mathbb{E}_{\mathbb{P}(y| \bm{x})} (y)
+\end{align}
+so $\hat{y} = \mathbb{E}_{\mathbb{P}(y| \bm{x})} (y)$.
+
+\subsection{The optimal prediction using absolute loss is the median of \texorpdfstring{$\mathbb{P}(y| \bm{x})$}{TEXT}} \label{proof:absolute-loss-optimal-classifier}
+The objective function is,
+\begin{equation}
+    \int \mathbb{P}(y| \bm{x})|y-y_{0}| dy
+\end{equation}
+taking the derivative of $\frac{\partial}{\partial y_{0}}$ and setting to 0 we get,
+\begin{equation}
+    \int - \frac{\mathbb{P}(y| \bm{x}) (y-y_{0})}{|y-y_{0}|} dy = 0
+\end{equation}
+note that,
+\begin{equation}
+    \frac{y-y_{0}}{|y-y_{0}|} = \begin{cases} \mbox{1,} & y > y_{0} \\ \mbox{-1,} & y<y_{0} \end{cases}
+\end{equation}
+so we have,
+\begin{align}
+    &{} \Rightarrow \int_{y>y_{0}} \mathbb{P}(y|\bm{x}) dy - \int_{y<y_{0}} \mathbb{P}(y|\bm{x}) dy = 0 \\
+    & \Rightarrow \int_{y_{0}}^{\infty} \mathbb{P}(y|\bm{x}) dy = \int_{- \infty}^{y_{0}} \mathbb{P}(y|\bm{x}) dy
+\end{align}
+so $\hat{y}=m$ where $m$ is the medium of $\mathbb{P}(y|\bm{x})$
+
+
+\newpage
+\section{Homeworks}
+\subsection{For Section 1}
+\begin{question}
+    \textbf{Prove $\bm{w}_{LS} = (\bm{X}^{T} \bm{X})^{-1} \bm{X}^{T} \bm{y}$.} \\
+    Answer is \cref{proof:wLS solution}
+\end{question}
+
+\begin{question}
+    \textbf{Why is the solution of $w_{LS}$ useless if n<d?} \\
+    If $n<d$ then the columns of the model matrix don't have full rank, we know that for a matrix $A \in \mathbb{R}^{n \times d} $, $\text{rank}(\bm{A}) \leq \min(n,d)$. Therefore, for model matrix X with n, d we have $\text{rank}(X) \leq n < d$ and so X is not full rank. Since X is not full rank we have that $\bm{X}^{T} \bm{X}$ is not invertible.
+\end{question}
+
+\begin{question}
+    \textbf{In what scenarios is the use of the Normal dist. to model $\mathbb{P}(y|\bm{x},\bm{w},\sigma)$ a bad idea?} \\
+    When the errors aren't normally distributed, which could arise when the predictor or target variables are non-normal or when outliers disrupt the model prediction. 
+    When this is the case it can cause lots of problems as we often use this assumption of normality when computing confidence intervals and to carry out hypothesis testing for example. So when our assumption of normality is incorrect it can lead to incorrect analyses. 
+\end{question}
+
+\begin{question}\label{q:b4}
+    \textbf{Prove $\bm{w}_{LS} = (\phi(\bm{X}))^{-1} \bm{y}$.} \\
+    We have,
+    \begin{align}
+        \bm{w}_{LS} {}& = (\phi(\bm{X})^{T} \phi(\bm{X}))^{-1} \phi(\bm{X})^{T} \bm{y} \\
+        & = \phi(\bm{X})^{-1} \phi(\bm{X})^{-T} \phi(\bm{X})^{T} \bm{y} \\
+        & = \phi(\bm{X})^{-1} \bm{y}
+    \end{align}
+\end{question}
+
+\begin{question}
+    \textbf{If we increase b of $\phi(\bm{x})$ by 2-fold, by how many folds will the computation time of $\bm{w}_{LS}$ increase?} \\
+    Let's consider computing the solution of $\bm{w}_{LS}$ using the shortened form we found in \cref{q:b4}.
+    Increasing b by 2-fold will increase the number of rows in the model matrix by 2-fold, finding the inverse of a matrix is $O(n^{3})$ (if using Gaussian elimination), so this would lead to a $2^{3}$-fold increase in computation of the inverse. We also will have a 2-fold increase in the number of computations during the matrix multiplication.
+\end{question}
+
+\subsection{For Section 2}
+\begin{question}
+    \textbf{Why do machine learning algorithms still work on high-dimensional datasets (such as images), despite the curse of dimensionality telling us that the number of observations needed for solving high dimensional problems should grow exponentially with dimensionality?} \\
+    This is down to machine learning algorithms being able to learn something about the underlying structure of the data. In learning about the underlying structure it reduces the dimensionality of the problem, as it can use features within the data. For example in convolutional neural networks it's been shown that the network uses sets of features built up hierarchically in order to help it classify images. Instead of having to directly learn what every combination of pixels contained within an image should be classified as it simply learns that certain low level-patterns of pixels are important for classification, it then learns that these low-level patterns put together in different ways create other larger features which are important and so on...
+\end{question}
+
+
+\subsection{For Section 3}
+\begin{question}
+    \textbf{The proof in \cref{proof:wLSR solution}}
+\end{question}
+
+\begin{question}
+    \textbf{Is the statement ``the solution of $\bm{w}_{LS}$ is useless if $n<d$'' still true for $\bm{w}_{LS-R}$?} \\
+    If $n<d$ then $\bm{X}$ not full rank and neither is $\bm{X}^{T} \bm{X}$, denote $\bm{A}:=\bm{X}^{T} \bm{X}$. $\bm{A}$ is not full rank and therefore its columns are not linearly independent, that means there exist $\mu_{1}, ..., \mu_{d}$ such that there exists $i \in \{1,...,d\}$ with $\mu_{i} \neq0$ and $\mu_{1} \bm{A}^{(1)} + ... + \mu_{d} \bm{A}^{(d)} = 0$, where $\bm{A}^{(i)}$ denotes the i-th column of A. Let $\mu_{1}, ..., \mu_{d}$ be any reals such that the above is true, then we have for any $j \in \{1,...,n\}$, $\sum_{i \in \{1,...,d\}} \mu_{i} \bm{A}_{ji} = 0$. Where $\bm{A}_{ji}$ denotes the entry found at the j-th row and i-th column of A. Now consider the same linear combination for any row, j, of $\bm{A} + \lambda \bm{I}$, we have $(\sum_{i \in \{1,...,d\} / \{j\} } \mu_{i} \bm{X}_{ji}) + \mu_{j} \bm{X}_{jj} + \lambda = \lambda $. As $\lambda>0$ we have that no linear combination of columns equals zero, unless $\mu_{1} = ...= \mu_{d}=0$. Hence, the columns of $(\bm{A} + \lambda \bm{I}) = (\bm{X}^{T} \bm{X} + \lambda \bm{I})$ are linearly independent and is therefore also invertible. So there does exist a solution to $\bm{w}_{LS-R}$ even if n<d.
+\end{question}
+
+\begin{question}
+    \textbf{The proof in \cref{proof:w-MAP equals w-LS-R}}
+\end{question}
+
+\begin{question}
+    \textbf{The proof in \cref{proof:complicated-integral}}
+\end{question}
+
+
+\end{appendices}
