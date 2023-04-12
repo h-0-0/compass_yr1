@@ -3,9 +3,9 @@
 #
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:1
-#SBATCH --job-name=MNIST
+#SBATCH --job-name=MNIST_e10
 #SBATCH --nodes=1
-#SBATCH --time=1:00:00
+#SBATCH --time=2:00:00
 #SBATCH --mem=4G
 #SBATCH --account MATH021322
 
@@ -29,11 +29,11 @@ echo Start Time: $(date)
 # python3 -m venv ./mypyenvb
 # We activate the virtual environment
 source ../mypyenv/bin/activate
-# python main.py --data_name="MNIST" --model_name="FC_FF_NN" --batch_size=64 --learning_rate=0.005 --epochs=30 --no-load_model --save_model
-python main.py --data_name="MNIST" --model_name="CNN" --batch_size=64 --learning_rate=0.007 --epochs=30 --no-load_model --save_model
+# python main.py --data_name="MNIST" --model_name="SGD_FC_FF_NN" --batch_size=64 --learning_rate=0.007 --epochs=40 --load_model --save_model --optimizer_type="SGD"
+# python main.py --data_name="MNIST" --model_name="SGD_CNN" --batch_size=64 --learning_rate=0.005 --epochs=30 --no-load_model --save_model --optimizer_type="SGD"
 
 # Split MNIST, 5 tasks
-python main.py --data_name="MNIST" --model_name="FC_FF_NN" --batch_size=64 --learning_rate=0.005 --epochs=5 --no-load_model --save_model --n_tasks=5 --init_inc=2
-python main.py --data_name="MNIST" --model_name="CNN_VGG" --batch_size=64 --learning_rate=0.007 --epochs=5 --no-load_model --save_model --n_tasks=5 --init_inc=2
+python main.py --data_name="MNIST" --model_name="SGD_FC_FF_NN_e10" --batch_size=64 --learning_rate=0.007 --epochs=10 --no-load_model --save_model --n_tasks=5 --init_inc=2 --optimizer_type="SGD"
+python main.py --data_name="MNIST" --model_name="SGD_CNN_e10" --batch_size=64 --learning_rate=0.005 --epochs=10 --no-load_model --save_model --n_tasks=5 --init_inc=2 --optimizer_type="SGD"
 
 echo End Time: $(date)

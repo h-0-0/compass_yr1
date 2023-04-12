@@ -20,6 +20,8 @@ def detect_model(model_name, data_name, encoder_name):
 def is_encoder(model_name):
     if("RN50_clip" in model_name):
         return "RN50_clip"
+    if("fVGG" in model_name):
+        return "fVGG"
     else:
         return False
 
@@ -29,7 +31,7 @@ def handle_device(model, device):
     model.device = device
 
 # Used to create model, optimizer and prev_epoch, if load_model is True then load model from saved_models folder
-def get_model(load_model, model_name, data_name, encoder_name, learning_rate, epochs, device, is_CL=False):
+def get_model(load_model, model_name, data_name, encoder_name, learning_rate, epochs, device, is_CL=False, optimizer_type="SGD"):
     if is_CL:
         CL_ext = "_CL"
     else:
@@ -44,8 +46,16 @@ def get_model(load_model, model_name, data_name, encoder_name, learning_rate, ep
         checkpoint = torch.load("saved_models/"+ data_name+ "_"+model_name+CL_ext+".pth", map_location=torch.device(device))
         model.load_state_dict(checkpoint['model_state_dict'])
 
-        # optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
-        optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+        # Create optimizer
+        if optimizer_type == "SGD":
+            optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+        elif optimizer_type == "Adam":
+            optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+        elif optimizer_type == "SGD_momentum":
+            optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
+        else:
+            raise Exception("Not a valid optimizer type, must be SGD or Adam")
+    
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         if is_CL:
             prev_epoch = False
@@ -58,8 +68,17 @@ def get_model(load_model, model_name, data_name, encoder_name, learning_rate, ep
         print("Loaded PyTorch Model State from saved_models/"+ data_name + "_" + model_name+ CL_ext+".pth")
     elif(load_model == False):
         model = detect_model(model_name, data_name, encoder_name)
-        # optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
-        optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+
+        # Create optimizer
+        if optimizer_type == "SGD":
+            optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+        elif optimizer_type == "Adam":
+            optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+        elif optimizer_type == "SGD_momentum":
+            optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
+        else:
+            raise Exception("Not a valid optimizer type, must be SGD or Adam")
+        
         handle_device(model, device)
         if is_CL:
             prev_epoch = False
@@ -91,7 +110,10 @@ def save(model, optimizer, data_name, model_name, epochs, is_CL=False):
     print("Saved PyTorch Model State to saved_models/"+data_name+ "_"+model_name+ CL_ext +".pth")
 
 # Run an experiment
-def run_exp(data_name="MNIST", model_name="RN50_clip_FF_FC_NN", batch_size=64, learning_rate=1e-3, epochs=5, load_model=False, save_model=False, device=False):
+def run_exp(data_name="MNIST", model_name="RN50_clip_FF_FC_NN", batch_size=64, learning_rate=1e-3, epochs=5, load_model=False, save_model=False, device=False, optimizer_type="SGD", seed=552023):
+    # Set seed
+    torch.manual_seed(seed)
+
     # Use GPU if available else use CPU, if device is given use that device
     if device == False:
         device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -111,7 +133,7 @@ def run_exp(data_name="MNIST", model_name="RN50_clip_FF_FC_NN", batch_size=64, l
         train_dataloader, test_dataloader = data.get_data_loader(data_name, batch_size, device)
 
     # Create model
-    model, optimizer, prev_epoch = get_model(load_model, model_name, data_name, encoder_name, learning_rate, epochs, device, is_CL=False)
+    model, optimizer, prev_epoch = get_model(load_model, model_name, data_name, encoder_name, learning_rate, epochs, device, is_CL=False, optimizer_type=optimizer_type)
 
     # Train model
     train_losses, test_losses, train_accs, test_accs, times, optimizer = opt.train(
@@ -133,7 +155,10 @@ def run_exp(data_name="MNIST", model_name="RN50_clip_FF_FC_NN", batch_size=64, l
     return data_name, model_name
 
 # Run an experiment in CL scenario
-def run_exp_CL(data_name="MNIST", model_name="RN50_clip_FF_FC_NN", n_tasks=5, init_inc=2, batch_size=64, learning_rate=1e-3, epochs=5, load_model=False, save_model=False, device=False):
+def run_exp_CL(data_name="MNIST", model_name="RN50_clip_FF_FC_NN", n_tasks=5, init_inc=2, batch_size=64, learning_rate=1e-3, epochs=5, load_model=False, save_model=False, device=False, optimizer_type="SGD", seed=552023):
+    # Set seed
+    torch.manual_seed(seed)
+
     # Use GPU if available else use CPU, if device is given use that device
     if device == False:
         device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -153,7 +178,7 @@ def run_exp_CL(data_name="MNIST", model_name="RN50_clip_FF_FC_NN", n_tasks=5, in
         train_scenario, test_scenario = data.get_data_loader_CL(data_name, batch_size, device, n_tasks, init_inc)
 
     # Create model or load model
-    model, optimizer, _ = get_model(load_model, model_name, data_name, encoder_name, learning_rate, epochs, device, is_CL=True)
+    model, optimizer, _ = get_model(load_model, model_name, data_name, encoder_name, learning_rate, epochs, device, is_CL=True, optimizer_type=optimizer_type)
 
     # Train model
     metrics, optimizer = opt.train_CL(
@@ -191,7 +216,9 @@ def main(args, is_CL):
             epochs=args.epochs, 
             load_model=args.load_model,
             save_model=args.save_model,
-            device=args.device
+            device=args.device,
+            optimizer_type=args.optimizer_type,
+            seed=args.seed
             )
         plot.plot_default(data_name, model_name, is_CL=False)
     else:
@@ -205,7 +232,9 @@ def main(args, is_CL):
             epochs=args.epochs, 
             load_model=args.load_model,
             save_model=args.save_model,
-            device=args.device
+            device=args.device,
+            optimizer_type=args.optimizer_type,
+            seed=args.seed
             )
         plot.plot_default(data_name, model_name, is_CL=True)
 
@@ -238,9 +267,19 @@ if __name__ == "__main__":
     # Argument for overriding which device to use
     parser.add_argument("--device", type=str, help="Which device to use", default=False)
 
+    # Argument for setting the optimizer
+    parser.add_argument("--optimizer_type", type=str, help="Which optimizer to use", default="Adam")
+
+    # Argument for setting the seed
+    parser.add_argument("--seed", type=int, help="Seed for random number generator", default=552023)
+
     # Parse arguments and check if CL experiment
     args = parser.parse_args()
     is_CL = (args.n_tasks != -1)
 
+    # Check arguments are correct
+    if not (args.optimizer_type in ["Adam", "SGD", "SGD_momentum"]):
+        raise ValueError("Only Adam, SGD and SGD with momentum optimizers are supported at the moment")
+    
     # Run experiment
     main(args, is_CL)

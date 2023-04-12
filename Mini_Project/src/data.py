@@ -1,16 +1,38 @@
-import torch
-from torch.utils.data import Dataset
-from torchvision.transforms import ToTensor
-import matplotlib.pyplot as plt
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
+from torch import from_numpy
 import numpy as np
-
-from latent_CL.Utils.utils import set_seed  
 from latent_CL.dataset_encoder import prepare_scenarios
 from latent_CL.args import ArgsGenerator
 from latent_CL.Models.model import ModelContainer
 from continuum import ClassIncremental
 from continuum.datasets import MNIST, CIFAR10, CIFAR100
+import h5py
+from pathlib import Path
+
+class H5Dataset(Dataset):
+    def __init__(self, file_path):
+        self.file_path = file_path
+
+        # Open the HDF5 file
+        self.h5file = h5py.File(self.file_path, "r")
+
+        # Get the number of samples in the dataset
+        self.num_samples = len(self.h5file["data"])
+
+    def __len__(self):
+        return self.num_samples
+
+    def __getitem__(self, index):
+        # get data
+        x = self.h5file["data"][index]
+        x = from_numpy(x)
+
+        # get label
+        y =  self.h5file["targets"][index][0].astype(np.int_)
+        return (x, y)
+
+    def close(self):
+        self.h5file.close()
 
 # Function to get training and testing data
 # downloads and stores data in folder named "data" if not already there
@@ -102,36 +124,42 @@ def get_data_loader_CL(name, batch_size, device, n_tasks, init_inc=2):
     return train_scenario, test_scenario
 
 def get_data_loader_encoder(data_name, encoder_name, batch_size, device):
-    # We generate arguments for retrieving and loading the encoded data (and runs data through encoder if not already encoded)
-    args_generator = ArgsGenerator(dataset_name=data_name, 
-                                    dataset_encoder_name=encoder_name,
-                                    permute_task_order = False ,
-                                    n_classes = None, 
-                                    n_tasks = 1, 
-                                    epochs = 10, 
-                                    batch_size = batch_size, 
-                                    encoding_batch_size = batch_size, 
-                                    encode_with_continuum = True, 
-                                    device = device,
+    if encoder_name == "fVGG":
+        # Create dataloaders from encoded data from hdf5 file
+        train_dataloader = DataLoader(H5Dataset("./data/EncodedDatasets/"+data_name+ "_"+ encoder_name + "_train.hdf5"), batch_size=batch_size, shuffle=True)
+        test_dataloader = DataLoader(H5Dataset("./data/EncodedDatasets/"+data_name+ "_"+ encoder_name + "_test.hdf5"), batch_size=batch_size, shuffle=True)
+        return train_dataloader, test_dataloader
+    else:
+        # We generate arguments for retrieving and loading the encoded data (and runs data through encoder if not already encoded)
+        args_generator = ArgsGenerator(dataset_name=data_name, 
+                                        dataset_encoder_name=encoder_name,
+                                        permute_task_order = False ,
+                                        n_classes = None, 
+                                        n_tasks = 1, 
+                                        epochs = 10, 
+                                        batch_size = batch_size, 
+                                        encoding_batch_size = batch_size, 
+                                        encode_with_continuum = True, 
+                                        device = device,
 
-                                    estimate_compute_regime = False, 
-                                    estimate_time = False, 
-                                    estimate_compute_regime_encoding = False, 
+                                        estimate_compute_regime = False, 
+                                        estimate_time = False, 
+                                        estimate_compute_regime_encoding = False, 
 
-                                    regime ='latent_ER',
+                                        regime ='latent_ER',
 
-                                    data_path = "./data", 
-                                    weights_path = None, 
-                                )
-    args_model = ModelContainer.Options()
+                                        data_path = "./data", 
+                                        weights_path = None, 
+                                    )
+        args_model = ModelContainer.Options()
 
-    # We now use prepare_scenarios (from latent_CL) to retrieve the encoded data and then create data loaders
-    scenario, scenario_test = prepare_scenarios(args_generator, args_model) 
-    train_taskset = scenario[0]
-    train_dataloader = DataLoader(train_taskset, batch_size=batch_size, shuffle=True)
-    test_taskset = scenario_test[0]
-    test_dataloader = DataLoader(test_taskset, batch_size=batch_size, shuffle=True)
-    return train_dataloader, test_dataloader
+        # We now use prepare_scenarios (from latent_CL) to retrieve the encoded data and then create data loaders
+        scenario, scenario_test = prepare_scenarios(args_generator, args_model) 
+        train_data = scenario[0]
+        test_data= scenario_test[0]
+        train_dataloader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
+        test_dataloader = DataLoader(test_data, batch_size=batch_size, shuffle=True)
+        return train_dataloader, test_dataloader
 
 def get_data_loader_encoder_CL(data_name, encoder_name, batch_size, device, n_tasks):
     # We generate arguments for retrieving and loading the encoded data (and runs data through encoder if not already encoded)

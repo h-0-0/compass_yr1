@@ -1,12 +1,8 @@
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
-from torchvision import datasets
-from torchvision.transforms import ToTensor
 import time
 import os
-from continuum.metrics import Logger
-from numpy import argmax
 
 # Used to save models at checkpoints
 def save_checkpoint(model, optimizer, data_name, model_name, checkpoint_id, epochs=False , is_CL=True):
@@ -47,7 +43,7 @@ def save_checkpoint(model, optimizer, data_name, model_name, checkpoint_id, epoc
     print("Saved PyTorch Model State to saved_models/" + path + "/" + path + "_" + checkpoint_id +".pth")
 
 # Performs one epoch of training
-def train_loop(dataloader, model, loss_fn, optimizer, logger=None):
+def train_loop(dataloader, model, loss_fn, optimizer):
     # Check if model is in training mode and set to training mode if not
     if(model.training==False):
         model.train()
@@ -55,13 +51,7 @@ def train_loop(dataloader, model, loss_fn, optimizer, logger=None):
     # Get size of dataset, keep track of loss and accuracy and start training loop
     size = len(dataloader.dataset)
     train_loss, correct = 0, 0
-    for batch, vals in enumerate(dataloader):
-        # If using logger then get t as well as we are in CL scenario, else ignore t as not in CL scenario
-        if logger is not None:
-            (X, y, t) = vals
-        else:
-            (X, y, *ignore) = vals
-        
+    for batch, (X, y, *ignore) in enumerate(dataloader):
         # Move data to device that model is on
         X  = X.to(model.device)
         y = y.to(model.device)
@@ -92,19 +82,13 @@ def train_loop(dataloader, model, loss_fn, optimizer, logger=None):
     return train_loss, train_acc
 
 # Performs testing
-def test_loop(dataloader, model, loss_fn, logger=None):
+def test_loop(dataloader, model, loss_fn):
     size = len(dataloader.dataset)
     num_batches = len(dataloader)
     test_loss, correct = 0, 0
 
     with torch.no_grad():
-        for vals in dataloader:
-            # If using logger then get t as well as we are in CL scenario, else ignore t as not in CL scenario
-            if logger is not None:
-                (X, y, t) = vals
-            else:
-                (X, y, *ignore) = vals
-            
+        for (X, y, *ignore) in dataloader:
             # Move data to device that model is on
             X  = X.to(model.device)
             y = y.to(model.device)
@@ -178,7 +162,7 @@ def train(model, train_dataloader, test_dataloader, optimizer,
     print("Done!")
     return train_losses, test_losses, train_accs, test_accs, times, optimizer
 
-# Function that trains neural network over multiple epochs in CL scenario
+# Function that trains neural network over multiple epochs in CL scenario, note that if SGD with momentum is used then the momentum is reset after each task
 def train_CL(model, train_scenario, test_scenario, optimizer, data_name, model_name, 
         learning_rate = 1e-3, epochs = 5, 
         loss_fn=nn.CrossEntropyLoss()
@@ -218,6 +202,11 @@ def train_CL(model, train_scenario, test_scenario, optimizer, data_name, model_n
         # Create data-loaders for current task
         train_dataloader = DataLoader(train_dataset)
         test_dataloader = DataLoader(test_dataset)
+        # Reset optimizer if SGD with momentum is used
+        if (type (optimizer).__name__ == 'SGD') and (optimizer.defaults['momentum'] != 0) and (not first):
+            optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
+        if (type (optimizer).__name__ == 'Adam') and (not first):
+            optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
         # Creates key in dictionary to keep track of task specific metrics for current task
         train_TLs[task_id] = []
         train_TAs[task_id] = []
@@ -304,6 +293,3 @@ def train_CL(model, train_scenario, test_scenario, optimizer, data_name, model_n
         metrics["Test TL task "+str(t)] = [None]*n_pad + test_TLs[t]
         metrics["Test TA task "+str(t)] = [None]*n_pad + test_TAs[t]
     return metrics, optimizer
-
-
-# TOOO: make sure logger gone

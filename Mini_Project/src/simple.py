@@ -28,23 +28,37 @@ class FC_FF_NN(nn.Module):
             else:
                 if(encoder_name == "RN50_clip"):
                     in_features = 1024
+                elif(encoder_name == "fVGG"):
+                    in_features = 512
                 else:
-                    raise Exception("Not given valid encoder name must be: RN50_clip")
+                    raise Exception("Not given valid encoder name must be: RN50_clip or fVGG")
             
-            super(FC_FF_NN, self).__init__()
-            self.flatten = nn.Flatten()
-            self.network = nn.Sequential(
-                nn.Linear(in_features, 512),
-                nn.ReLU(),
-                nn.Linear(512, 512),
-                nn.ReLU(),
-                nn.Linear(512, 256),
-                nn.ReLU(),
-                nn.Linear(256, 128),
-                nn.ReLU(),
-                nn.Linear(128, 10)
-            )
-            self.device = None
+            if(encoder_name == "fVGG"):
+                super(FC_FF_NN, self).__init__()
+                self.flatten = nn.Flatten()
+                self.network = nn.Sequential(
+                    nn.Linear(512, 512),
+                    nn.ReLU(inplace=True),
+                    nn.Linear(512, 512),
+                    nn.ReLU(inplace=True),
+                    nn.Linear(512, 10),
+                )
+                self.device = None
+            else:
+                super(FC_FF_NN, self).__init__()
+                self.flatten = nn.Flatten()
+                self.network = nn.Sequential(
+                    nn.Linear(in_features, 512),
+                    nn.ReLU(),
+                    nn.Linear(512, 512),
+                    nn.ReLU(),
+                    nn.Linear(512, 256),
+                    nn.ReLU(),
+                    nn.Linear(256, 128),
+                    nn.ReLU(),
+                    nn.Linear(128, 10)
+                )
+                self.device = None
 
         elif(data_name == "CIFAR100"):
             # We customize the input size depending on the encoder used,
@@ -54,23 +68,37 @@ class FC_FF_NN(nn.Module):
             else:
                 if(encoder_name == "RN50_clip"):
                     in_features = 1024
+                elif(encoder_name == "fVGG"):
+                    in_features = 512
                 else:
-                    raise Exception("Not given valid encoder name must be: RN50_clip")
+                    raise Exception("Not given valid encoder name must be: RN50_clip or fVGG")
             
-            super(FC_FF_NN, self).__init__()
-            self.flatten = nn.Flatten()
-            self.network = nn.Sequential(
-                nn.Linear(in_features, 512),
-                nn.ReLU(),
-                nn.Linear(512, 512),
-                nn.ReLU(),
-                nn.Linear(512, 256),
-                nn.ReLU(),
-                nn.Linear(256, 128),
-                nn.ReLU(),
-                nn.Linear(128, 100)
-            )
-            self.device = None
+            if(encoder_name == "fVGG"):
+                super(FC_FF_NN, self).__init__()
+                self.flatten = nn.Flatten()
+                self.network = nn.Sequential(
+                    nn.Linear(512, 512),
+                    nn.ReLU(inplace=True),
+                    nn.Linear(512, 512),
+                    nn.ReLU(inplace=True),
+                    nn.Linear(512, 100),
+                )
+                self.device = None
+            else:
+                super(FC_FF_NN, self).__init__()
+                self.flatten = nn.Flatten()
+                self.network = nn.Sequential(
+                    nn.Linear(in_features, 512),
+                    nn.ReLU(),
+                    nn.Linear(512, 512),
+                    nn.ReLU(),
+                    nn.Linear(512, 256),
+                    nn.ReLU(),
+                    nn.Linear(256, 128),
+                    nn.ReLU(),
+                    nn.Linear(128, 100)
+                )
+                self.device = None
         else:
             raise Exception("Not given valid dataset name must be: MNIST, CIFAR10 or CIFAR100")
 
@@ -114,46 +142,52 @@ class CNN(nn.Module):
             # Based on VGG16 architecture
             self.conv = nn.Sequential(
                 # Block 1
-                nn.Conv2d(in_channels=in_channels, out_channels=64, kernel_size=(3,3), stride=1, padding="same"),
-                nn.ReLU(),
-                nn.Conv2d(in_channels=64, out_channels=64, kernel_size=(3,3), stride=1, padding="same"),
-                nn.ReLU(),
-                nn.MaxPool2d(kernel_size=(2,2)),
+                nn.Conv2d(in_channels=in_channels, out_channels=64, kernel_size=3, stride=1, padding=1),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1, padding=1),
+                nn.ReLU(inplace=True),
+                nn.MaxPool2d(kernel_size=2, stride=2),
+
                 # Block 2
-                nn.Conv2d(in_channels=64, out_channels=128, kernel_size=(3,3), stride=1, padding="same"),
-                nn.ReLU(),
-                nn.Conv2d(in_channels=128, out_channels=128, kernel_size=(3,3), stride=1, padding="same"),
-                nn.ReLU(),
-                nn.MaxPool2d(kernel_size=(2,2)),
+                nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=1, padding=1),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(in_channels=128, out_channels=128, kernel_size=3, stride=1, padding=1),
+                nn.ReLU(inplace=True),
+                nn.MaxPool2d(kernel_size=2, stride=2),
+
                 # Block 3
-                nn.Conv2d(in_channels=128, out_channels=256, kernel_size=(3,3), stride=1, padding="same"),
-                nn.ReLU(),
-                nn.Conv2d(in_channels=256, out_channels=256, kernel_size=(3,3), stride=1, padding="same"),
-                nn.ReLU(),
-                nn.Conv2d(in_channels=256, out_channels=256, kernel_size=(3,3), stride=1, padding="same"),
-                nn.ReLU(),
-                nn.MaxPool2d(kernel_size=(2,2)),
+                nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, stride=1, padding=1),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3, stride=1, padding=1),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3, stride=1, padding=1),
+                nn.ReLU(inplace=True),
+                nn.MaxPool2d(kernel_size=2, stride=2),
+
                 # Block 4
-                nn.Conv2d(in_channels=256, out_channels=512, kernel_size=(3,3), stride=1, padding="same"),
-                nn.ReLU(),
-                nn.Conv2d(in_channels=512, out_channels=512, kernel_size=(3,3), stride=1, padding="same"),
-                nn.ReLU(),
-                nn.Conv2d(in_channels=512, out_channels=512, kernel_size=(3,3), stride=1, padding="same"),
-                nn.ReLU(),
-                nn.MaxPool2d(kernel_size=(2,2)),
+                nn.Conv2d(in_channels=256, out_channels=512, kernel_size=3, stride=1, padding=1),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(in_channels=512, out_channels=512, kernel_size=3, stride=1, padding=1),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(in_channels=512, out_channels=512, kernel_size=3, stride=1, padding=1),
+                nn.ReLU(inplace=True),
+                nn.MaxPool2d(kernel_size=2, stride=2),
+
                 # Block 5
-                nn.Conv2d(in_channels=512, out_channels=512, kernel_size=(3,3), stride=1, padding="same"),
-                nn.ReLU(),
-                nn.Conv2d(in_channels=512, out_channels=512, kernel_size=(3,3), stride=1, padding="same"),
-                nn.ReLU(),
-                nn.Conv2d(in_channels=512, out_channels=512, kernel_size=(3,3), stride=1, padding="same"),
-                nn.ReLU(),
-                nn.MaxPool2d(kernel_size=(2,2))
+                nn.Conv2d(in_channels=512, out_channels=512, kernel_size=3, stride=1, padding=1),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(in_channels=512, out_channels=512, kernel_size=3, stride=1, padding=1),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(in_channels=512, out_channels=512, kernel_size=3, stride=1, padding=1),
+                nn.ReLU(inplace=True),
+                nn.MaxPool2d(kernel_size=2, stride=2)
             )
             self.fc = nn.Sequential(
-                nn.Linear(512, 128),
-                nn.ReLU(),
-                nn.Linear(128, 10)
+                nn.Linear(512, 512),
+                nn.ReLU(inplace=True),
+                nn.Linear(512, 512),
+                nn.ReLU(inplace=True),
+                nn.Linear(512, 10),
             )
             self.flatten = nn.Flatten()
             self.device = None
@@ -167,31 +201,77 @@ class CNN(nn.Module):
                 raise Exception("Not given valid encoder name must be: RN50_clip")
             super(CNN, self).__init__()
 
-            # 3 VGG blocks
+            # Based on VGG16 architecture
             self.conv = nn.Sequential(
                 # Block 1
-                nn.Conv2d(in_channels=in_channels, out_channels=32, kernel_size=(3,3), stride=1, padding=0),
-                nn.ReLU(),
-                nn.Conv2d(in_channels=32, out_channels=32, kernel_size=(3,3), stride=1, padding=0),
-                nn.ReLU(),
-                nn.MaxPool2d(kernel_size=(2,2)),
+                nn.Conv2d(in_channels=in_channels, out_channels=64, kernel_size=3, stride=1, padding=1),
+                nn.BatchNorm2d(64),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1, padding=1),
+                nn.BatchNorm2d(64),
+                nn.ReLU(inplace=True),
+                nn.MaxPool2d(kernel_size=2, stride=2),
+                nn.Dropout(0.5),
+
                 # Block 2
-                nn.Conv2d(in_channels=32, out_channels=64, kernel_size=(3,3), stride=1, padding=0),
-                nn.ReLU(),
-                nn.Conv2d(in_channels=64, out_channels=64, kernel_size=(3,3), stride=1, padding=0),
-                nn.ReLU(),
-                nn.MaxPool2d(kernel_size=(2,2))
+                nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=1, padding=1),
+                nn.BatchNorm2d(128),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(in_channels=128, out_channels=128, kernel_size=3, stride=1, padding=1),
+                nn.BatchNorm2d(128),
+                nn.ReLU(inplace=True),
+                nn.MaxPool2d(kernel_size=2, stride=2),
+                nn.Dropout(0.5),
+
                 # Block 3
-                # nn.Conv2d(in_channels=64, out_channels=128, kernel_size=(3,3), stride=1, padding=0),
-                # nn.ReLU(),
-                # nn.Conv2d(in_channels=128, out_channels=128, kernel_size=(3,3), stride=1, padding=0),
-                # nn.ReLU(),
-                # nn.MaxPool2d(kernel_size=(2,2))
+                nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, stride=1, padding=1),
+                nn.BatchNorm2d(256),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3, stride=1, padding=1),
+                nn.BatchNorm2d(256),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3, stride=1, padding=1),
+                nn.BatchNorm2d(256),
+                nn.ReLU(inplace=True),
+                nn.MaxPool2d(kernel_size=2, stride=2),
+                nn.Dropout(0.5),
+
+                # Block 4
+                nn.Conv2d(in_channels=256, out_channels=512, kernel_size=3, stride=1, padding=1),
+                nn.BatchNorm2d(512),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(in_channels=512, out_channels=512, kernel_size=3, stride=1, padding=1),
+                nn.BatchNorm2d(512),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(in_channels=512, out_channels=512, kernel_size=3, stride=1, padding=1),
+                nn.BatchNorm2d(512),
+                nn.ReLU(inplace=True),
+                nn.MaxPool2d(kernel_size=2, stride=2),
+                nn.Dropout(0.5),
+
+                # Block 5
+                nn.Conv2d(in_channels=512, out_channels=512, kernel_size=3, stride=1, padding=1),
+                nn.BatchNorm2d(512),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(in_channels=512, out_channels=512, kernel_size=3, stride=1, padding=1),
+                nn.BatchNorm2d(512),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(in_channels=512, out_channels=512, kernel_size=3, stride=1, padding=1),
+                nn.BatchNorm2d(512),
+                nn.ReLU(inplace=True),
+                nn.MaxPool2d(kernel_size=2, stride=2),
+                nn.Dropout(0.5)
             )
             self.fc = nn.Sequential(
-                nn.Linear(1600, 256),
-                nn.ReLU(),
-                nn.Linear(256, 100)
+                nn.Linear(512, 512),
+                nn.BatchNorm2d(512),
+                nn.ReLU(inplace=True),
+                nn.Dropout(0.5),
+                nn.Linear(512, 512),
+                nn.BatchNorm2d(512),
+                nn.ReLU(inplace=True),
+                nn.Dropout(0.5),
+                nn.Linear(512, 100),
             )
             self.flatten = nn.Flatten()
             self.device = None
@@ -204,5 +284,3 @@ class CNN(nn.Module):
         out = self.flatten(out)
         out = self.fc(out)
         return out
-
-# TODO: check VGG big results, maybe batch nomralization? maybe make fully connected layers in CNN and FC_FF_NN with encoder the same?
