@@ -6,9 +6,10 @@
 #SBATCH --gres=gpu:4
 #SBATCH --ntasks-per-node=4   # This needs to match Trainer(devices=...)
 #SBATCH --mem=4G
-#SBATCH --time=0-01:00:00
+#SBATCH --time=0-04:00:00
 #SBATCH --signal=SIGHUP@90
 #SBATCH --account MATH021322
+#SBATCH --job-name=AE
 
 # Define executable
 export EXE=/bin/hostname

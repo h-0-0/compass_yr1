@@ -1,0 +1,40 @@
+cpu-bind=MASK - bp1-gpu026, task  0  0 [234597]: mask 0x1717 set
+bp1-gpu026.data.bp.acrc.priv
+JOB ID: 4761538
+Working Directory: /user/work/jd18380/compass_yr1/SC2/portfolio_8
+Start Time: Fri 7 Apr 08:56:37 BST 2023
+GPU available: True (cuda), used: True
+TPU available: False, using: 0 TPU cores
+IPU available: False, using: 0 IPUs
+HPU available: False, using: 0 HPUs
+/user/home/jd18380/tmp/mypyenvb/lib/python3.7/site-packages/lightning/pytorch/trainer/configuration_validator.py:110: PossibleUserWarning: You defined a `validation_step` but have no `val_dataloader`. Skipping val loop.
+  category=PossibleUserWarning,
+Initializing distributed: GLOBAL_RANK: 0, MEMBER: 1/4
+Using device:  cuda
+Files already downloaded and verified
+Files already downloaded and verified
+Traceback (most recent call last):
+  File "main.py", line 66, in <module>
+    main(args)
+  File "main.py", line 31, in main
+    trainer.fit(model=ED, train_dataloaders=training_loader)
+  File "/user/home/jd18380/tmp/mypyenvb/lib/python3.7/site-packages/lightning/pytorch/trainer/trainer.py", line 609, in fit
+    self, self._fit_impl, model, train_dataloaders, val_dataloaders, datamodule, ckpt_path
+  File "/user/home/jd18380/tmp/mypyenvb/lib/python3.7/site-packages/lightning/pytorch/trainer/call.py", line 38, in _call_and_handle_interrupt
+    return trainer_fn(*args, **kwargs)
+  File "/user/home/jd18380/tmp/mypyenvb/lib/python3.7/site-packages/lightning/pytorch/trainer/trainer.py", line 650, in _fit_impl
+    self._run(model, ckpt_path=self.ckpt_path)
+  File "/user/home/jd18380/tmp/mypyenvb/lib/python3.7/site-packages/lightning/pytorch/trainer/trainer.py", line 1048, in _run
+    self.strategy.setup_environment()
+  File "/user/home/jd18380/tmp/mypyenvb/lib/python3.7/site-packages/lightning/pytorch/strategies/ddp.py", line 152, in setup_environment
+    self.setup_distributed()
+  File "/user/home/jd18380/tmp/mypyenvb/lib/python3.7/site-packages/lightning/pytorch/strategies/ddp.py", line 203, in setup_distributed
+    _init_dist_connection(self.cluster_environment, self._process_group_backend, timeout=self._timeout)
+  File "/user/home/jd18380/tmp/mypyenvb/lib/python3.7/site-packages/lightning/fabric/utilities/distributed.py", line 245, in _init_dist_connection
+    torch.distributed.init_process_group(torch_distributed_backend, rank=global_rank, world_size=world_size, **kwargs)
+  File "/user/home/jd18380/tmp/mypyenvb/lib/python3.7/site-packages/torch/distributed/distributed_c10d.py", line 786, in init_process_group
+    _store_based_barrier(rank, store, timeout)
+  File "/user/home/jd18380/tmp/mypyenvb/lib/python3.7/site-packages/torch/distributed/distributed_c10d.py", line 349, in _store_based_barrier
+    rank, store_key, world_size, worker_count, timeout
+RuntimeError: Timed out initializing process group in store based barrier on rank: 0, for key: store_based_barrier_key:1 (world_size=4, worker_count=1, timeout=0:30:00)
+End Time: Fri 7 Apr 09:57:14 BST 2023

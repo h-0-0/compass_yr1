@@ -1,9 +1,9 @@
-from torch import optim, nn, sigmoid, flatten, zeros, sum
+from torch import optim, nn, sigmoid, flatten, zeros, sum, exp, randn_like
 import torch.nn.functional as F
 import lightning as L
 
 # Class for an encoder
-class Encoder(nn.Module):
+class Encoder(L.LightningModule):
     def __init__(self, num_input_channels: int, base_channel_size: int, latent_dim: int, act_fn: object = nn.GELU):
         """
         Args:
@@ -33,7 +33,7 @@ class Encoder(nn.Module):
         return self.net(x)
 
 # Class for a variational encoder
-class VarEncoder(nn.Module):
+class VarEncoder(L.LightningModule):
     def __init__(self, num_input_channels: int, base_channel_size: int, latent_dim: int, act_fn: object = nn.GELU):
         """
         Args:
@@ -56,7 +56,7 @@ class VarEncoder(nn.Module):
             nn.Conv2d(2 * c_hid, 2 * c_hid, kernel_size=3, padding=1, stride=2),  # 8x8 => 4x4
             act_fn()
         )
-        self.flatten = nn.Flatten(),  # Image grid to single feature vector
+        self.flatten = nn.Flatten()  # Image grid to single feature vector
         self.fc_mu = nn.Linear(c_hid*8*2*2, latent_dim)
         self.fc_logvar = nn.Linear(c_hid*8*2*2, latent_dim)
 
@@ -68,7 +68,7 @@ class VarEncoder(nn.Module):
         return mu, logvar
 
 # Class or a decoder
-class Decoder(nn.Module):
+class Decoder(L.LightningModule):
     def __init__(self, num_input_channels: int, base_channel_size: int, latent_dim: int, act_fn: object = nn.GELU):
         """
         Args:
@@ -153,6 +153,7 @@ class AutoEncoder(L.LightningModule):
     def configure_optimizers(self):
         """Configures the optimizer, we use Adam with a learning rate of 1e-3."""
         optimizer = optim.Adam(self.parameters(), lr=1e-3)
+        return optimizer
 
     def training_step(self, batch, batch_idx):
         """Given a batch of images, this function returns the training loss."""
@@ -191,6 +192,8 @@ class VarAutoEncoder(L.LightningModule):
         num_input_channels: int = 3,
         width: int = 32,
         height: int = 32,
+        learning_rate: float = 1e-3,
+        beta: float = 1.0,
     ):
         super().__init__()
         # Saving hyperparameters of autoencoder
@@ -203,14 +206,22 @@ class VarAutoEncoder(L.LightningModule):
 
     def forward(self, x):
         """The forward function takes in an image and returns the reconstructed image."""
-        z = self.encoder(x)
+        mu, logvar = self.encoder(x)
+        z = self.reparameterize(mu, logvar)
         x_hat = self.decoder(z)
         return x_hat
 
+    def reparameterize(self, mu, logvar):
+        """Reparameterization trick to sample from N(mu, var) from N(0,1)."""
+        std = exp(0.5 * logvar)
+        eps = randn_like(std)
+        return eps * std + mu
+    
     def _get_total_loss(self, batch):
-        """Given a batch of images, this function returns the total loss (MSE in our case) which is the reconstruction loss + the KL divergence loss"""
+        """Given a batch of images, this function returns the total loss (MSE in our case) which is the reconstruction loss + the KL divergence loss, aswell as the reconstruction loss and the KL divergence loss separately."""
         x, _ = batch  # We do not need the labels
-        z, mu, log_var = self.encoder(x)
+        mu, log_var = self.encoder(x)
+        z = self.reparameterize(mu, log_var)
         x_hat = self.decoder(z)
         reconstruction_loss = F.mse_loss(x, x_hat, reduction="none")
         reconstruction_loss = reconstruction_loss.sum(dim=[1, 2, 3]).mean(dim=[0])

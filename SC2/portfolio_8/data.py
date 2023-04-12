@@ -52,12 +52,12 @@ def get_data(name, device):
 
 
 # Function to retrieve data and create data loaders
-def get_data_loader(name, batch_size, device):
+def get_data_loader(name, batch_size, device, num_workers=0):
     # Get training and testing data
     training_data, test_data = get_data(name, device)
 
     # Create data loaders
-    train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
-    test_dataloader = DataLoader(test_data, batch_size=batch_size, shuffle=True)
+    train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True, num_workers=num_workers)
+    test_dataloader = DataLoader(test_data, batch_size=batch_size, shuffle=True, num_workers=num_workers)
 
     return train_dataloader, test_dataloader

@@ -24,7 +24,7 @@ def main(args):
         ED = vae.VarAutoEncoder(32, l_dim, num_input_channels=3)
 
     # Setup data
-    training_loader, test_loader = data.get_data_loader("CIFAR10", 64, device)
+    training_loader, test_loader = data.get_data_loader("CIFAR10", 64, device, num_workers=0)
 
     # Train the model 
     trainer = pl.Trainer(accelerator="auto", devices=4, num_nodes=1, strategy="ddp", max_epochs=500, plugins=[SLURMEnvironment(requeue_signal=signal.SIGHUP)])
