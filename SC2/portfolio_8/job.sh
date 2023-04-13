@@ -3,11 +3,10 @@
 # 
 #SBATCH --partition=gpu
 #SBATCH --nodes=1             # This needs to match Trainer(num_nodes=...)
-#SBATCH --gres=gpu:4
-#SBATCH --ntasks-per-node=4   # This needs to match Trainer(devices=...)
+#SBATCH --gres=gpu:1
+#SBATCH --ntasks-per-node=1   # This needs to match Trainer(devices=...)
 #SBATCH --mem=4G
 #SBATCH --time=0-04:00:00
-#SBATCH --signal=SIGHUP@90
 #SBATCH --account MATH021322
 #SBATCH --job-name=AE
 
