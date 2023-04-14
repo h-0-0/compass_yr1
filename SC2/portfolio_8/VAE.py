@@ -158,7 +158,7 @@ class AutoEncoder(L.LightningModule):
     def training_step(self, batch, batch_idx):
         """Given a batch of images, this function returns the training loss."""
         loss = self._get_reconstruction_loss(batch)
-        self.log("train_loss", loss)
+        self.log("train_loss", loss, on_epoch=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -169,7 +169,7 @@ class AutoEncoder(L.LightningModule):
     def test_step(self, batch, batch_idx):
         """Given a batch of images, this function returns the test loss."""
         loss = self._get_reconstruction_loss(batch)
-        self.log("test_loss", loss)
+        self.log("test_loss", loss, on_epoch=True)
 
 # Class for variational autoencoder
 class VarAutoEncoder(L.LightningModule):

@@ -26,9 +26,14 @@ def main(args):
     # Setup data
     training_loader, test_loader = data.get_data_loader("CIFAR10", 64, device)
 
-    # Train the model 
+    # Setup optimizer
     trainer = pl.Trainer(accelerator="auto", devices=1, num_nodes=1, max_epochs=500)
-    trainer.fit(model=ED, train_dataloaders=training_loader)
+
+    # Train the model
+    trainer.fit(model=ED, train_dataloaders=training_loader, val_dataloaders=test_loader)
+
+    # Add testing to the model 
+    trainer.test(model=ED, dataloaders=test_loader)
 
     # Save the model
     if not os.path.exists("saved_models"):
@@ -37,9 +42,6 @@ def main(args):
         trainer.save_checkpoint("saved_models/autoencoder_"+ str(l_dim) + ".ckpt")
     elif args.vae:
         trainer.save_checkpoint("saved_models/varautoencoder_"+ str(l_dim) + ".ckpt")
-
-    # Test the model 
-    trainer.test(model=ED, dataloaders=test_loader)
 
     # choose your trained nn.Module
     encoder = ED.encoder
