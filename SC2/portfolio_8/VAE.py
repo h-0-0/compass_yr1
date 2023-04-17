@@ -2,9 +2,13 @@ from torch import optim, nn, sigmoid, flatten, zeros, sum, exp, randn_like
 import torch.nn.functional as F
 import lightning as L
 
+# Class for an encoderfrom torch import optim, nn, sigmoid, flatten, zeros, sum, exp, randn_like
+import torch.nn.functional as F
+import lightning as L
+
 # Class for an encoder
 class Encoder(L.LightningModule):
-    def __init__(self, num_input_channels: int, base_channel_size: int, latent_dim: int, act_fn: object = nn.GELU):
+    def __init__(self, num_input_channels: int, base_channel_size: int, latent_dim: int, act_fn: object = nn.ReLU):
         """
         Args:
            num_input_channels : Number of input channels of the image. For CIFAR, this parameter is 3
@@ -14,18 +18,29 @@ class Encoder(L.LightningModule):
         """
         super().__init__()
         c_hid = base_channel_size
+        # self.net = nn.Sequential(
+        #     nn.Conv2d(num_input_channels, c_hid, kernel_size=3, padding=1, stride=2),  # 32x32 => 16x16
+        #     act_fn(),
+        #     nn.Conv2d(c_hid, c_hid, kernel_size=3, padding=1),
+        #     act_fn(),
+        #     nn.Conv2d(c_hid, 2 * c_hid, kernel_size=3, padding=1, stride=2),  # 16x16 => 8x8
+        #     act_fn(),
+        #     nn.Conv2d(2 * c_hid, 2 * c_hid, kernel_size=3, padding=1),
+        #     act_fn(),
+        #     nn.Conv2d(2 * c_hid, 2 * c_hid, kernel_size=3, padding=1, stride=2),  # 8x8 => 4x4
+        #     act_fn(),
+        #     nn.Flatten(),  # Image grid to single feature vector
+        #     nn.Linear(2 * 16 * c_hid, latent_dim),
+        # )
+
         self.net = nn.Sequential(
-            nn.Conv2d(num_input_channels, c_hid, kernel_size=3, padding=1, stride=2),  # 32x32 => 16x16
+            nn.Conv2d(num_input_channels, c_hid, kernel_size=3, padding=1, stride=2),  
             act_fn(),
-            nn.Conv2d(c_hid, c_hid, kernel_size=3, padding=1),
+            nn.Conv2d(c_hid, 2*c_hid, kernel_size=3, padding=1),
             act_fn(),
-            nn.Conv2d(c_hid, 2 * c_hid, kernel_size=3, padding=1, stride=2),  # 16x16 => 8x8
+            nn.Conv2d(2*c_hid, 4 * c_hid, kernel_size=3, padding=1, stride=2), 
             act_fn(),
-            nn.Conv2d(2 * c_hid, 2 * c_hid, kernel_size=3, padding=1),
-            act_fn(),
-            nn.Conv2d(2 * c_hid, 2 * c_hid, kernel_size=3, padding=1, stride=2),  # 8x8 => 4x4
-            act_fn(),
-            nn.Flatten(),  # Image grid to single feature vector
+            nn.Flatten(), 
             nn.Linear(2 * 16 * c_hid, latent_dim),
         )
 
@@ -80,20 +95,30 @@ class Decoder(L.LightningModule):
         super().__init__()
         c_hid = base_channel_size
         self.linear = nn.Sequential(nn.Linear(latent_dim, 2 * 16 * c_hid), act_fn())
+        # self.net = nn.Sequential(
+        #     nn.ConvTranspose2d(
+        #         2 * c_hid, 2 * c_hid, kernel_size=3, output_padding=1, padding=1, stride=2
+        #     ),  # 4x4 => 8x8
+        #     act_fn(),
+        #     nn.Conv2d(2 * c_hid, 2 * c_hid, kernel_size=3, padding=1),
+        #     act_fn(),
+        #     nn.ConvTranspose2d(2 * c_hid, c_hid, kernel_size=3, output_padding=1, padding=1, stride=2),  # 8x8 => 16x16
+        #     act_fn(),
+        #     nn.Conv2d(c_hid, c_hid, kernel_size=3, padding=1),
+        #     act_fn(),
+        #     nn.ConvTranspose2d(
+        #         c_hid, num_input_channels, kernel_size=3, output_padding=1, padding=1, stride=2
+        #     ),  # 16x16 => 32x32
+        #     nn.Tanh(),  # The input images is scaled between -1 and 1, hence the output has to be bounded as well
+        # )
         self.net = nn.Sequential(
             nn.ConvTranspose2d(
-                2 * c_hid, 2 * c_hid, kernel_size=3, output_padding=1, padding=1, stride=2
-            ),  # 4x4 => 8x8
+                4 * c_hid, 2 * c_hid, kernel_size=3, padding=1, stride=2), 
             act_fn(),
-            nn.Conv2d(2 * c_hid, 2 * c_hid, kernel_size=3, padding=1),
-            act_fn(),
-            nn.ConvTranspose2d(2 * c_hid, c_hid, kernel_size=3, output_padding=1, padding=1, stride=2),  # 8x8 => 16x16
-            act_fn(),
-            nn.Conv2d(c_hid, c_hid, kernel_size=3, padding=1),
+            nn.ConvTranspose2d(2 * c_hid, c_hid, kernel_size=3, padding=1, stride=2),  
             act_fn(),
             nn.ConvTranspose2d(
-                c_hid, num_input_channels, kernel_size=3, output_padding=1, padding=1, stride=2
-            ),  # 16x16 => 32x32
+                c_hid, num_input_channels, kernel_size=3, padding=1, stride=2), 
             nn.Tanh(),  # The input images is scaled between -1 and 1, hence the output has to be bounded as well
         )
 
