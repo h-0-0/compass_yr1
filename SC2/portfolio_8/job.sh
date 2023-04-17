@@ -8,7 +8,7 @@
 #SBATCH --mem=4G
 #SBATCH --time=0-04:00:00
 #SBATCH --account MATH021322
-#SBATCH --job-name=AE
+#SBATCH --job-name=AE-2048
 
 # Define executable
 export EXE=/bin/hostname
@@ -29,7 +29,7 @@ echo Start Time: $(date)
 # python3 -m venv ./mypyenvb
 # We activate the virtual environment
 source mypyenv/bin/activate
-python main.py --l_dim=256 --ae
+python main.py --l_dim=2048 --ae
 # Can use below if you want to submit a job for execution in real time
 # srun python3 train.py
 

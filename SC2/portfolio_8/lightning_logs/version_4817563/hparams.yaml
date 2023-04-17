@@ -1,9 +1,0 @@
-base_channel_size: 32
-beta: 1.0
-decoder_class: !!python/name:VAE.Decoder ''
-encoder_class: !!python/name:VAE.VarEncoder ''
-height: 32
-latent_dim: 256
-learning_rate: 0.001
-num_input_channels: 3
-width: 32
