@@ -171,7 +171,7 @@ def plot_PTA(results_df, model_name, path=False, xs = False):
         plt.savefig(path + model_name + "_PTA.png")
         plt.clf()
 
-# Plot training and testing loss for all task trained on up to current task being trained on over training for a given model
+# Plot training and testing loss seperately for all task trained on up to current task being trained on over training for a given model
 def plot_TLs(results_df, model_name, path=False, xs = False):
     # Get list of task ids
     task_ids = results_df.loc[results_df['Model Name'] == model_name, 'Task Name'].values
@@ -207,7 +207,59 @@ def plot_TLs(results_df, model_name, path=False, xs = False):
             plt.savefig(path + model_name + "_TL_task_"+ task_id +".png")
             plt.clf()
 
+# Function that adds padding at begining so that all lists are same length
+def pad_list(lists):
+    # Get max length
+    max_len = max([len(l) for l in lists])
+    # Pad all lists
+    for i in range(len(lists)):
+        lists[i] = [0]*(max_len-len(lists[i])) + lists[i]
+    return lists
+
 # Plot training and testing loss for all task trained on up to current task being trained on over training for a given model
+def plot_TL(results_df, model_name, path=False, xs = False):
+    # Get list of task ids
+    task_ids = results_df.loc[results_df['Model Name'] == model_name, 'Task Name'].values
+    # Get total number of epochs
+    epochs = [i for i in range(len(task_ids))]
+    # Only keep unique task ids
+    task_ids = unique(task_ids)
+
+    # Create figure for plotting
+    plt.figure()
+    for task_id in task_ids:
+        task_id = str(task_id)
+        # Get training and testing loss for model
+        train_TL = results_df.loc[results_df['Model Name'] == model_name, 'Train TL task '+task_id].values
+        test_TL = results_df.loc[results_df['Model Name'] == model_name, 'Test TL task '+task_id].values
+        # Pad lists
+        train_TL, test_TL = pad_list([train_TL, test_TL])
+
+        # Plot training and testing loss over time
+        if xs == False:
+            plt.plot(epochs, train_TL, label="Training TL for task "+ task_id)
+            plt.plot(epochs, test_TL, label="Testing TL for task "+ task_id, linestyle="dashed")
+            plt.xlabel("Epoch")
+        else:
+            plt.plot(epochs, train_TL, label="Training TL for task "+ task_id)
+            plt.plot(epochs, test_TL, label="Testing TL for task "+ task_id, linestyle="dashed")
+            plt.xlabel("Task.Epoch")
+            plt.xticks([i for i in range(len(xs))], [str(x) for x in xs])
+        plt.ylabel("Task Loss (TL)")
+        plt.title("Task Loss (TL) on tasks over training for " + model_name)
+        plt.legend()
+
+    # Save or show plot
+    if path == False:
+        plt.show()
+    else:
+        # Check if path exists
+        if not os.path.exists(path):
+            os.makedirs(path)
+        plt.savefig(path + model_name + "_TL_task.png")
+        plt.clf()
+
+# Plot training and testing loss seperately for all task trained on up to current task being trained on over training for a given model
 def plot_TAs(results_df, model_name, path=False, xs = False):
     # Get list of task ids
     task_ids = results_df.loc[results_df['Model Name'] == model_name, 'Task Name'].values
@@ -242,6 +294,49 @@ def plot_TAs(results_df, model_name, path=False, xs = False):
                 os.makedirs(path)
             plt.savefig(path + model_name + "_TA_task_"+ task_id +".png")
             plt.clf()
+
+# Plot training and testing accuracy for all task trained on up to current task being trained on over training for a given model
+def plot_TA(results_df, model_name, path=False, xs = False):
+    # Get list of task ids
+    task_ids = results_df.loc[results_df['Model Name'] == model_name, 'Task Name'].values
+    # Get total number of epochs
+    epochs = [i for i in range(len(task_ids))]
+    # Only keep unique task ids
+    task_ids = unique(task_ids)
+
+    # Create figure for plotting
+    plt.figure()
+    for task_id in task_ids:
+        task_id = str(task_id)
+        # Get training and testing loss for model
+        train_TA = results_df.loc[results_df['Model Name'] == model_name, 'Train TA task '+task_id].values
+        test_TA = results_df.loc[results_df['Model Name'] == model_name, 'Test TA task '+task_id].values
+        # Pad lists
+        train_TA, test_TA = pad_list([train_TA, test_TA])
+
+        # Plot training and testing loss over time
+        if xs == False:
+            plt.plot(epochs, train_TA, label="Training TA for task "+ task_id)
+            plt.plot(epochs, test_TA, label="Testing TA for task "+ task_id, linestyle="dashed")
+            plt.xlabel("Epoch")
+        else:
+            plt.plot(epochs, train_TA, label="Training TA for task "+ task_id)
+            plt.plot(epochs, test_TA, label="Testing TA for task "+ task_id, linestyle="dashed")
+            plt.xlabel("Task.Epoch")
+            plt.xticks([i for i in range(len(xs))], [str(x) for x in xs])
+        plt.ylabel("Task Accuracy (TA)")
+        plt.title("Task Accuracy (TA) on tasks over training for " + model_name)
+        plt.legend()
+
+    # Save or show plot
+    if path == False:
+        plt.show()
+    else:
+        # Check if path exists
+        if not os.path.exists(path):
+            os.makedirs(path)
+        plt.savefig(path + model_name + "_TA_task.png")
+        plt.clf()
 
 # Given dataframe and model name creates x values for plotting from epochs and task columns
 def create_xs(results_df, model_name):
@@ -283,8 +378,8 @@ def plot_default(data_names, model_names, is_CL: bool=False):
                 plot_CTA(results_df, model_name, path=path, xs=xs)
                 plot_PTL(results_df, model_name, path=path, xs=xs)
                 plot_PTA(results_df, model_name, path=path, xs=xs)
-                plot_TLs(results_df, model_name, path=path, xs=xs)
-                plot_TAs(results_df, model_name, path=path, xs=xs)
+                plot_TL(results_df, model_name, path=path, xs=xs)
+                plot_TA(results_df, model_name, path=path, xs=xs)
     else:
         # Load new results
         results_df = results.load_results(data_names, CL_ext=CL_ext)
@@ -300,5 +395,5 @@ def plot_default(data_names, model_names, is_CL: bool=False):
             plot_CTA(results_df, model_names, path=path, xs=xs)
             plot_PTL(results_df, model_names, path=path, xs=xs)
             plot_PTA(results_df, model_names, path=path, xs=xs)
-            plot_TLs(results_df, model_names, path=path, xs=xs)
-            plot_TAs(results_df, model_names, path=path, xs=xs)
+            plot_TL(results_df, model_names, path=path, xs=xs)
+            plot_TA(results_df, model_names, path=path, xs=xs)

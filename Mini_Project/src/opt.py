@@ -171,7 +171,7 @@ def train_CL(model, train_scenario, test_scenario, optimizer, data_name, model_n
     past_train_dataloader = {}
     past_test_dataloader = {}
 
-    # Initialize arrays to keep track of various metrics
+    # Initialize arrays/dictionaries to keep track of various metrics
     # Keeps track of time
     times = []
     # Keeps track of losses and accuracies for task currently being trained on
@@ -189,7 +189,12 @@ def train_CL(model, train_scenario, test_scenario, optimizer, data_name, model_n
     train_PTAs = []
     test_PTLs = []
     test_PTAs = []
-
+    # Keeps track of losses and accuracies on each specific task over training  
+    ids = [i for i in range(len(train_scenario))]
+    train_TLs = {i: [] for i in ids}
+    train_TAs = {i: [] for i in ids}
+    test_TLs = {i: [] for i in ids}
+    test_TAs = {i: [] for i in ids}
 
     # Record starting time
     training_start_time = time.time()
@@ -207,11 +212,6 @@ def train_CL(model, train_scenario, test_scenario, optimizer, data_name, model_n
             optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
         if (type (optimizer).__name__ == 'Adam') and (not first):
             optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-        # Creates key in dictionary to keep track of task specific metrics for current task
-        train_TLs[task_id] = []
-        train_TAs[task_id] = []
-        test_TLs[task_id] = []
-        test_TAs[task_id] = []
 
         # Perform multiple epochs of training and testing
         for _ in range(epochs):
