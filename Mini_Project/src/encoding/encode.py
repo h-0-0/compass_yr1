@@ -204,8 +204,8 @@ def main(args, is_CL: bool=False):
     else:
         if(args.data_name == "CIFAR10"):
             run_encoding(args.data_name, args.encoder_name, batch_size=128, learning_rate=0.0001, epochs=100, optimizer="Adam", load_model=args.load_model)
-        elif(args.data_name == "CIFAR100_sub"):
-            run_encoding(args.data_name, args.encoder_name, batch_size=128, learning_rate=0.0001, epochs=100, optimizer="Adam", load_model=args.load_model)
+        elif(args.data_name == "CIFAR100"):
+            run_encoding(args.data_name, args.encoder_name, batch_size=128, learning_rate=0.0001, epochs=200, optimizer="Adam", load_model=args.load_model)
         else:
             raise Exception("Not implemented args for other datasets yet")
     print("Done")
