@@ -227,27 +227,32 @@ def plot_TL(results_df, model_name, path=False, xs = False):
 
     # Create figure for plotting
     plt.figure()
+    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+    if (len(colors) < len(task_ids)):
+        print("Warning: Not enough colors for plotting, haven't added functionality for more than 10 tasks yet")
     for task_id in task_ids:
         task_id = str(task_id)
         # Get training and testing loss for model
         train_TL = results_df.loc[results_df['Model Name'] == model_name, 'Train TL task '+task_id].values
         test_TL = results_df.loc[results_df['Model Name'] == model_name, 'Test TL task '+task_id].values
         # Pad lists
-        train_TL, test_TL = pad_list([train_TL, test_TL])
+        if(len(train_TL) != len(test_TL)):
+            train_TL, test_TL = pad_list([train_TL, test_TL])
 
         # Plot training and testing loss over time
+        color = colors[int(task_id)]
         if xs == False:
-            plt.plot(epochs, train_TL, label="Training TL for task "+ task_id)
-            plt.plot(epochs, test_TL, label="Testing TL for task "+ task_id, linestyle="dashed")
+            plt.plot(epochs, train_TL, label="Training TL for task "+ task_id, color=color)
+            plt.plot(epochs, test_TL, label="Testing TL for task "+ task_id, linestyle="dashed", color=color)
             plt.xlabel("Epoch")
         else:
-            plt.plot(epochs, train_TL, label="Training TL for task "+ task_id)
-            plt.plot(epochs, test_TL, label="Testing TL for task "+ task_id, linestyle="dashed")
+            plt.plot(epochs, train_TL, label="Training TL for task "+ task_id, color=color)
+            plt.plot(epochs, test_TL, label="Testing TL for task "+ task_id, linestyle="dashed", color=color)
             plt.xlabel("Task.Epoch")
             plt.xticks([i for i in range(len(xs))], [str(x) for x in xs])
         plt.ylabel("Task Loss (TL)")
         plt.title("Task Loss (TL) on tasks over training for " + model_name)
-        plt.legend()
+        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
     # Save or show plot
     if path == False:
@@ -256,7 +261,7 @@ def plot_TL(results_df, model_name, path=False, xs = False):
         # Check if path exists
         if not os.path.exists(path):
             os.makedirs(path)
-        plt.savefig(path + model_name + "_TL_task.png")
+        plt.savefig(path + model_name + "_TL_task.png", bbox_inches='tight')
         plt.clf()
 
 # Plot training and testing loss seperately for all task trained on up to current task being trained on over training for a given model
@@ -306,27 +311,32 @@ def plot_TA(results_df, model_name, path=False, xs = False):
 
     # Create figure for plotting
     plt.figure()
+    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+    if (len(colors) < len(task_ids)):
+        print("Warning: Not enough colors for plotting, haven't added functionality for more than 10 tasks yet")
     for task_id in task_ids:
         task_id = str(task_id)
         # Get training and testing loss for model
         train_TA = results_df.loc[results_df['Model Name'] == model_name, 'Train TA task '+task_id].values
         test_TA = results_df.loc[results_df['Model Name'] == model_name, 'Test TA task '+task_id].values
         # Pad lists
-        train_TA, test_TA = pad_list([train_TA, test_TA])
+        if(len(train_TA) != len(test_TA)):
+            train_TA, test_TA = pad_list([train_TA, test_TA])
 
         # Plot training and testing loss over time
+        color = colors[int(task_id)]
         if xs == False:
-            plt.plot(epochs, train_TA, label="Training TA for task "+ task_id)
-            plt.plot(epochs, test_TA, label="Testing TA for task "+ task_id, linestyle="dashed")
+            plt.plot(epochs, train_TA, label="Training TA for task "+ task_id, color=color)
+            plt.plot(epochs, test_TA, label="Testing TA for task "+ task_id, linestyle="dashed", color=color)
             plt.xlabel("Epoch")
         else:
-            plt.plot(epochs, train_TA, label="Training TA for task "+ task_id)
-            plt.plot(epochs, test_TA, label="Testing TA for task "+ task_id, linestyle="dashed")
+            plt.plot(epochs, train_TA, label="Training TA for task "+ task_id, color=color)
+            plt.plot(epochs, test_TA, label="Testing TA for task "+ task_id, linestyle="dashed", color=color)
             plt.xlabel("Task.Epoch")
             plt.xticks([i for i in range(len(xs))], [str(x) for x in xs])
         plt.ylabel("Task Accuracy (TA)")
         plt.title("Task Accuracy (TA) on tasks over training for " + model_name)
-        plt.legend()
+        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
     # Save or show plot
     if path == False:
@@ -335,7 +345,7 @@ def plot_TA(results_df, model_name, path=False, xs = False):
         # Check if path exists
         if not os.path.exists(path):
             os.makedirs(path)
-        plt.savefig(path + model_name + "_TA_task.png")
+        plt.savefig(path + model_name + "_TA_task.png", bbox_inches='tight')
         plt.clf()
 
 # Given dataframe and model name creates x values for plotting from epochs and task columns

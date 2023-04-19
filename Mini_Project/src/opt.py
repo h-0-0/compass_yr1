@@ -199,6 +199,10 @@ def train_CL(model, train_scenario, test_scenario, optimizer, data_name, model_n
     # Record starting time
     training_start_time = time.time()
 
+    # Extract all data loaders for each task
+    all_train_dataloader = {id : DataLoader(i) for id, i in enumerate(train_scenario)}
+    all_test_dataloader = {id : DataLoader(i) for id, i in enumerate(test_scenario)}
+
     # Perform multiple epochs of training
     first = True
     for task_id, (train_dataset, test_dataset) in enumerate(zip(train_scenario, test_scenario)):
@@ -226,6 +230,7 @@ def train_CL(model, train_scenario, test_scenario, optimizer, data_name, model_n
             train_PTL = train_CTL
             train_PTA = train_CTA
             if first == False:
+                # Calculate loss and accuracy for past tasks, both task specific (TL/TA) and average across all tasks (PTL/PTA) for testing data
                 for t, dl in past_train_dataloader.items():
                     train_TL, train_TA = past_data(dl, model, loss_fn)
                     train_TLs[t].append(train_TL)
@@ -237,6 +242,12 @@ def train_CL(model, train_scenario, test_scenario, optimizer, data_name, model_n
             else:
                 train_PTLs.append(train_PTL)
                 train_PTAs.append(train_PTA)
+            # Also calculate average loss and accuracy across tasks not yet seen
+            for t, dl in all_train_dataloader.items():
+                if (t not in past_train_dataloader) and (t != task_id):
+                    train_TL, train_TA = past_data(dl, model, loss_fn)
+                    train_TLs[t].append(train_TL)
+                    train_TAs[t].append(train_TA)
 
             # Save time
             times.append(time.time() - training_start_time)
@@ -263,6 +274,12 @@ def train_CL(model, train_scenario, test_scenario, optimizer, data_name, model_n
             else:
                 test_PTLs.append(test_PTL)
                 test_PTAs.append(test_PTA)
+            # Also calculate average loss and accuracy across tasks not yet seen
+            for t, dl in all_test_dataloader.items():
+                if (t not in past_test_dataloader) and (t != task_id):
+                    test_TL, test_TA = past_data(dl, model, loss_fn)
+                    test_TLs[t].append(test_TL)
+                    test_TAs[t].append(test_TA)
         
         # Save checkpoint of model
         save_checkpoint(model, optimizer, data_name, model_name, "task_"+str(task_id), is_CL=True)

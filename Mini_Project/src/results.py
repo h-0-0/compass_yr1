@@ -87,6 +87,8 @@ def add_to_results_CL(results_df, model_name, epochs, batch_size, learning_rate,
         "Task Name": np_repeat(task_names, epochs),
         "Number of Classes for Initial Task": [init_inc]*len(task_names)*epochs
         }
+    print(new_results)
+    print(metrics)
     for metric in metrics:
         new_results[metric] = metrics[metric]
     new_results = pd.DataFrame(new_results)
