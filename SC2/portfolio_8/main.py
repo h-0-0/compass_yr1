@@ -19,7 +19,7 @@ def main(args):
 
     # Setup model
     if args.ae:
-        ED = vae.AutoEncoder(12, l_dim, num_input_channels=3) # 32 was prev base_channels
+        ED = vae.AutoEncoder(12, l_dim, num_input_channels=3) # TODO:32 was prev base_channels
     elif args.vae:
         ED = vae.VarAutoEncoder(32, l_dim, num_input_channels=3)
 
