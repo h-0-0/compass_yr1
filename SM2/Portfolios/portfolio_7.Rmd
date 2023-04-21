@@ -1,0 +1,230 @@
+---
+title: "portfolio_7"
+output: pdf_document
+date: "2023-04-20"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Gaussian Process Regression
+
+## Task 1
+### Question 1
+We have that the function is a kernel if it satisfies Mercers theorum, let $K_{i,j} = k(x_{i}, x_{j}) = g(x_{i}) g(x_{j})$ be the kernel matrix. We have that K is symmetric as:
+$$
+K_{i,j} = g(x_{i}) g(x_{j}) = g(x_{j}) g(x_{i}) = K_{j,i}
+$$
+We can also show that K is postitive semi-definite, first let $c=(c_{1}, ..., c_{n}) \in \mathbb{R}^{n}$, then,
+$$
+\begin{aligned}
+  \sum_{i} \sum_{j} K_{i,j} c_{i} c_{j} &{}= \sum_{i} \sum_{j} c_{i} c_{j} g(x_{i}) g(x_{j}) \\
+  &= (\sum_{i} c_{i} g(x_{i})) (\sum_{j} c_{j} g(x_{j})) \\
+  &= (\sum_{i} c_{i} g(x_{i}))^{2}\\
+  &\geq 0
+\end{aligned}
+$$
+Therefore K is postitive semi-definite, as K is both symmetric and postive semi-definite by Mercers theorum is a kernel. 
+
+### Question 2
+Again let $K$ denote the kernel matrix, then,
+$$
+K_{i,j} = k(x_{i}, x_{j}) = a 
+$$
+K is symmetric as,
+$$
+K_{i,j} = k(x_{i}, x_{j}) = a = k(x_{j}, x_{i}) = K_{j,i}
+$$
+And we have its postitive semi-definite as for any $c=(c_{1}, ..., c_{n})^{T} \in \mathbb{R}^{n}$ we have,
+$$
+\begin{aligned}
+  \sum_{i} \sum_{j} K_{i,j} c_{i} c_{j} 
+  &{}= \sum_{i} \sum_{j} c_{i} c_{j} a \\
+  &= a \cdot (\sum_{i} c_{i} ) (\sum_{j} c_{j}) \\
+  &= a \cdot (\sum_{i} c_{i})^{2}\\
+  &\geq 0
+\end{aligned}
+$$
+hence by Mercers theorum K is a kernel.
+
+### Question 3
+Again let K denote the kernel matrix, we have, 
+$$
+K_{i,j} = \sum_{l=1}^{m} c_{l} k_{l}(x_{i}, x_{j})
+$$
+We can also show that K is postitive semidefinite, as each kernel k is symmetric (by Mercers theorum),
+$$
+\begin{aligned}
+  K_{i,j} 
+  &{}= \sum_{l=1}^{m} c_{l} k_{l} (x_{i}, x_{j}) \\
+  &= \sum_{l=1}^{m} c_{l} k_{l} (x_{j}, x_{i}) \\
+  &=K_{j,i} 
+\end{aligned}
+$$
+We can also show that K is positive semi-definite, as each kernel k is (by Mercers theorum) postiive semidefinite, let $\lambda = (\lambda_{1}, ..., \lambda_{n}) \in \mathbb{R}^{n}$, then,
+$$
+\begin{aligned}
+  \sum_{i} \sum_{j} K_{i,j} \lambda_{i} \lambda_{j} 
+  &{}= \sum_{i} \sum_{j} \lambda_{i} \lambda_{j} \sum_{l} c_{l} k_{l} (x_{i}, x_{j}) \\
+  &= \sum_{l} c_{l} \sum_{i} \sum_{j} \lambda_{i} \lambda_{j} k_{l} (x_{i}, x_{j}) \\
+  &\geq 0
+\end{aligned}
+$$
+as $c_{l} \geq 0$ and $\sum_{i} \sum_{j} \lambda_{i} \lambda_{j} k_{l}(x_{i}, x_{j}) \geq 0$ for all $l \in \{1,...,m\}$ therefore K is postitive semi-definite, therefore k is a kernel by Mercers theourm.
+
+### Question 4
+Let K denote the kernel matrix, if we let $x_{i}, x_{j} \in \chi$ for all $i,j \in \{1,...,n\}$, then  
+$$
+K_{i,j} = k(x_{i}, x_{j}) 1_{\chi \times \chi}(x_{i}, x_{j}) = k(x_{i}, x_{j})
+$$
+K is symmetric as,
+$$
+K_{i,j} = k(x_{i}, x_{j}) = k(x_{j}, x_{i})
+$$
+since $x_{i}, x_{j} \in \mathbb{R}^{p}$ and k is a kernel on $\mathbb{R}^{p}$, similarly we have for some $c = (c_{1}, ..., c_{n}) \in \mathbb{R}^{p}$ that,
+$$
+\sum_{i} \sum_{j} c_{i} c_{j} K_{i,j} = \sum_{i} \sum_{j} c_{i} c_{j} k(x_{i}, x_{j}) \geq 0
+$$
+Hence K is symmetric and postitive semi-definite and therefore k a kernel when restricted on $\chi \times \chi$. 
+
+## Task 2
+For this task we will use the bone mineral dataset, let's load it in and have a look at some of it:
+```{r}
+BMD <- read.csv("portfolio_7_data/spnbmd.csv")
+head(BMD)
+```
+Let's now print some summary statistics for the dataset:
+```{r}
+summary(BMD)
+```
+We now are going to add the rate of change as we would like to model how the relative change in spinal Bone Mineral Density (BMD) changes with age:
+```{r}
+BMD <- BMD[order(BMD$id, BMD$age),]
+BMD$sex <- as.factor(BMD$sex)
+BMD$rc <- NA
+
+for (id in as.numeric(BMD$idnum)) {
+  BMD.dash <- BMD[BMD$idnum == id,]
+  if (nrow(BMD.dash) > 1) {
+    spnbmd_diff <- diff(BMD.dash$spnbmd)
+    rc <- c(NA, spnbmd_diff / BMD.dash$spnbmd[1:(nrow(BMD.dash)-1)])
+    BMD[BMD$idnum == id, "rc"] <- rc
+  }
+}
+
+BMD <- BMD[complete.cases(BMD),]
+head(BMD)
+```
+Excellent, let's now get into it, we want to fit a Gaussian process regression model with known variance $\sigma^{2} = \lambda$. I will be using the Gaussian kernel as I would like to fit a continuous non-constant function  so our parameter vector is simply $\psi = \gamma$ the bandwidth parameter. Now we would like to compute the posterior distribution of f given the observations $y_{1:n}^{0}$. To do this we will choose $\lambda$ and $\gamma$ using empirical bayes:
+```{r}
+library(kernlab)
+
+# Define some variables that we are going to use in our function
+X <- BMD$age
+y <- BMD$rc
+n <- nrow(BMD)
+
+# Function that calculates the negative marginal log likelihood
+nmll <- function(par){
+  lambda <- par[1]
+  gamma <- par[2]
+  rbf <- rbfdot(sigma = gamma)
+  gram <- kernelMatrix(rbf, X)
+  0.5* log(det(gram + lambda* diag(n) + 1e-6 * diag(n))) + 0.5* t(y) %*% solve(gram + lambda* diag(n) + 1e-6 * diag(n)) %*% y
+}
+
+# Set our search parameters
+lower <- c(0.01, 0.01)
+upper <- c(3, 4)
+n_searches <- 5
+
+# Conduct multiple searches with different initial parameters
+set.seed(123)
+results <- data.frame(matrix(nrow = n_searches, ncol = 3))
+colnames(results) <- c("init_param_1", "init_param_2", "max_nmll")
+for (i in 1:n_searches) {
+  init_params <- runif(2, lower, upper)
+  # Use optim to minimize the negative marginal log likelihood
+  result <- optim(init_params, nmll)
+  results[i,] <- c(init_params[1], init_params[2], -result$value)
+}
+print(results)
+```
+Now let's calculate our values for $f_{n}$ and the credible sets at the 95% level:
+```{r, warning=FALSE}
+lambda <- 1.6587907
+gamma <- 1.8318928
+rbf <- rbfdot(sigma = gamma) # gamma is the estimated lengthscale parameter
+model <- gausspr(X, y, kernel = rbf, lambda = lambda) # lambda is the estimated noise parameter
+
+y_pred <- predict(model, X)
+se <- predict(model, X)
+
+lci <- c()
+uci <- c()
+for(i in 1:length(X)){
+  lci[i] <- qnorm(c(0.025), mean = y_pred[i], sd = se[i])
+  uci[i] <- qnorm(c(0.975), mean = y_pred[i], sd = se[i])
+}
+```
+Let's now plot what we found above along with the data:
+```{r}
+library(ggplot2)
+df <- data.frame(x = X, y = y_pred, ci_low = lci, ci_high = uci)
+ggplot(df, aes(x = x, y = y)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = ci_low, ymax = ci_high), alpha = 0.3) +
+  geom_point(data = data.frame(x = X, y = y), aes(x = x, y = y), color = "red") +
+  labs(x = "Age", y = "Relative Change in Spinal BMD", title = "Relationship Between Age and RC") 
+```
+Now let's repeat what we just did but now using a low rank approximation for 100 and 50 dimensions, we start by finding our hyperparameters using empirical bayes:
+```{r, eval=FALSE}
+# Function that calculates the approximate negative marginal log likelihood
+approx_nmll <- function(par, d){
+  # Obtain the indices that would sort v
+  idx <- order(X)
+  # Create a logical vector indicating repeated elements
+  repeated <- duplicated(X)[idx]
+  # Rearrange v so that repeated elements are pushed to the back
+  X_rb <- c(X[idx][!repeated], X[idx][repeated])
+  
+  print(par)
+  lambda <- par[1]
+  gamma <- par[2]
+  rbf <- rbfdot(sigma = gamma)
+  gram_d <- kernelMatrix(rbf, X_rb[1:d])
+  gram_nd <- kernelMatrix(rbf, X_rb, X_rb[1:d])
+  sigma_d <- lambda* gram_d + t(gram_nd) %*% gram_nd
+  
+  term_1 <- 0.5* ( log(det(sigma_d + 1e-6 * diag(d))) -log(det(gram_d + 1e-6 * diag(d))) + (n-d)*log(lambda) )
+  term_2 <- (1/ (2*lambda)) * ( norm(y, type="2") - norm( sqrt(solve( sigma_d + 1e-6 * diag(d) )) %*% t(gram_nd) %*% y , type="2") )
+  term_3 <- (n/2) * log(2*pi)
+  term_1 + term_2 + term_3
+}
+# Set our search parameters
+lower <- c(0.01, 0.01)
+upper <- c(3, 4)
+n_searches <- 5
+
+# Conduct multiple searches with different initial parameters
+set.seed(123)
+results <- data.frame(matrix(nrow = n_searches, ncol = 3))
+colnames(results) <- c("init_param_1", "init_param_2", "max_approx_nmll")
+for (i in 1:n_searches) {
+  init_params <- runif(2, lower, upper)
+  # Use optim to minimize the negative marginal log likelihood
+  result <- optim(init_params, approx_nmll, d=100)
+  results[i,] <- c(init_params[1], init_params[2], -result$value)
+}
+print(results)
+```
+I couldn't get the above to work as I was getting numerical errors when trying to square root the inverse of sigma_d, I tried a wide range of different initial parameters to no avail. If I had got it working I would then have made a plot of $f_{n}$ with the credible sets similarly as I did before carrying out this low rank approximation.
+
+
+
+
+
+
+
+
