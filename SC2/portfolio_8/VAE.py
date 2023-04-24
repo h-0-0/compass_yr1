@@ -12,7 +12,6 @@ class Encoder(L.LightningModule):
         """
         Args:
            num_input_channels : Number of input channels of the image. For CIFAR, this parameter is 3
-           base_channel_size : Number of channels we use in the first convolutional layers. Deeper layers might use a duplicate of it.
            latent_dim : Dimensionality of latent representation z
            act_fn : Activation function used throughout the encoder network
         """
@@ -40,23 +39,29 @@ class VarEncoder(L.LightningModule):
         """
         Args:
            num_input_channels : Number of input channels of the image. For CIFAR, this parameter is 3
-           base_channel_size : Number of channels we use in the first convolutional layers. Deeper layers might use a duplicate of it.
            latent_dim : Dimensionality of latent representation z
            act_fn : Activation function used throughout the encoder network
         """
         super().__init__()
         self.conv = nn.Sequential(
             nn.Conv2d(num_input_channels, 32, kernel_size=3, padding=1, stride=2), 
+            nn.BatchNorm2d(32),
             act_fn(),
             nn.Conv2d(32, 64, kernel_size=3, padding=1, stride=2),
+            nn.BatchNorm2d(64),
             act_fn(),
             nn.Conv2d(64, 128, kernel_size=3, padding=1, stride=2), 
+            nn.BatchNorm2d(128),
             act_fn(),
             nn.Conv2d(128, 256, kernel_size=3, padding=1, stride=2),
+            nn.BatchNorm2d(256),
+            act_fn(),
+            nn.Conv2d(256, 512, kernel_size=3, padding=1, stride=2),
+            nn.BatchNorm2d(512),
             act_fn()
         )
         self.flatten = nn.Flatten()  # Image grid to single feature vector
-        self.fc = nn.Sequential(nn.Linear(1024, 512), act_fn())
+        self.fc = nn.Sequential(nn.Linear(512, 512), act_fn())
         self.fc_mu = nn.Linear(512, latent_dim)
         self.fc_logvar = nn.Linear(512, latent_dim)
 
@@ -74,7 +79,6 @@ class Decoder(L.LightningModule):
         """
         Args:
            num_input_channels : Number of channels of the image to reconstruct. For CIFAR, this parameter is 3
-           base_channel_size : Number of channels we use in the last convolutional layers. Early layers might use a duplicate of it.
            latent_dim : Dimensionality of latent representation z
            act_fn : Activation function used throughout the decoder network
         """
@@ -165,7 +169,6 @@ class AutoEncoder(L.LightningModule):
 class VarAutoEncoder(L.LightningModule):
     """The AutoEncoder class is a wrapper for the VarEncoder and Decoder classes. It employs the LightningModule super class. It is a variational autoencoder.
     Args:
-        base_channel_size : Number of channels we use in the last convolutional layers. Early layers might use a duplicate of it.
         latent_dim : Dimensionality of latent representation z
         encoder_class : Class of encoder to use
         decoder_class : Class of decoder to use
@@ -223,9 +226,9 @@ class VarAutoEncoder(L.LightningModule):
         """Given a batch of images, this function returns the training loss."""
         reconstruction_loss, kl_div_loss, total_loss = self._get_total_loss(batch)
 
-        self.log("train_loss", total_loss)
-        self.log("reconstruction_loss", reconstruction_loss)
-        self.log("kl_div_loss", kl_div_loss)
+        self.log("train_loss", total_loss, on_epoch=True)
+        self.log("reconstruction_loss", reconstruction_loss, on_epoch=True)
+        self.log("kl_div_loss", kl_div_loss, on_epoch=True)
 
         return total_loss
 
@@ -243,9 +246,9 @@ class VarAutoEncoder(L.LightningModule):
         """Given a batch of images, this function returns the test loss."""
         reconstruction_loss, kl_div_loss, total_loss = self._get_total_loss(batch)
 
-        self.log("test_loss", total_loss)
-        self.log("test_reconstruction_loss", reconstruction_loss)
-        self.log("test_kl_div_loss", kl_div_loss)
+        self.log("test_loss", total_loss, on_epoch=True)
+        self.log("test_reconstruction_loss", reconstruction_loss, on_epoch=True)
+        self.log("test_kl_div_loss", kl_div_loss, on_epoch=True)
 
         return total_loss
 
