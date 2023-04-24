@@ -8,7 +8,7 @@ import lightning as L
 
 # Class for an encoder
 class Encoder(L.LightningModule):
-    def __init__(self, num_input_channels: int, base_channel_size: int, latent_dim: int, act_fn: object = nn.ReLU):
+    def __init__(self, num_input_channels: int, latent_dim: int, act_fn: object = nn.ReLU):
         """
         Args:
            num_input_channels : Number of input channels of the image. For CIFAR, this parameter is 3
@@ -17,20 +17,18 @@ class Encoder(L.LightningModule):
            act_fn : Activation function used throughout the encoder network
         """
         super().__init__()
-        c_hid = base_channel_size
         self.net = nn.Sequential(
-            nn.Conv2d(num_input_channels, c_hid, kernel_size=3, padding=1, stride=2),  # 32x32 => 16x16
+            nn.Conv2d(num_input_channels, 16, kernel_size=3, padding=1, stride=1),
             act_fn(),
-            nn.Conv2d(c_hid, c_hid, kernel_size=3, padding=1),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Conv2d(16, 32, kernel_size=3, padding=1),
             act_fn(),
-            nn.Conv2d(c_hid, 2 * c_hid, kernel_size=3, padding=1, stride=2),  # 16x16 => 8x8
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Conv2d(32, 64, kernel_size=3, padding=1, stride=1),
             act_fn(),
-            nn.Conv2d(2 * c_hid, 2 * c_hid, kernel_size=3, padding=1),
-            act_fn(),
-            nn.Conv2d(2 * c_hid, 2 * c_hid, kernel_size=3, padding=1, stride=2),  # 8x8 => 4x4
-            act_fn(),
-            nn.Flatten(),  # Image grid to single feature vector
-            nn.Linear(2 * 16 * c_hid, latent_dim)
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Flatten(), 
+            nn.Linear(64 *4 *4 , latent_dim)
         )
 
     def forward(self, x):
@@ -38,7 +36,7 @@ class Encoder(L.LightningModule):
 
 # Class for a variational encoder
 class VarEncoder(L.LightningModule):
-    def __init__(self, num_input_channels: int, base_channel_size: int, latent_dim: int, act_fn: object = nn.ReLU):
+    def __init__(self, num_input_channels: int, latent_dim: int, act_fn: object = nn.ReLU):
         """
         Args:
            num_input_channels : Number of input channels of the image. For CIFAR, this parameter is 3
@@ -47,33 +45,32 @@ class VarEncoder(L.LightningModule):
            act_fn : Activation function used throughout the encoder network
         """
         super().__init__()
-        c_hid = base_channel_size
         self.conv = nn.Sequential(
-            nn.Conv2d(num_input_channels, c_hid, kernel_size=3, padding=1, stride=2),  # 32x32 => 16x16
+            nn.Conv2d(num_input_channels, 32, kernel_size=3, padding=1, stride=2), 
             act_fn(),
-            nn.Conv2d(c_hid, c_hid, kernel_size=3, padding=1),
+            nn.Conv2d(32, 64, kernel_size=3, padding=1, stride=2),
             act_fn(),
-            nn.Conv2d(c_hid, 2 * c_hid, kernel_size=3, padding=1, stride=2),  # 16x16 => 8x8
+            nn.Conv2d(64, 128, kernel_size=3, padding=1, stride=2), 
             act_fn(),
-            nn.Conv2d(2 * c_hid, 2 * c_hid, kernel_size=3, padding=1),
-            act_fn(),
-            nn.Conv2d(2 * c_hid, 2 * c_hid, kernel_size=3, padding=1, stride=2),  # 8x8 => 4x4
+            nn.Conv2d(128, 256, kernel_size=3, padding=1, stride=2),
             act_fn()
         )
         self.flatten = nn.Flatten()  # Image grid to single feature vector
-        self.fc_mu = nn.Linear(c_hid*8*2*2, latent_dim)
-        self.fc_logvar = nn.Linear(c_hid*8*2*2, latent_dim)
+        self.fc = nn.Sequential(nn.Linear(1024, 512), act_fn())
+        self.fc_mu = nn.Linear(512, latent_dim)
+        self.fc_logvar = nn.Linear(512, latent_dim)
 
     def forward(self, x):
         x = self.conv(x)
         x = self.flatten(x)
+        x = self.fc(x)
         mu = self.fc_mu(x)
         logvar = self.fc_logvar(x)
         return mu, logvar
 
 # Class or a decoder
 class Decoder(L.LightningModule):
-    def __init__(self, num_input_channels: int, base_channel_size: int, latent_dim: int, act_fn: object = nn.ReLU):
+    def __init__(self, num_input_channels: int, latent_dim: int, act_fn: object = nn.ReLU):
         """
         Args:
            num_input_channels : Number of channels of the image to reconstruct. For CIFAR, this parameter is 3
@@ -82,22 +79,13 @@ class Decoder(L.LightningModule):
            act_fn : Activation function used throughout the decoder network
         """
         super().__init__()
-        c_hid = base_channel_size
-        self.linear = nn.Sequential(nn.Linear(latent_dim, 2 * 16 * c_hid), act_fn())
+        self.linear = nn.Sequential(nn.Linear(latent_dim, 64*4*4), act_fn())
         self.net = nn.Sequential(
-            nn.ConvTranspose2d(
-                2 * c_hid, 2 * c_hid, kernel_size=3, output_padding=1, padding=1, stride=2
-            ),  # 4x4 => 8x8
+            nn.ConvTranspose2d(64, 32, kernel_size=4, stride=2, padding=1),
             act_fn(),
-            nn.Conv2d(2 * c_hid, 2 * c_hid, kernel_size=3, padding=1),
+            nn.ConvTranspose2d(32, 16, kernel_size=4, stride=2, padding=1),
             act_fn(),
-            nn.ConvTranspose2d(2 * c_hid, c_hid, kernel_size=3, output_padding=1, padding=1, stride=2),  # 8x8 => 16x16
-            act_fn(),
-            nn.Conv2d(c_hid, c_hid, kernel_size=3, padding=1),
-            act_fn(),
-            nn.ConvTranspose2d(
-                c_hid, num_input_channels, kernel_size=3, output_padding=1, padding=1, stride=2
-            ),  # 16x16 => 32x32
+            nn.ConvTranspose2d(16, 3, kernel_size=4, stride=2, padding=1),
             nn.Tanh()  # The input images is scaled between -1 and 1, hence the output has to be bounded as well
         )
 
@@ -113,7 +101,6 @@ class AutoEncoder(L.LightningModule):
     """
     The AutoEncoder class is a wrapper for the encoder and decoder classes. It employs the LightningModule super class.
     Args:
-        base_channel_size : Number of channels we use in the first convolutional layers. Deeper layers might use a duplicate of it.
         latent_dim : Dimensionality of latent representation z
         encoder_class : Class of the encoder to use
         decoder_class : Class of the decoder to use
@@ -123,7 +110,6 @@ class AutoEncoder(L.LightningModule):
     """
     def __init__(
         self,
-        base_channel_size: int,
         latent_dim: int,
         encoder_class: object = Encoder,
         decoder_class: object = Decoder,
@@ -135,8 +121,8 @@ class AutoEncoder(L.LightningModule):
         # Saving hyperparameters of autoencoder
         self.save_hyperparameters()
         # Creating encoder and decoder
-        self.encoder = encoder_class(num_input_channels, base_channel_size, latent_dim)
-        self.decoder = decoder_class(num_input_channels, base_channel_size, latent_dim)
+        self.encoder = encoder_class(num_input_channels, latent_dim)
+        self.decoder = decoder_class(num_input_channels, latent_dim)
         # Example input array needed for visualizing the graph of the network
         self.example_input_array = zeros(2, num_input_channels, width, height)
 
@@ -189,7 +175,6 @@ class VarAutoEncoder(L.LightningModule):
     """
     def __init__(
         self,
-        base_channel_size: int,
         latent_dim: int,
         encoder_class: object = VarEncoder,
         decoder_class: object = Decoder,
@@ -203,8 +188,8 @@ class VarAutoEncoder(L.LightningModule):
         # Saving hyperparameters of autoencoder
         self.save_hyperparameters()
         # Creating encoder and decoder
-        self.encoder = encoder_class(num_input_channels, base_channel_size, latent_dim)
-        self.decoder = decoder_class(num_input_channels, base_channel_size, latent_dim)
+        self.encoder = encoder_class(num_input_channels, latent_dim)
+        self.decoder = decoder_class(num_input_channels, latent_dim)
         # Example input array needed for visualizing the graph of the network
         self.example_input_array = zeros(2, num_input_channels, width, height)
 
