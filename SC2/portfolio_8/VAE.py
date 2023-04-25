@@ -43,32 +43,45 @@ class VarEncoder(L.LightningModule):
            act_fn : Activation function used throughout the encoder network
         """
         super().__init__()
+        # self.conv = nn.Sequential(
+        #     nn.Conv2d(num_input_channels, 32, kernel_size=3, padding=1, stride=2), 
+        #     nn.BatchNorm2d(32),
+        #     act_fn(),
+        #     nn.Conv2d(32, 64, kernel_size=3, padding=1, stride=2),
+        #     nn.BatchNorm2d(64),
+        #     act_fn(),
+        #     nn.Conv2d(64, 128, kernel_size=3, padding=1, stride=2), 
+        #     nn.BatchNorm2d(128),
+        #     act_fn(),
+        #     nn.Conv2d(128, 256, kernel_size=3, padding=1, stride=2),
+        #     nn.BatchNorm2d(256),
+        #     act_fn(),
+        #     nn.Conv2d(256, 512, kernel_size=3, padding=1, stride=2),
+        #     nn.BatchNorm2d(512),
+        #     act_fn()
+        # )
         self.conv = nn.Sequential(
-            nn.Conv2d(num_input_channels, 32, kernel_size=3, padding=1, stride=2), 
-            nn.BatchNorm2d(32),
+            nn.Conv2d(num_input_channels, 16, kernel_size=3, padding=1, stride=1),
             act_fn(),
-            nn.Conv2d(32, 64, kernel_size=3, padding=1, stride=2),
-            nn.BatchNorm2d(64),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Conv2d(16, 32, kernel_size=3, padding=1),
             act_fn(),
-            nn.Conv2d(64, 128, kernel_size=3, padding=1, stride=2), 
-            nn.BatchNorm2d(128),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Conv2d(32, 64, kernel_size=3, padding=1, stride=1),
             act_fn(),
-            nn.Conv2d(128, 256, kernel_size=3, padding=1, stride=2),
-            nn.BatchNorm2d(256),
-            act_fn(),
-            nn.Conv2d(256, 512, kernel_size=3, padding=1, stride=2),
-            nn.BatchNorm2d(512),
-            act_fn()
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Flatten(), 
+            nn.Linear(64 *4 *4 , latent_dim)
         )
         self.flatten = nn.Flatten()  # Image grid to single feature vector
-        self.fc = nn.Sequential(nn.Linear(512, 512), act_fn())
-        self.fc_mu = nn.Linear(512, latent_dim)
-        self.fc_logvar = nn.Linear(512, latent_dim)
+        # self.fc = nn.Sequential(nn.Linear(512, 512), act_fn())
+        self.fc_mu = nn.Linear(256, latent_dim)
+        self.fc_logvar = nn.Linear(256, latent_dim)
 
     def forward(self, x):
         x = self.conv(x)
         x = self.flatten(x)
-        x = self.fc(x)
+        # x = self.fc(x)
         mu = self.fc_mu(x)
         logvar = self.fc_logvar(x)
         return mu, logvar
@@ -211,7 +224,7 @@ class VarAutoEncoder(L.LightningModule):
         self,
         latent_dim: int,
         encoder_class: object = VarEncoder,
-        decoder_class: object = VarDecoder,
+        decoder_class: object = Decoder,
         num_input_channels: int = 3,
         width: int = 32,
         height: int = 32,
