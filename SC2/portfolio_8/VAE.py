@@ -98,6 +98,37 @@ class Decoder(L.LightningModule):
         x = x.reshape(x.shape[0], -1, 4, 4)
         x = self.net(x)
         return x
+    
+# Class or a decoder
+class VarDecoder(L.LightningModule):
+    def __init__(self, num_input_channels: int, latent_dim: int, act_fn: object = nn.ReLU):
+        """
+        Args:
+           num_input_channels : Number of channels of the image to reconstruct. For CIFAR, this parameter is 3
+           latent_dim : Dimensionality of latent representation z
+           act_fn : Activation function used throughout the decoder network
+        """
+        super().__init__()
+        self.linear = nn.Sequential(nn.Linear(latent_dim, 512), act_fn(), nn.Linear(512, 256*4*4), act_fn())
+        self.net = nn.Sequential(
+            nn.ConvTranspose2d(256, 128, kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(128),
+            act_fn(),
+            nn.ConvTranspose2d(128, 64, kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(64),
+            act_fn(),
+            nn.ConvTranspose2d(64, 32, kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(32),
+            act_fn(),
+            nn.ConvTranspose2d(32, 3, kernel_size=3, stride=1, padding=1),
+            nn.Tanh()  # The input images is scaled between -1 and 1, hence the output has to be bounded as well
+        )
+
+    def forward(self, x):
+        x = self.linear(x)
+        x = x.reshape(x.shape[0], -1, 4, 4)
+        x = self.net(x)
+        return x
 
     
 # Class for an auteencoder, it uses the lightning module super class
@@ -180,7 +211,7 @@ class VarAutoEncoder(L.LightningModule):
         self,
         latent_dim: int,
         encoder_class: object = VarEncoder,
-        decoder_class: object = Decoder,
+        decoder_class: object = VarDecoder,
         num_input_channels: int = 3,
         width: int = 32,
         height: int = 32,
