@@ -71,12 +71,12 @@ class VarEncoder(L.LightningModule):
             act_fn(),
             nn.MaxPool2d(kernel_size=2, stride=2),
             nn.Flatten(), 
-            nn.Linear(64 *4 *4 , latent_dim)
+            nn.Linear(64 *4 *4 , 512)
         )
         self.flatten = nn.Flatten()  # Image grid to single feature vector
         # self.fc = nn.Sequential(nn.Linear(512, 512), act_fn())
-        self.fc_mu = nn.Linear(256, latent_dim)
-        self.fc_logvar = nn.Linear(256, latent_dim)
+        self.fc_mu = nn.Linear(512, latent_dim)
+        self.fc_logvar = nn.Linear(512, latent_dim)
 
     def forward(self, x):
         x = self.conv(x)
