@@ -1,5 +1,10 @@
 \section{Related Work}
-% TODO: Online learning
-% TODO: data drift
-% TODO: latent replay
-% TODO: Representation / foundational learning
+\label{sec:related}
+The problem of CF crops up in many currently active research areas in DL including online learning a close cousin of CL, transfer learning, Multitask learning and problems where the data distribution changes over time. The encoders we will be working with in this paper come from the field of representation/ foundational learning. We will now take a moment to briefly elaborate on these closely related areas.
+
+\subsection{Representation / Foundational Learning}
+The area of representation learning (also referred to as foundational learning) focuses on using machine learning algorithms to learn good representations and for computing representations. Work in this field includes ``unsupervised feature learning and deep learning'' and includes methods such as ``probabilistic models, autoencoders, manifold learning, and deep networks'' \cite{bengio2013representation}. The AE and VAE we mentioned in \ref{subsec:encoders} come from this area of research. Many representation learning methods become pervasive in DL systems for their ability to simplify a problem by generating informative features from data. This is also the case in CL where an encoder is often used as it ``greatly simplifies
+the downstream task of classification'' \cite{shanahan2021encoders} and has empirically been shown to increase performance such as when using latent replay methods \cite{ostapenko2022continual}. 
+
+\subsection{Other areas where CF appears}
+As well as in CL, CF has been shown to appear in many other areas of DL including multi-task and transfer learning \cite{kudugunta2019investigating} and learning where there is data distribution shift \cite{toneva2018empirical,rabanser2019failing}. CF occurs in these settings due to the violation of the iid. data assumption that we mentioned in \ref{subsec:CF}. There is also the very closely related area of online learning \cite{jain2014review} which aims to make networks capable of learning and adapting to better perform on current incoming data (which doesn't necessarily mean not forgetting previous tasks), which is similar to learning with data distribution shift, it's similar to CL as it also works in the scenario where data is presented to the network in a continual fashion. A subset of the online learning area that also gets much attention is data stream learning \cite{gama2012survey} where data flows into the network continuously and the network only sees each piece of data once. An important note is that certain CL scenarios qualify as also being an online learning scenario, this is often the case in robotics research where the agent has to continually learn from a data stream \cite{lesort2020continual}.

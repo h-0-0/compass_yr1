@@ -1,2 +1,58 @@
 \section{Methods}
-% TODO: add method
+\label{sec:methods}
+In this project we aim to understand in more depth the problem of CF. As mentioned in \cref{subsec:CF} the literature on where and why CF presents and in what scenarios it is most pronounced is lacking, whereas the literature in the area of CL which aims to solve the problem of CF is much more abundant. This dichotomy is strange as it would make sense to have a better core understanding of CF, this would give CL researchers a better understanding as to what problem they are actually trying to solve. In this project we intended to find out the answers to some simple questions regarding CF:
+\begin{itemize}
+    \item What's the effect of using a pre-trained encoder on catastrophic forgetting?
+    \item What's the effect of using a pre-trained encoder on the ability to learn new tasks?
+    \item How does the effectiveness of the above (or lack thereof) change with different encoders?
+    \item How does the effectiveness of the above (or lack thereof) change if we freeze the encoder versus if we train the network end-to-end?
+\end{itemize}
+Our work is very close in spirit to \cite{ramasesh2020anatomy}, where the authors similarly investigated the degree of CF that occurs in a network where part of it is frozen. It differs in the fact that we use a CL scenario where there are 5 tasks as opposed to 2, we pretrain the encoders and we specifically investigate freezing the encoder portion of the network. In their experiments they found that forgetting occurred in deeper layers and that freezing shallow layers (where the encoder portion of the network is located) didn't result in decreased forgetting. 
+
+Somewhat similarly to us in \cite{ostapenko2022continual} the authors investigated the effect of using frozen encoders on reducing CF, they found that it reduced compute and that it made the task of CL simpler and showed in some cases that using non-parametric models in conjunction with a frozen encoder resulted in minimized forgetting. However, in their paper they used latent replay techniques when training their models, whereas we will not be employing any CL techniques whatsoever in our experiments. 
+
+Finally, in \cite{rebuffi2017icarl} and \cite{li2017learning} a subset of the experiments seem to suggest that when training on tasks sequentially the encoder was mainly changed and not the classifier layers. We will now introduce some datasets, metrics and networks we used in our experiments.
+
+\subsection{Datasets}
+\label{subsec:datasets}
+In our experiments we used the MNIST \cite{deng2012mnist}, CIFAR10, CIFAR100 \cite{krizhevsky2009learning} and the Imagenet \cite{deng2009imagenet} datasets. Where CIFAR100 and Imagenet were mainly used for pretraining. We also used the split-MNIST \cite{zenke2017reg} and split-CIFAR10 \cite{zenke2017reg} benchmarks when working in the CL scenario, which is where we split the datasets into a number of tasks where each task contains all the data pertaining to some given classes in the dataset. In our experiments we split both datasets into 5 tasks where each class contained 2 classes from the dataset. These two benchmarks are commonly used in the area of CL. 
+
+\subsection{Metrics}
+\label{subsec:metrics}
+In our experiments we measured the accuracy and loss obtained by the network on training data and testing data. We measured the average loss and accuracy obtained over all the batches each epoch and we measured the loss and accuracy obtained on the whole test set at the end of each epoch. Note that the training set wasn't used at all in the training of the model. 
+
+When in the CL scenario we also tracked some additional metrics, mainly the loss and accuracy achieved on each individual task, the Task Accuracy (TA) and Task Loss (TL), during training (we calculate this in the same way as in the batch scenario). This is useful for observing how performance of the network changes over the course of training on each task and allows us to observe learning and forgetting on each individual task. 
+
+Using this we also calculated two additional metrics which are the Continual Task Accuracy (CTA) and Continual Task Loss (CTL). The CTA and CTL track the accuracy and loss achieved on the current task during training. The CTA and CTL are helpful as they give a good picture of how well the network is doing at adapting to the current task. 
+
+Another metric we tracked was the time taken for training as a proxy for the amount of compute required to train the network. We ran all the experiments on the same GPU, the NVIDIA GeForce RTX 2080 Ti. Note that for the networks with frozen encoders we encoded the data before training and then trained the network on the encoded data, the time for encoding the data isn't included in the compute times.
+
+\subsection{Networks}
+\label{subsec:networks}
+In our experiments we used a number of different networks, for our experiments with \textbf{MNIST} we used:
+\begin{itemize}
+    \item \textbf{FCFFNN}: A simple Fully-Connected-Feed-Forward Neural Network composed of 2 hidden layers (both with 512 neurons).
+    \item \textbf{CNN}: A simple  Convolutional Neural Network with 2 convolutional layers (first with 16 filters and second with 32 filters, a kernel size of 3, stride 1 and padding 0) followed by max pooling layers (kernel size of 2) and with one fully connected layer on the end.
+\end{itemize}
+For both networks we used the Rectified Linear Unit (ReLU) activation function and the Stochastic Gradient Descent (SGD) optimizer (both in the CL and batch setting), we also used the ReLU activation function in all the network architectures we trained on CIFAR10. In our experiments with \textbf{CIFAR10} we used the following networks:
+\begin{itemize}
+    \item \textbf{CNN}: A CNN based on the VGG16 architecture \cite{simonyan2014very} with no pretraining, it has 3 fully connected layers at the end where both hidden layers have 512 neurons and the output layer has 10.
+    \item \textbf{nfVGG-FCFFNN}: The same VGG16 network except with batch normalization \cite{ioffe2015batch} and dropout \cite{srivastava2014dropout} pretrained on CIFAR100.
+    \item \textbf{fVGG-FCFFNN}: The same as above except we freeze the convolutional layers after pretraining.
+    \item \textbf{nfResnet18-FCFFNN}: The Resnet18 network \cite{he2016deep} pretrained on Imagenet with a fully connected network on the end (exactly the same as that used with VGG).
+    \item \textbf{fResnet18-FCFFNN}: The same as above except we freeze the Resnet18 layers after pretraining.
+    \item \textbf{nfAE-FCFFNN}: Makes use of a convolutional autoencoder pretrained on CIFAR100 (tasked with image reconstruction). The encoder portion of the network is made up of 3 convolutional layers (first with 16 filters, second with 32 filters and third with 64 filters, a kernel size of 3, stride 1 and padding 1) with max pooling layers (kernel size of 2 and stride of 2) with one fully connected layer of size 256. The decoder portion of the network is made up of 3 convolutional layers (first with 64 filters, second with 32 filters and third with 16 filters, a kernel size of 4, stride 2 and padding 1) with one fully connected layer of size 1024 located before the convolutional layers. We used a hyperbolic tangent activation function at the end of the decoder. After pretraining we only keep the encoder and add on the end a fully connected network (exactly the same as that used with VGG). Note that this is by far the smallest network out of this bunch.
+    \item \textbf{fAE-FCFFNN}: The same as above except we freeze the encoder portion of the network after pretraining.
+\end{itemize}
+When working on the CIFAR10 and split-CIFAR10 benchmarks we made use of the Adam optimizer \cite{kingma2014adam} and when in the CL scenario reset the optimizer at the end of each task to reset the momentum (during testing we found that this resulted in better performance). We also used the cross entropy loss function for all of our experiments across datasets. Note that we didn't use any form of data augmentation during pretraining or training, we didn't use any regularization techniques (such as weight decay) and any form of CL method. The thinking behind this was to keep the networks in their simplest forms as possible whilst still being capable of achieving good performance to minimize confounders. Also note that we use a wide range of networks above including networks pretrained on different datasets, using different architectures and different loss functions (the autoencoder aims to reduce reconstruction loss during training) this was done with the hope that the experiments would give a good picture of how well different networks architectures with varying richness in pretraining may differ in their level of forgetting. 
+
+\subsection{Frozen versus Non-Frozen Encoders}
+In our experiment section we will look at the results of the networks mentioned above trained on split-CIFAR10 (with 5 tasks). By comparing the performance of networks with the encoder portion either frozen or unfrozen we aim to see the effect of using fixed features for CL versus using features that are changed over the course of learning. The results might indicate whether forgetting happens in early ``encoding layers'' of the network and could give answers to whether or not using frozen features does make the upstream task of CL easier \cite{ostapenko2022continual}, whether it reduces the amount of forgetting due to shallow layers no longer changing \cite{rebuffi2017icarl, li2017learning} or whether it makes no difference at all if all forgetting occurs in the deepest layers \cite{ramasesh2020anatomy}. 
+
+\subsection{Varying Type of Encoder}
+In our experiments we use encoders that were trained on an image classification task (Resnet18 and the VGG16 networks) and an encoder that was trained on an image reconstruction task (the AE). By comparing the performance of these networks we aim to see whether or not the type of encoder used has an effect on the amount of forgetting that occurs. Will the degree of forgetting of a network with an encoder trained on an image classification task be different to that of a network with an encoder trained on an image reconstruction task? Is an encoder trained to produce a low dimensional latent representation of an image better at retaining knowledge than an encoder trained to produce a representation useful for classifying an image? We aim to explore the answers to these questions in our experiments section.
+
+\subsection{Pretraining versus No Pretraining and Pretraining with Different Datasets}
+In our experiments we also compare the performance of networks that were pretrained on different datasets : None vs. CIFAR100 vs. Imagenet. By mixing the richness of the pretraining dataset we can also try and infer the effect of pretraining on the amount of forgetting that occurs. Will a network pretrained on a richer dataset forget less than a network pretrained on a less rich dataset? Based on \cite{ramasesh2022effect} we might hypothesize that a richer pretraining dataset and a bigger network is less likely to forget. We also hope to infer if pretraining at all is beneficial for CL, if it is then we might expect the network with no pretraining to forget more than the networks with pretraining.
+
+% TODO: mention the different CL scenarios and how we are focussing on task incremental learning

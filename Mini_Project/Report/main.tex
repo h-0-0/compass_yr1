@@ -8,10 +8,13 @@
 \usepackage{booktabs}
 \usepackage{tabu}
 \usepackage[T1]{fontenc}
-\usepackage{subfig}
+% \usepackage{subfig}
+\usepackage{subcaption}
+\usepackage{placeins}
+\usepackage{multirow}
 
 %% Sets page size and margins
-\usepackage[a4paper,top=2cm,bottom=3cm,left=3cm,right=3cm,marginparwidth=2.75cm]{geometry}
+\usepackage[a4paper,top=2cm,bottom=3cm,left=2cm,right=2cm,marginparwidth=2.75cm]{geometry}
 %% Useful packages
 \usepackage{amsmath}
 \usepackage{amsfonts}
@@ -42,20 +45,23 @@
 
 
 \begin{abstract}
-    % TODO: add abstract
+    In this report we demonstrate how neural networks trained on tasks sequentially forget how to perform previous tasks they've trained on when training on new tasks. We demonstrate forgetting on the split-MNIST using simple networks and then on split-CIFAR10 with networks composed of a pretrained encoder and a fully connected classifier on the end where the encoders were trained using different techniques. We found that using frozen latent representations or trainable latent representations had no effect on the forgetting rate of the network, however, trainable latent representations tended to be able to achieve a higher accuracy on the task currently being trained. We also found all our networks except the largest, trained on the largest pretraining dataset with a frozen latent representation had immediate complete forgetting of the previous task after one epoch of training on a new task. We also propose an extremely simple continual learning technique based on our findings.  
 \end{abstract}
 
 \input{1_Intro}
+\FloatBarrier
 \input{2_Background}
+\FloatBarrier
 \input{3_Related}
+\FloatBarrier
 \input{4_Method}
+\FloatBarrier
 \input{5_Experiment}
-% TODO: Results and Discussion Section?
+\FloatBarrier
 \input{6_Conclusion.tex}
-% \input{appendix}
-
+\FloatBarrier
 \small
 \bibliographystyle{plain}
 \bibliography{refs}
-
+\input{appendix}
 \end{document}
