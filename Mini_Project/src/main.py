@@ -6,10 +6,22 @@ import opt
 import results
 import plot
 from argparse import ArgumentParser
+import pretrain
+
+def print_flush(*args, **kwargs):
+    print(*args, **kwargs, flush=True)
 
 # Given model_name detects what model to create and returns said model
-def detect_model(model_name, data_name, encoder_name):
-    if("FC_FF_NN" in model_name):
+def detect_model(model_name, data_name, encoder_name, device):
+    if ("FC_FF_NN" in model_name) and ("CNN" in model_name):
+        raise Exception("Cannot have both FC_FF_NN and CNN in model name")
+    elif("nfVGG_FC_FF_NN" in model_name):
+        return pretrain.encoder_FC_FF_NN(data_name, "nfVGG", device)
+    elif("nfResnet18_FC_FF_NN" in model_name):
+        return pretrain.encoder_FC_FF_NN(data_name, "nfResnet18", device)
+    elif("nfAE_FC_FF_NN" in model_name):
+        return pretrain.encoder_FC_FF_NN(data_name, "nfAE", device)
+    elif("FC_FF_NN" in model_name):
         return simple.FC_FF_NN(data_name, encoder_name)
     elif("CNN" in model_name):
         return simple.CNN(data_name, encoder_name)
@@ -18,10 +30,18 @@ def detect_model(model_name, data_name, encoder_name):
 
 # Given model_name detects if it contains the name of one of our encoders
 def is_encoder(model_name):
-    if("RN50_clip" in model_name):
+    if ("RN50_clip" in model_name) and ("fVGG" in model_name):
+        raise Exception("Cannot have both RN50_clip and fVGG in model name")
+    elif("RN50_clip" in model_name):
         return "RN50_clip"
-    if("fVGG" in model_name):
+    elif("fResnet18" in model_name) and not ("nfResnet18" in model_name):
+        return "fResnet18"
+    elif("fResnet50" in model_name) and not ("nfResnet50" in model_name):
+        return "fResnet50"
+    elif("fVGG" in model_name) and not ("nfVGG" in model_name):
         return "fVGG"
+    elif("fAE" in model_name) and not ("nfAE" in model_name):
+        return "fAE"
     else:
         return False
 
@@ -42,7 +62,7 @@ def get_model(load_model, model_name, data_name, encoder_name, learning_rate, ep
         if not os.path.exists("saved_models"):
             raise Exception("No saved_models folder found, cannot load model")
         # Load model
-        model = detect_model(model_name, data_name, encoder_name)
+        model = detect_model(model_name, data_name, encoder_name, device)
         checkpoint = torch.load("saved_models/"+ data_name+ "_"+model_name+CL_ext+".pth", map_location=torch.device(device))
         model.load_state_dict(checkpoint['model_state_dict'])
 
@@ -65,10 +85,9 @@ def get_model(load_model, model_name, data_name, encoder_name, learning_rate, ep
                 raise Exception("Cannot load model from epoch: "+str(prev_epoch)+" and train for a total of: "+str(epochs)+" epochs")
 
         handle_device(model, device)
-        print("Loaded PyTorch Model State from saved_models/"+ data_name + "_" + model_name+ CL_ext+".pth")
+        print_flush("Loaded PyTorch Model State from saved_models/"+ data_name + "_" + model_name+ CL_ext+".pth")
     elif(load_model == False):
-        model = detect_model(model_name, data_name, encoder_name)
-
+        model = detect_model(model_name, data_name, encoder_name, device)
         # Create optimizer
         if optimizer_type == "SGD":
             optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
@@ -78,7 +97,6 @@ def get_model(load_model, model_name, data_name, encoder_name, learning_rate, ep
             optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
         else:
             raise Exception("Not a valid optimizer type, must be SGD or Adam")
-        
         handle_device(model, device)
         if is_CL:
             prev_epoch = False
@@ -107,7 +125,7 @@ def save(model, optimizer, data_name, model_name, epochs, is_CL=False):
         }, 
         "saved_models/"+data_name+ "_"+ model_name+ CL_ext + ".pth"
         )
-    print("Saved PyTorch Model State to saved_models/"+data_name+ "_"+model_name+ CL_ext +".pth")
+    print_flush("Saved PyTorch Model State to saved_models/"+data_name+ "_"+model_name+ CL_ext +".pth")
 
 # Run an experiment
 def run_exp(data_name="MNIST", model_name="RN50_clip_FF_FC_NN", batch_size=64, learning_rate=1e-3, epochs=5, load_model=False, save_model=False, device=False, optimizer_type="SGD", seed=552023):
@@ -117,13 +135,13 @@ def run_exp(data_name="MNIST", model_name="RN50_clip_FF_FC_NN", batch_size=64, l
     # Use GPU if available else use CPU, if device is given use that device
     if device == False:
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        print("Using {} device".format(device))
+        print_flush("\nUsing {} device".format(device))
     else:
-        print("Using {} device".format(device))
+        print_flush("\nUsing {} device".format(device))
 
     # Print experiment info
-    print("\n \n \n---------------------------- New Experiment ----------------------------")
-    print("Data: "+data_name, "Model: "+model_name, "Batch size: "+str(batch_size), "Learning rate: "+str(learning_rate), "Epochs: "+str(epochs), "Load model: "+str(load_model), "Save model: "+str(save_model), sep="\n")
+    print_flush("\n \n---------------------------- New Experiment ----------------------------")
+    print_flush("Data: "+data_name, "Model: "+model_name, "Batch size: "+str(batch_size), "Learning rate: "+str(learning_rate), "Epochs: "+str(epochs), "Load model: "+str(load_model), "Save model: "+str(save_model), sep="\n")
 
     # Load data
     encoder_name = is_encoder(model_name)
@@ -155,25 +173,25 @@ def run_exp(data_name="MNIST", model_name="RN50_clip_FF_FC_NN", batch_size=64, l
     return data_name, model_name
 
 # Run an experiment in CL scenario
-def run_exp_CL(data_name="MNIST", model_name="RN50_clip_FF_FC_NN", n_tasks=5, init_inc=2, batch_size=64, learning_rate=1e-3, epochs=5, load_model=False, save_model=False, device=False, optimizer_type="SGD", seed=552023):
+def run_exp_CL(data_name="MNIST", model_name="RN50_clip_FF_FC_NN", n_tasks=5, init_inc=2, batch_size=64, learning_rate=1e-3, epochs=5, load_model=False, save_model=False, device=False, optimizer_type="SGD", seed=552023, reset_fc=False):
     # Set seed
     torch.manual_seed(seed)
 
     # Use GPU if available else use CPU, if device is given use that device
     if device == False:
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        print("Using {} device".format(device))
+        print_flush("\nUsing {} device".format(device))
     else:
-        print("Using {} device".format(device))
+        print_flush("\nUsing {} device".format(device))
     
     # Print experiment info
-    print("\n \n \n---------------------------- New Experiment ----------------------------")
-    print("Data: "+data_name, "Model: "+model_name, "Number of tasks: "+str(n_tasks), "Number of classes in first task: " + str(init_inc), "Batch size: "+str(batch_size), "Learning rate: "+str(learning_rate), "Epochs: "+str(epochs), "Load model: "+str(load_model), "Save model: "+str(save_model), sep="\n")
+    print_flush("\n\n---------------------------- New Experiment ----------------------------")
+    print_flush("Data: "+data_name, "Model: "+model_name, "Number of tasks: "+str(n_tasks), "Number of classes in first task: " + str(init_inc), "Batch size: "+str(batch_size), "Learning rate: "+str(learning_rate), "Epochs: "+str(epochs), "Load model: "+str(load_model), "Save model: "+str(save_model), sep="\n")
     
     # Load data
     encoder_name = is_encoder(model_name)
     if(encoder_name!=False):
-        train_scenario, test_scenario = data.get_data_loader_encoder_CL(data_name, encoder_name, batch_size, device, n_tasks)
+        train_scenario, test_scenario = data.get_data_loader_encoder_CL(data_name, encoder_name, batch_size, device, n_tasks, init_inc)
     else:
         train_scenario, test_scenario = data.get_data_loader_CL(data_name, batch_size, device, n_tasks, init_inc)
 
@@ -189,7 +207,8 @@ def run_exp_CL(data_name="MNIST", model_name="RN50_clip_FF_FC_NN", n_tasks=5, in
         data_name,
         model_name,
         learning_rate=learning_rate, 
-        epochs=epochs
+        epochs=epochs,
+        reset_fc=reset_fc
     )
 
     # Create task names (Currently is just [0, ..., n_tasks-1])
@@ -234,7 +253,8 @@ def main(args, is_CL):
             save_model=args.save_model,
             device=args.device,
             optimizer_type=args.optimizer_type,
-            seed=args.seed
+            seed=args.seed,
+            reset_fc=args.reset_fc
             )
         plot.plot_default(data_name, model_name, is_CL=True)
 
@@ -272,6 +292,11 @@ if __name__ == "__main__":
 
     # Argument for setting the seed
     parser.add_argument("--seed", type=int, help="Seed for random number generator", default=552023)
+    
+    # Argument for resetting the FC layer
+    parser.add_argument('--reset_fc', action='store_true')
+    parser.add_argument('--no-reset_fc', dest='reset_fc', action='store_false')
+    parser.set_defaults(reset_fc=False)
 
     # Parse arguments and check if CL experiment
     args = parser.parse_args()

@@ -4,6 +4,9 @@ from torch.utils.data import DataLoader
 import time
 import os
 
+def print_flush(*args, **kwargs):
+    print(*args, **kwargs, flush=True)
+
 # Used to save models at checkpoints
 def save_checkpoint(model, optimizer, data_name, model_name, checkpoint_id, epochs=False , is_CL=True):
     if is_CL:
@@ -40,7 +43,7 @@ def save_checkpoint(model, optimizer, data_name, model_name, checkpoint_id, epoc
             }, 
             "saved_models/" + path + "/" + path + "_" + checkpoint_id + ".pth"
             )
-    print("Saved PyTorch Model State to saved_models/" + path + "/" + path + "_" + checkpoint_id +".pth")
+    print_flush("Saved PyTorch Model State to saved_models/" + path + "/" + path + "_" + checkpoint_id +".pth")
 
 # Performs one epoch of training
 def train_loop(dataloader, model, loss_fn, optimizer):
@@ -69,10 +72,10 @@ def train_loop(dataloader, model, loss_fn, optimizer):
         train_loss += loss.item()
         correct += (pred.argmax(1) == y).type(torch.float).sum().item()
         
-        # Print loss every 100 batches
+        # print_flush loss every 100 batches
         if batch % 100 == 0:
             loss, current = loss.item(), (batch + 1) * len(X)
-            print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
+            print_flush(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
 
     # Find number of batches and calculate average loss and accuracy
     num_batches = len(dataloader)
@@ -102,7 +105,7 @@ def test_loop(dataloader, model, loss_fn):
     test_loss /= num_batches
     correct /= size
     test_acc = 100*correct
-    print(f"Test Error: \n Accuracy: {(test_acc):>0.1f}%, Avg loss: {test_loss:>8f} \n")  
+    print_flush(f"Test Error: \n Accuracy: {(test_acc):>0.1f}%, Avg loss: {test_loss:>8f} \n")  
     return test_loss, test_acc
 
 # Calculates accuracy and loss for past data
@@ -144,8 +147,8 @@ def train(model, train_dataloader, test_dataloader, optimizer,
     starting_epoch, end_epoch = epochs
     training_start_time = time.time()
     for t in range(starting_epoch, end_epoch):
-        # Print epoch number
-        print(f"Epoch {t+1}\n-------------------------------")
+        # print_flush epoch number
+        print_flush(f"Epoch {t+1}\n-------------------------------")
 
         # Perform training and save loss and accuracy
         train_loss, train_acc = train_loop(train_dataloader, model, loss_fn, optimizer)
@@ -159,13 +162,14 @@ def train(model, train_dataloader, test_dataloader, optimizer,
         test_loss, test_acc = test_loop(test_dataloader, model, loss_fn)
         test_losses.append(test_loss)
         test_accs.append(test_acc)
-    print("Done!")
+    print_flush("Done!")
     return train_losses, test_losses, train_accs, test_accs, times, optimizer
 
 # Function that trains neural network over multiple epochs in CL scenario, note that if SGD with momentum is used then the momentum is reset after each task
 def train_CL(model, train_scenario, test_scenario, optimizer, data_name, model_name, 
         learning_rate = 1e-3, epochs = 5, 
-        loss_fn=nn.CrossEntropyLoss()
+        loss_fn=nn.CrossEntropyLoss(),
+        reset_fc = False 
         ):
     # Collect past data-loaders for calculating metrics
     past_train_dataloader = {}
@@ -206,8 +210,8 @@ def train_CL(model, train_scenario, test_scenario, optimizer, data_name, model_n
     # Perform multiple epochs of training
     first = True
     for task_id, (train_dataset, test_dataset) in enumerate(zip(train_scenario, test_scenario)):
-        # Print task number
-        print(f"Task {task_id}\n-------------------------------")
+        # print_flush task number
+        print_flush(f"Task {task_id}\n-------------------------------")
         # Create data-loaders for current task
         train_dataloader = DataLoader(train_dataset)
         test_dataloader = DataLoader(test_dataset)
@@ -217,6 +221,12 @@ def train_CL(model, train_scenario, test_scenario, optimizer, data_name, model_n
         if (type (optimizer).__name__ == 'Adam') and (not first):
             optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
+        # TODO: remove below once finished investigating
+        if reset_fc == True:
+            print_flush("----------Resetting parameters----------")
+            for layer in model.fc:
+                if hasattr(layer, 'reset_parameters'):
+                    layer.reset_parameters()
         # Perform multiple epochs of training and testing
         for _ in range(epochs):
             # Perform training and save loss and accuracy on current task
@@ -288,7 +298,7 @@ def train_CL(model, train_scenario, test_scenario, optimizer, data_name, model_n
         past_test_dataloader[task_id] = test_dataloader
         first = False
 
-    print("Done!")
+    print_flush("Done!")
     # Store metrics in dictionary
     metrics = {
         "Train CTL": train_CTLs,

@@ -7,11 +7,12 @@ from torchvision import datasets, transforms
 # Class for fully connected feed forward neural network
 class FC_FF_NN(nn.Module):
     def __init__(self, data_name, encoder_name=False):
+        self.encoder_name = encoder_name
         # We create the network architecture depending on the dataset
         if(data_name == "MNIST"):
             super(FC_FF_NN, self).__init__()
             self.flatten = nn.Flatten()
-            self.network = nn.Sequential(
+            self.fc = nn.Sequential(
                 nn.Linear(28*28, 512),
                 nn.ReLU(),
                 nn.Linear(512, 512),
@@ -21,8 +22,7 @@ class FC_FF_NN(nn.Module):
             self.device = None
 
         elif(data_name == "CIFAR10"):
-            # We customize the input size depending on the encoder used,
-            # if no encoder is used we use the original input size of the dataset
+            # We customize the input size depending on the encoder used, if no encoder is used we use the original input size of the dataset
             if(encoder_name == False):
                 in_features = 32*32*3
             else:
@@ -30,39 +30,27 @@ class FC_FF_NN(nn.Module):
                     in_features = 1024
                 elif(encoder_name == "fVGG"):
                     in_features = 512
+                elif(encoder_name == "fResnet18"):
+                    in_features = 512
+                elif(encoder_name == "fAE"):
+                    in_features = 256
+                elif(encoder_name == "fResnet50"):
+                    in_features = 2048
                 else:
-                    raise Exception("Not given valid encoder name must be: RN50_clip or fVGG")
-            
-            if(encoder_name == "fVGG"):
-                super(FC_FF_NN, self).__init__()
-                self.flatten = nn.Flatten()
-                self.network = nn.Sequential(
-                    nn.Linear(512, 512),
-                    nn.ReLU(inplace=True),
-                    nn.Linear(512, 512),
-                    nn.ReLU(inplace=True),
-                    nn.Linear(512, 10),
-                )
-                self.device = None
-            else:
-                super(FC_FF_NN, self).__init__()
-                self.flatten = nn.Flatten()
-                self.network = nn.Sequential(
-                    nn.Linear(in_features, 512),
-                    nn.ReLU(),
-                    nn.Linear(512, 512),
-                    nn.ReLU(),
-                    nn.Linear(512, 256),
-                    nn.ReLU(),
-                    nn.Linear(256, 128),
-                    nn.ReLU(),
-                    nn.Linear(128, 10)
-                )
-                self.device = None
+                    raise Exception("Not given valid encoder name must be: RN50_clip, fVGG, fResnet18 or fAE")
+            super(FC_FF_NN, self).__init__()
+            self.flatten = nn.Flatten()
+            self.fc = nn.Sequential(
+                nn.Linear(in_features, 512),
+                nn.ReLU(inplace=True),
+                nn.Linear(512, 512),
+                nn.ReLU(inplace=True),
+                nn.Linear(512, 10),
+            )
+            self.device = None
 
         elif(data_name == "CIFAR100"):
-            # We customize the input size depending on the encoder used,
-            # if no encoder is used we use the original input size of the dataset
+            # We customize the input size depending on the encoder used, if no encoder is used we use the original input size of the dataset
             if(encoder_name == False):
                 in_features = 32*32*3
             else:
@@ -72,48 +60,34 @@ class FC_FF_NN(nn.Module):
                     in_features = 512
                 else:
                     raise Exception("Not given valid encoder name must be: RN50_clip or fVGG")
-            
-            if(encoder_name == "fVGG"):
-                super(FC_FF_NN, self).__init__()
-                self.flatten = nn.Flatten()
-                self.network = nn.Sequential(
-                    nn.Linear(512, 512),
-                    nn.ReLU(inplace=True),
-                    nn.Linear(512, 512),
-                    nn.ReLU(inplace=True),
-                    nn.Linear(512, 100),
-                )
-                self.device = None
-            else:
-                super(FC_FF_NN, self).__init__()
-                self.flatten = nn.Flatten()
-                self.network = nn.Sequential(
-                    nn.Linear(in_features, 512),
-                    nn.ReLU(),
-                    nn.Linear(512, 512),
-                    nn.ReLU(),
-                    nn.Linear(512, 256),
-                    nn.ReLU(),
-                    nn.Linear(256, 128),
-                    nn.ReLU(),
-                    nn.Linear(128, 100)
-                )
-                self.device = None
+                
+            super(FC_FF_NN, self).__init__()
+            self.flatten = nn.Flatten()
+            self.fc = nn.Sequential(
+                nn.Linear(512, 512),
+                nn.ReLU(inplace=True),
+                nn.Linear(512, 512),
+                nn.ReLU(inplace=True),
+                nn.Linear(512, 100),
+            )
+            self.device = None
         else:
             raise Exception("Not given valid dataset name must be: MNIST, CIFAR10 or CIFAR100")
 
     # Compute forward pass
     def forward(self, x):
         x = self.flatten(x)
-        out = self.network(x)
+        out = self.fc(x)
         return out
 
 
 # Class for convolutional neural network
 class CNN(nn.Module):
     def __init__(self, data_name, encoder_name=False):
+        self.encoder_name = encoder_name
         # We create the network architecture depending on the dataset
         if(data_name == "MNIST"):
+            # A simple low compute CNN for MNIST
             super(CNN, self).__init__()
             self.conv = nn.Sequential(
                 nn.Conv2d(in_channels=1, out_channels=16, kernel_size=3, stride=1, padding=0),
@@ -130,14 +104,11 @@ class CNN(nn.Module):
             self.device = None
 
         elif(data_name == "CIFAR10"):
-            # We customize the input size depending on the encoder used,
-            # if no encoder is used we use the original input size of the dataset
+            # We customize the input size depending on the encoder used, currently only supports no encoder
             if (encoder_name == False):
                 in_channels = 3
-            elif(encoder_name == "RN50_clip"):
-                in_channels = 1
             else:
-                raise Exception("Not given valid encoder name must be: RN50_clip")
+                raise Exception("This class doesnt currently support encoders")
             super(CNN, self).__init__()
             # Based on VGG16 architecture
             self.conv = nn.Sequential(
@@ -195,10 +166,8 @@ class CNN(nn.Module):
         elif(data_name == "CIFAR100"):
             if (encoder_name == False):
                 in_channels = 3
-            elif(encoder_name == "RN50_clip"):
-                in_channels = 1
             else:
-                raise Exception("Not given valid encoder name must be: RN50_clip")
+                raise Exception("This class doesnt currently support encoders")
             super(CNN, self).__init__()
 
             # Based on VGG16 architecture
@@ -264,13 +233,9 @@ class CNN(nn.Module):
             )
             self.fc = nn.Sequential(
                 nn.Linear(512, 512),
-                nn.BatchNorm2d(512),
                 nn.ReLU(inplace=True),
-                nn.Dropout(0.5),
                 nn.Linear(512, 512),
-                nn.BatchNorm2d(512),
                 nn.ReLU(inplace=True),
-                nn.Dropout(0.5),
                 nn.Linear(512, 100),
             )
             self.flatten = nn.Flatten()

@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import results
 import os
-from numpy import unique
+from numpy import unique, count_nonzero, cumsum
 
 # Plot training and testing loss over time for a given model
 def plot_loss(results_df, model_name, path=False):
@@ -57,6 +57,11 @@ def plot_CTL(results_df, model_name, path=False, xs = False):
     train_CTL = results_df.loc[results_df['Model Name'] == model_name, 'Train CTL'].values
     test_CTL = results_df.loc[results_df['Model Name'] == model_name, 'Test CTL'].values
 
+    # Get list of task ids
+    task_ids = results_df.loc[results_df['Model Name'] == model_name, 'Task Name'].values
+    # Get number of epochs per task
+    epochs_per_task = [count_nonzero(task_ids == id) for id in unique(task_ids)]
+
     # Plot training and testing loss over time
     if xs == False:
         plt.plot(train_CTL, label="Training CTL")
@@ -65,8 +70,8 @@ def plot_CTL(results_df, model_name, path=False, xs = False):
     else:
         plt.plot(train_CTL, label="Training CTL")
         plt.plot(test_CTL, label="Testing CTL")
-        plt.xlabel("Task.Epoch")
-        plt.xticks([i for i in range(len(xs))], [str(x) for x in xs])
+        plt.xlabel("Task Number")
+        plt.xticks(cumsum(epochs_per_task), [str(id) for id in unique(task_ids)])
     plt.ylabel("CTL")
     plt.title("Current Task Loss (CTL) over training for " + model_name)
     plt.legend()
@@ -87,6 +92,11 @@ def plot_CTA(results_df, model_name, path=False, xs = False):
     train_CTA = results_df.loc[results_df['Model Name'] == model_name, 'Train CTA'].values
     test_CTA = results_df.loc[results_df['Model Name'] == model_name, 'Test CTA'].values
 
+    # Get list of task ids
+    task_ids = results_df.loc[results_df['Model Name'] == model_name, 'Task Name'].values
+    # Get number of epochs per task
+    epochs_per_task = [count_nonzero(task_ids == id) for id in unique(task_ids)]
+
     # Plot training and testing loss over time
     if xs == False:
         plt.plot(train_CTA, label="Training CTA")
@@ -95,8 +105,8 @@ def plot_CTA(results_df, model_name, path=False, xs = False):
     else:
         plt.plot(train_CTA, label="Training CTA")
         plt.plot(test_CTA, label="Testing CTA")
-        plt.xlabel("Task.Epoch")
-        plt.xticks([i for i in range(len(xs))], [str(x) for x in xs])
+        plt.xlabel("Task Number")
+        plt.xticks(cumsum(epochs_per_task), [str(id) for id in unique(task_ids)])
     plt.ylabel("CTA")
     plt.title("Current Task Accuracy (CTA) over training for " + model_name)
     plt.legend()
@@ -117,6 +127,11 @@ def plot_PTL(results_df, model_name, path=False, xs = False):
     train_PTL = results_df.loc[results_df['Model Name'] == model_name, 'Train PTL'].values
     test_PTL = results_df.loc[results_df['Model Name'] == model_name, 'Test PTL'].values
 
+    # Get list of task ids
+    task_ids = results_df.loc[results_df['Model Name'] == model_name, 'Task Name'].values
+    # Get number of epochs per task
+    epochs_per_task = [count_nonzero(task_ids == id) for id in unique(task_ids)]
+
     # Plot training and testing loss over time
     if xs == False:
         plt.plot(train_PTL, label="Training PTL")
@@ -125,8 +140,8 @@ def plot_PTL(results_df, model_name, path=False, xs = False):
     else:
         plt.plot(train_PTL, label="Training PTL")
         plt.plot(test_PTL, label="Testing PTL")
-        plt.xlabel("Task.Epoch")
-        plt.xticks([i for i in range(len(xs))], [str(x) for x in xs])
+        plt.xlabel("Task Number")
+        plt.xticks(cumsum(epochs_per_task), [str(id) for id in unique(task_ids)])
     plt.ylabel("PTL")
     plt.title("Past Task Loss (PTL) over training for " + model_name)
     plt.legend()
@@ -147,6 +162,11 @@ def plot_PTA(results_df, model_name, path=False, xs = False):
     train_PTA = results_df.loc[results_df['Model Name'] == model_name, 'Train PTA'].values
     test_PTA = results_df.loc[results_df['Model Name'] == model_name, 'Test PTA'].values
 
+    # Get list of task ids
+    task_ids = results_df.loc[results_df['Model Name'] == model_name, 'Task Name'].values
+    # Get number of epochs per task
+    epochs_per_task = [count_nonzero(task_ids == id) for id in unique(task_ids)]
+
     # Plot training and testing loss over time
     if xs == False:
         plt.plot(train_PTA, label="Training PTA")
@@ -155,8 +175,8 @@ def plot_PTA(results_df, model_name, path=False, xs = False):
     else:
         plt.plot(train_PTA, label="Training PTA")
         plt.plot(test_PTA, label="Testing PTA")
-        plt.xlabel("Task.Epoch")
-        plt.xticks([i for i in range(len(xs))], [str(x) for x in xs])
+        plt.xlabel("Task Number")
+        plt.xticks(cumsum(epochs_per_task), [str(id) for id in unique(task_ids)])
     plt.ylabel("PTA")
     plt.title("Past Task Accuracy (PTA) over training for " + model_name)
     plt.legend()
@@ -222,6 +242,8 @@ def plot_TL(results_df, model_name, path=False, xs = False):
     task_ids = results_df.loc[results_df['Model Name'] == model_name, 'Task Name'].values
     # Get total number of epochs
     epochs = [i for i in range(len(task_ids))]
+    # Get number of epochs per task
+    epochs_per_task = [count_nonzero(task_ids == id) for id in unique(task_ids)]
     # Only keep unique task ids
     task_ids = unique(task_ids)
 
@@ -248,8 +270,8 @@ def plot_TL(results_df, model_name, path=False, xs = False):
         else:
             plt.plot(epochs, train_TL, label="Training TL for task "+ task_id, color=color)
             plt.plot(epochs, test_TL, label="Testing TL for task "+ task_id, linestyle="dashed", color=color)
-            plt.xlabel("Task.Epoch")
-            plt.xticks([i for i in range(len(xs))], [str(x) for x in xs])
+            plt.xlabel("Task Number")
+            plt.xticks(cumsum(epochs_per_task), [str(id) for id in unique(task_ids)])
         plt.ylabel("Task Loss (TL)")
         plt.title("Task Loss (TL) on tasks over training for " + model_name)
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
@@ -306,6 +328,8 @@ def plot_TA(results_df, model_name, path=False, xs = False):
     task_ids = results_df.loc[results_df['Model Name'] == model_name, 'Task Name'].values
     # Get total number of epochs
     epochs = [i for i in range(len(task_ids))]
+    # Get number of epochs per task
+    epochs_per_task = [count_nonzero(task_ids == id) for id in unique(task_ids)]
     # Only keep unique task ids
     task_ids = unique(task_ids)
 
@@ -332,8 +356,8 @@ def plot_TA(results_df, model_name, path=False, xs = False):
         else:
             plt.plot(epochs, train_TA, label="Training TA for task "+ task_id, color=color)
             plt.plot(epochs, test_TA, label="Testing TA for task "+ task_id, linestyle="dashed", color=color)
-            plt.xlabel("Task.Epoch")
-            plt.xticks([i for i in range(len(xs))], [str(x) for x in xs])
+            plt.xlabel("Task Number")
+            plt.xticks(cumsum(epochs_per_task), [str(id) for id in unique(task_ids)])
         plt.ylabel("Task Accuracy (TA)")
         plt.title("Task Accuracy (TA) on tasks over training for " + model_name)
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
@@ -407,3 +431,5 @@ def plot_default(data_names, model_names, is_CL: bool=False):
             plot_PTA(results_df, model_names, path=path, xs=xs)
             plot_TL(results_df, model_names, path=path, xs=xs)
             plot_TA(results_df, model_names, path=path, xs=xs)
+
+# TODO: remove xs functionality from plot functions, not needed anymore
