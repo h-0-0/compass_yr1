@@ -8,22 +8,493 @@ date: "2023-05-09"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+# Parrallel Rcpp
+In this portfolio we will look at how to carry out parrallel computation in R using Rcpp. We will look at an Irish smart meter data set and do some analysis on electricity demand using the help of parralelization in Rcpp. First lets load in the data:
+```{r}
+library(devtools)
+install_github("mfasiolo/electBook")
+library(electBook)
+data(Irish)
 ```
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+Let's now concatenate all of the electricity demand from all households into a single vector and print out some of the first values of the vector:
+```{r}
+y <- do.call("c", Irish$indCons)
+y <- y - mean(y)
+head(y)
 ```
+We would like to model y, the electricity demand, according to the time of day which is given by the vector x:
+```{r}
+ncust <- ncol(Irish$indCons) 
+x <- rep(Irish$extra$tod, ncust)
+```
+Let's now plot a subsample of the data:
+```{r}
+n <- length(x)
+ss <- sample(1:n, 1e4)
+plot(x[ss], y[ss], col = "grey")
+```
+Here y is the electricity demand and x is the time of day, 0 corresponds to midnight and 47 23:30, ie. x represents the time of day as the number of 30 minute intervals that have so far passed. We would like to fit a simple univariate regression model $\mathbb{E}(y|x)=\beta_{1}x$. Let's first create a function in regular R that would do this:
+```{r}
+reg1D <- function(y, x){
+  
+  b <- t(x) %*% y / (t(x) %*% x)  
+  
+  return(b)
+  
+}
+```
+Let's now create a version in RcppParallel, so we can split computation across multiple cores:
+```{r}
+library(Rcpp)
+library(RcppParallel)
+Rcpp::sourceCpp(code = ' 
+// [[Rcpp::depends(RcppParallel)]]
+#include <Rcpp.h>
+#include <RcppParallel.h>
+#include <iostream>
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+using namespace Rcpp;
+using namespace RcppParallel;
+
+// Define a struct to hold the input and output data
+struct RegressionData {
+  const RVector<double> x;
+  const RVector<double> y;
+  double xx;
+  double xy;
+  
+  // Constructor to initialize the input data
+  RegressionData(const NumericVector x_, const NumericVector y_)
+    : x(x_), y(y_), xx(0), xy(0) {}
+};
+
+// Define the worker function to calculate the sums
+struct RegressionWorker : public Worker {
+  RegressionData* data;
+
+  // Constructor to initialize the worker with the input data
+  RegressionWorker(RegressionData* data_) : data(data_) {}
+  
+  // Function to perform the calculation
+  void operator()(std::size_t begin, std::size_t end) {
+    double partial_xx = 0.0;
+    double partial_xy = 0.0;
+    for (std::size_t i = begin; i < end; i++) {
+      partial_xx += (data->x[i] * data->x[i]);
+      partial_xy += (data->x[i] * data->y[i]);
+    }
+    #pragma omp critical
+    {
+      data->xx += partial_xx;
+      data->xy += partial_xy;
+    }
+  }
+};
+
+// [[Rcpp::export]]
+NumericVector reg1D_parallel(NumericVector y, NumericVector x) {
+
+  // Create RegressionData object with input data
+  RegressionData data(x, y);
+  
+  // Create RegressionWorker object with pointer to RegressionData
+  RegressionWorker worker(&data);
+  
+  // Call parallelReduce to perform the calculation in parallel
+  parallelFor(0, x.length(), worker);
+  
+  // Perform: xy / xx
+  NumericVector result(1);
+  #pragma omp critical
+  {
+    result[0] = data.xy / data.xx;
+  }
+  return result;
+}
+')
+```
+Let's first compare the fits of these two models and see if they reach the same conclusion:
+```{r}
+lm(y ~ -1 + x)$coeff
+reg1D(y, x)
+reg1D_parallel(y, x)
+```
+The results are very similar with some minor discrepancies for the last 4 digits. Let's now compare the speed of these two functions in fitting a model, we will also set the number of threads to be used to 8, our parallel function will use the maximum number of threads available so will use 8 threads:
+```{r}
+setThreadOptions(numThreads = 8)
+
+# Fit using both functions and print times
+system.time( reg1D(y, x) )
+system.time( reg1D_parallel(y, x) )
+```
+We can see that the time for our parallel version of the function to run was much less than the time needed for the non-parallel version. Let's now take a look at the model that is fitted by reg1D_parallel:
+```{r}
+ss <- sort( sample(1:n, 1e4) )
+plot(x[ss], y[ss], col = "grey")
+abline(a = 0, b = reg1D_parallel(y, x), col = 2, lwd = 2)
+```
+The fit is t
+errible, this is pretty obvious simply by taking a look at the scatter plot. Let's now instead try and fit a non-linear model that may more accurately be able to model the electricity demand. Let's now try fitting a polynomial regression of the following form, $\mathbb{E}(y|x)=\beta_{0}+ \beta_{1}x+\beta_{2}x^{2}+\beta_{3}x^{3}$. First let's write our non-parallel version:
+```{r}
+regMD <- function(y, X){
+  
+  XtX <- t(X) %*% X
+  
+  C <- chol(XtX)
+  
+  b <- backsolve(C, forwardsolve(t(C), t(X) %*% y) )
+  
+  return(b)
+  
+}
+```
+And now let's write our parallel version, we will write functions for computing $X^{T}X$ and finding the Choleksy decomposition: 
+```{r}
+Rcpp::sourceCpp(code = ' 
+// [[Rcpp::depends(RcppParallel)]]
+#include <Rcpp.h>
+#include <RcppParallel.h>
+#include <cmath>
+#include <iostream>
+using namespace Rcpp;
+using namespace RcppParallel;
+
+// Define a custom worker class for parallel computation of Cholesky decmposition
+class CholeskyWorker : public Worker {
+private:
+  const RMatrix<double> A;
+  RMatrix<double> R;
+
+public:
+  CholeskyWorker(const NumericMatrix A, NumericMatrix R)
+    : A(A), R(R) {}
+
+  // Function to perform the parallel computation
+  void operator()(std::size_t begin, std::size_t end) {
+    std::size_t n = A.nrow();
+
+    for (std::size_t i = begin; i < end; ++i) {
+      for (std::size_t j = i; j < n; ++j) {
+        double sumProduct = 0.0;
+        for (std::size_t k = 0; k < i; ++k) {
+          sumProduct += R(k, i) * R(k, j);
+        }
+        if (i == j) {
+          R(i, i) = std::sqrt(A(i, i) - sumProduct);
+        } else {
+          R(i, j) = (A(i, j) - sumProduct) / R(i, i);
+        }
+      }
+    }
+  }
+};
+
+// Function to perform Cholesky decomposition in parallel
+// [[Rcpp::export]]
+NumericMatrix cholParallel(const NumericMatrix A) {
+  std::size_t n = A.nrow();
+  NumericMatrix R(n, n);
+
+  // Create an instance of the CholeskyWorker
+  CholeskyWorker worker(A, R);
+
+  // Perform parallel computation using RcppParallel
+  parallelFor(0, n, worker);
+
+  // Set the lower triangular elements to zero
+  for (std::size_t i = 0; i < n; ++i) {
+    for (std::size_t j = 0; j < i; ++j) {
+      R(i, j) = 0.0;
+    }
+  }
+
+  return R;
+}
+
+// Define a custom worker class for parallel computation
+class XtXWorker : public Worker {
+private:
+  const RMatrix<double> X;
+  RMatrix<double> result;
+
+public:
+  XtXWorker(const NumericMatrix X, NumericMatrix result)
+    : X(X), result(result) {}
+
+  // Function to perform the parallel computation
+  void operator()(std::size_t begin, std::size_t end) {
+    std::size_t n = X.ncol();
+
+    for (std::size_t i = begin; i < end; ++i) {
+      for (std::size_t j = i; j < n; ++j) {
+        double dotProduct = 0.0;
+        for (std::size_t k = 0; k < X.nrow(); ++k) {
+          dotProduct += X(k, i) * X(k, j);
+        }
+        result(i, j) = dotProduct;
+        result(j, i) = dotProduct;  // Set the symmetric element as well
+      }
+    }
+  }
+};
+
+// Function to perform matrix times itself in parallel
+// [[Rcpp::export]]
+NumericMatrix XtX(const NumericMatrix X) {
+  std::size_t n = X.ncol();
+  NumericMatrix result(n, n);
+
+  // Create an instance of the XtXWorker
+  XtXWorker worker(X, result);
+
+  // Perform parallel computation using RcppParallel
+  parallelFor(0, n, worker);
+
+  return result;
+}
+
+')
+```
+Let's now write the parallel version of our function using the functions we created using RcppParallel above, note that we perform the frontsolve and backsolve like in the non-parallel version as these functions are sequential and therfore cant be paralellized:
+```{r}
+regMD_parallel <- function(y, X){
+  C <- cholParallel(XtX(X))
+  b <- backsolve(C, forwardsolve(t(C), t(X) %*% y) )
+  return(b)
+}
+```
+Let's now check that the values we get are the same:
+```{r}
+X <- cbind(1, x, x^2, x^3)
+b_lm <- lm(y ~ -1 + X)$coeff; b_lm
+b <- regMD(y, X) ; b
+b_p <- regMD_parallel(y, X) ; b_p
+```
+They all look the same! great! Let's now compare their compute times:
+```{r}
+system.time( regMD(y, X) )
+system.time( regMD_parallel(y, X) )
+```
+The compute times for our parallel version are quite a bit faster, let's now see what the fit looks like:
+```{r}
+ss <- sort( sample(1:n, 1e4) )
+Xu <- cbind(1, 0:47, (0:47)^2, (0:47)^3)
+plot(x[ss], y[ss], col = "grey")
+lines(0:47, Xu %*% b_p, col = 2)
+```
+This fit looks much better than before, but can we do even better? let's now try and fit a basic one dimensional local polynomial regression (using a Gaussian kernel), let's first write our non-parallel version:
+```{r}
+regMD_local <- function(y, X, x0, x, h){
+  
+  w <- dnorm(x0, x, h)
+  w <- w / sum(x) * length(y)
+  
+  wY <- y * sqrt(w)
+  wX <- X * sqrt(w)
+  wXtwX <- t(wX) %*% wX
+  
+  C <- chol(wXtwX)
+  
+  b <- backsolve(C, forwardsolve(t(C), t(wX) %*% wY) )
+  
+  return(b)
+  
+}
+```
+We already have a function for performing the cholesky decomposition in parallel, 
+```{r}
+Rcpp::sourceCpp(code = ' 
+// [[Rcpp::depends(RcppParallel)]]
+#include <Rcpp.h>
+#include <RcppParallel.h>
+#include <cmath>
+#include <iostream>
+
+using namespace Rcpp;
+using namespace RcppParallel;
+
+// [[Rcpp::export]]
+double cpp_dnorm(double x, double mu, double sigma) {
+    double coefficient = 1 / (sqrt(2 * M_PI) * sigma);
+    double exponent = -((x - mu) * (x - mu)) / (2 * sigma * sigma);
+    return coefficient * exp(exponent);
+}
+
+class VectorSumWorker : public Worker
+{
+private:
+  const RVector<double> input;
+  double sum;
+
+public:
+  VectorSumWorker(const NumericVector input) : input(input), sum(0.0) {}
+  
+  VectorSumWorker(VectorSumWorker& other, Split) : input(other.input), sum(0.0) {}
+
+  void operator()(std::size_t begin, std::size_t end)
+  {
+    double localSum = 0.0;
+    for (std::size_t i = begin; i < end; ++i)
+    {
+      localSum += input[i];
+    }
+    sum += localSum;
+  }
+
+  void join(const VectorSumWorker& rhs)
+  {
+    sum += rhs.sum;
+  }
+  
+  double getSum() const
+  {
+    return sum;
+  }
+};
+
+// [[Rcpp::export]]
+double VectorSum(NumericVector input)
+{
+  VectorSumWorker worker(input);
+  parallelReduce(0, input.size(), worker);
+
+  return worker.getSum();
+}
+
+class WeightsWorker : public Worker
+{
+private:
+  const double x0;
+  const RVector<double> x;
+  const double h;
+  const double sx;
+  const double ylen;
+  NumericVector w;
+
+public:
+  WeightsWorker(const double x0, const NumericVector x, const double h, const double sx, const double ylen)
+    : x0(x0), x(x), h(h), w(x.size()), sx(sx), ylen(ylen) {}
+
+  void operator()(std::size_t begin, std::size_t end)
+  {
+    for (std::size_t i = begin; i < end; ++i)
+    {
+      double weight = cpp_dnorm(x0, x[i], h);
+      w[i] = weight/sx * ylen;
+    }
+  }
+  
+  NumericVector getWeights() {
+    return w;
+  }
+};
+
+// [[Rcpp::export]]
+NumericVector get_weights(double x0, NumericVector x, double h, NumericVector y)
+{
+  double sx  = VectorSum(x);
+  double ylen = y.size();
+  double c = sx*ylen;
+  WeightsWorker weights(x0, x, h, sx, ylen);
+  parallelFor(0, x.size(), weights);
+
+  return weights.getWeights();
+}
+
+struct MulVecWorker : public Worker {
+  const RVector<double> x;
+  const RVector<double> y;
+  RVector<double> output;
+
+  MulVecWorker(const NumericVector& x, const NumericVector& y, NumericVector& result)
+    : x(x), y(y), output(result) {}
+
+  void operator()(std::size_t begin, std::size_t end) {
+    for (std::size_t i = begin; i < end; ++i) {
+      output[i] = x[i] * y[i];
+    }
+  }
+};
+
+// [[Rcpp::export]]
+NumericVector mulVecParallel(const NumericVector& x, const NumericVector& y) {
+  // Create an output vector of the same length as input vectors
+  NumericVector output(x.size());
+
+  // Create a worker object
+  MulVecWorker worker(x, y, output);
+
+  // Perform the parallel calculation
+  parallelFor(0, x.size(), worker);
+
+  return output;
+}
+
+struct ElementwiseMatVecMulWorker : public Worker {
+  const RMatrix<double> inputX;
+  const RVector<double> inputY;
+  RMatrix<double> output;
+
+  ElementwiseMatVecMulWorker(const NumericMatrix& X, const NumericVector& y, NumericMatrix& result)
+    : inputX(X), inputY(y), output(result) {}
+
+  void operator()(std::size_t begin, std::size_t end) {
+    for (std::size_t i = begin; i < end; ++i) {
+      for (int j = 0; j < inputX.ncol(); ++j) {
+        output(i, j) = inputX(i, j) * inputY[i];
+      }
+    }
+  }
+};
+
+// [[Rcpp::export]]
+NumericMatrix elementwiseMatVecMulParallel(const NumericMatrix& X, const NumericVector& y) {
+  NumericMatrix output(X.nrow(), X.ncol());
+
+  ElementwiseMatVecMulWorker worker(X, y, output);
+
+  parallelFor(0, X.nrow(), worker);
+
+  return output;
+}
+
+')
+```
+We use the paralellized functions above in our parallel version of the function:
+```{r}
+regMD_local_parallel <- function(y, X, x0, x, h){
+
+  w <- get_weights(x0, x, h, y)
+  
+  sqrt_w <- sqrt(w)
+  wY <- mulVecParallel(y, sqrt_w)
+  wX <- elementwiseMatVecMulParallel(X, sqrt_w)
+  wXtwX <- XtX(wX)
+  
+  C <- cholParallel(wXtwX)
+  
+  b <- backsolve(C, forwardsolve(t(C), t(wX) %*% wY) )
+  
+  return(b)
+  
+}
+```
+Let's first check if the answers we get back are the same:
+```{r}
+b_lm <- lm(y ~ -1 + X, weights = dnorm(35, x, 5))$coeff; b_lm
+b <- regMD_local(y, X, x0 = 35, x = x, h = 5) ; b
+b_p <- regMD_local_parallel(y, X, x0 = 35, x = x, h = 5) ; b_p
+```
+They are all the same! Let's now see how much quicker our parallel version is!
+```{r}
+system.time( regMD_local(y, X, x0 = 35, x = x, h = 5) )
+system.time( regMD_local_parallel(y, X,  x0 = 35, x = x, h = 5) )
+```
+We see the user time has increased slightly due to extra setup, however the total elapsed time is much less than the time taken for our non-parallel version. Let's now see the fit of this model:
+```{r}
+f <- lapply(0:47, function(.x ) regMD_local_parallel(y, X, x0 = .x, x = x, h = 5))
+
+plot(x[ss], y[ss], col = "grey")
+lines(0:47, sapply(1:48, function(ii) Xu[ii, ] %*% f[[ii]]), col = 2, lwd = 3, type = 'b')
+```
+This fit looks even better than our previous fit!
