@@ -41,4 +41,4 @@ Below is the rough structure of this repositry with information on what director
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    ├── pretrain.py/  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    │   └── Code for all pre-trained models with non-frozen encoders (all models with "nf" at the start)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    └── MNIST.sh, CIFAR10.sh, CIFAR100.sh/  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;        └── Bash scripts used to run experiments using the SLURM scheduling system  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;      └── Bash scripts used to run experiments using the SLURM scheduling system  
