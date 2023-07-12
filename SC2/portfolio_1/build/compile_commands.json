@@ -1,0 +1,14 @@
+[
+{
+  "directory": "/home/jd18380/Documents/compass_yr1/SC2/portfolio_1/build",
+  "command": "/usr/bin/g++   -g -o CMakeFiles/runTests.dir/Neural_Net.cpp.o -c /home/jd18380/Documents/compass_yr1/SC2/portfolio_1/neural_network/Neural_Net.cpp",
+  "file": "/home/jd18380/Documents/compass_yr1/SC2/portfolio_1/neural_network/Neural_Net.cpp",
+  "output": "CMakeFiles/runTests.dir/Neural_Net.cpp.o"
+},
+{
+  "directory": "/home/jd18380/Documents/compass_yr1/SC2/portfolio_1/build",
+  "command": "/usr/bin/g++   -g -o CMakeFiles/runTests.dir/Unit_Tests.cpp.o -c /home/jd18380/Documents/compass_yr1/SC2/portfolio_1/neural_network/Unit_Tests.cpp",
+  "file": "/home/jd18380/Documents/compass_yr1/SC2/portfolio_1/neural_network/Unit_Tests.cpp",
+  "output": "CMakeFiles/runTests.dir/Unit_Tests.cpp.o"
+}
+]

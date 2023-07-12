@@ -125,12 +125,40 @@ And then define it like so:
 This concludes the intro to C++!
 
 # Let's Get Some C++ Practice!
-To get coding some more C++ we will now move onto a project I have done in C++. The project was to create, train and test a neural network all written in C++. 
+To get coding some more C++ we will now move onto a project I have done in C++. The project was to create, train and test a neural network all written in C++. I wrote the neural network completely from scratch using only the standard C++ libraries in order to get some good C++ practice and to get more familiar with some of the details of how a neural network works.
 
 ## Creating a Neural Network
+The neural network class is defined in the "Neural_Net.h" file, we will now print out the header file so we can get an idea of what the class looks like:
+```{r, engine = 'bash'}
+cat neural_network/Neural_Net.h
+```
+We can see that the class has a constructor, a destructor, a method to forward propogate through the network and a method to back propogate through the network for a mini-batch of datapoints (the network is trained using mini-batch gradient descent). There is also the layer class which contains methods for forward and back propogation through the individual layer which the neural network class makes use of. For now the only activation function we have defined is the ReLU function and the only kind of layers we have defined are fully connected layers. We also currently can only use the MSE as our loss and so in future it would be good to add cross entropy loss for when carrying out classification tasks for example. However, it should be straightforward to add more activation functions, loss functions and layer types such as convolutional layers.
 
-## Fitting a Neural Network
+Let's now look at the "Optimizer.h" file:
+```{r, engine = 'bash'}
+cat neural_network/Optimizer.h
+```
+We can see that the optimizer class has a constructor, a destructor, methods to retrieve training, testing and validation data, a method to train the network and a method to test the network among other things. The Optimizer class makes use of templates so that it can work with any kind of data. We can use the train() method to train a network on some data for a given number of epochs, for each epoch it will train the network on all the data and then test the network on the test data printing the loss. Some work remains to be done to log the loss and accuracies for each epoch and plot them, fully implement the use of validation data (at the moment it just uses the test data) and implement early stopping, learning rate schedules, etc. 
 
+The way we could create a network is instantiate a vector of layers and initialize the neural network class with it. We could then instantiate an optimizer with some data and our neural network and train the network. My hope was to create a wrapper for the classes with Rcpp so that we could use the neural network in R and try out the network on some data! but I have not quite had the time to do so. I am fairly confident, however, that the code should work (or at least be very close to working) as I have written extensive unit tests for the code using google test, which my code passes. In the appendix you can see all the tests for yourself, but for now lets just run the tests:
+```{r, engine = 'bash'}
+cd neural_network
+make
+./runTests
+```
+Further work with this code that I would also like to finish at some point is paralleling the training of the network to speed it up along with other things mentioned earlier. After this project my C++ knowledge certainly feels much sounder although its a shame I couldn't quite round the whole thing off by interfacing with Rcpp and training it on some data! But I perhaps bit off more than I can chew given the time frame! The next section I have printed off some of the implementation code, but again, please check my Github as it may be easier to read there.  
 
+## Appendix: The implementations of the header files and the unit tests
+I will now print out the implementations of the header files if you are interested in taking a look at how all the methods were implemented:
+```{r, engine = 'bash'}
+cat neural_network/Neural_Net.cpp
+```
 
+```{r, engine = 'bash'}
+cat neural_network/Optimizer.tpp
+```
 
+Finally I will print out the unit tests:
+```{r, engine = 'bash'}
+cat neural_network/Unit_Tests.cpp
+```

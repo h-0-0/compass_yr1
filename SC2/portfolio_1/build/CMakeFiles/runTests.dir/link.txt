@@ -1,0 +1,1 @@
+/usr/bin/g++ -g -rdynamic CMakeFiles/runTests.dir/Neural_Net.cpp.o CMakeFiles/runTests.dir/Unit_Tests.cpp.o -o runTests  -Wl,-Bstatic -lgtest -Wl,-Bdynamic -lpthread 

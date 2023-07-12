@@ -1,49 +1,115 @@
-#include <eigen3/Eigen/Eigen>
-#include <iostream>
+#ifndef NEURALNETWORK_H
+#define NEURALNETWORK_H
+
 #include <vector>
+#include <string>
+#include <memory>
 
-// use typedefs for future ease for changing data types like : float to double
-typedef float Scalar;
-typedef Eigen::MatrixXf Matrix;
-typedef Eigen::RowVectorXf RowVector;
-typedef Eigen::VectorXf ColVector;
+// Function for computing the MSE between the output and target vectors
+double computeMSE(const std::vector<double>& output, const std::vector<double>& target);
 
-/*! @brief Neural Network Class
-*
-* Add some text
-*
-* @class this is a class
-*/
-class NeuralNetwork {
+// Function for creating a random double number between min and max
+double randomDouble(double min, double max);
+
+// Function to initialize a matrix of random weights according to arguments
+std::vector<std::vector<double>> initializeWeights(size_t numRows, size_t numCols, double min, double max);
+
+// Function to initialize a vector of random biases according to arguments
+std::vector<double> initializeBiases(size_t numBiases, double min, double max);
+
+// Virtual class which all activation function classes should implement
+class ActivationFunction {
 public:
-    // constructor
-    NeuralNetwork(std::vector<uint> layer_sizes, Scalar learning_rate = Scalar(0.005));
-
-    // function for forward propagation of data
-    void ForwardPass(RowVector& input);
-
-    // function for backward propagation of errors made by neurons
-    void BackwardPass(RowVector& output);
-
-    // function to calculate errors made by neurons in each layer
-    void CalcErrors(RowVector& output);
-
-    // function to update the weights of connections
-    void UpdateWeights();
-
-    // function to train the neural network give an array of data points
-    void Train(std::vector<RowVector*> data);
-
-    // storage objects for working of neural network
-    /*
-          use pointers when using std::vector<Class> as std::vector<Class> calls destructor of
-          Class as soon as it is pushed back! when we use pointers it can't do that, besides
-          it also makes our neural network class less heavy!! It would be nice if you can use
-          smart pointers instead of usual ones like this
-        */
-    std::vector<RowVector*> neuron_layers; // stores the different layers of our network
-    std::vector<RowVector*> unactivated_layers; // stores the unactivated (activation fn not yet applied) values of layers
-    std::vector<RowVector*> errors; // stores the error contribution of each neurons
-    std::vector<Matrix*> weights; // the connection weights itself
-    Scalar learning_rate;
+    virtual double activate(double x) const = 0;
+    virtual double derivative(double x) const = 0;
+    virtual std::string get_name() const = 0;
 };
+
+// Class for the ReLU activation function, it inherits from the virtual ActivationFunction class
+class ReLU : public ActivationFunction {
+public:
+    double activate(double x) const override;
+    double derivative(double x) const override;
+    std::string get_name() const override;
+};
+
+// Layer class
+class Layer {
+private:
+    std::vector<std::vector<double>> weights;
+    std::vector<double> biases;
+    const std::shared_ptr<ActivationFunction> actFun;
+    std::vector<double> preActivationValues;
+    // Store the gradients of the weights and biases for all the data points in the current batch
+    std::vector<std::vector<std::vector<double>>> weightGradients;
+    std::vector<std::vector<double>> biasGradients;
+
+public:
+    Layer(const std::vector<std::vector<double>>& initialWeights,
+            const std::vector<double>& initialBiases,
+            const std::shared_ptr<ActivationFunction>& actFun
+        );
+    Layer(int n_in,
+            int n_out,
+            const std::shared_ptr<ActivationFunction>& actFun
+        );
+    ~Layer();
+
+    std::vector<double> layer_pass(const std::vector<double>& inputs);
+
+    std::vector<double> get_activation_derivative() const;
+
+    std::vector<std::vector<double>> get_weights() const;
+
+    std::vector<double> get_biases() const;
+
+    std::shared_ptr<ActivationFunction> get_actFun() const;
+
+    std::vector<double> get_preActivationValues() const;
+
+    std::vector<std::vector<std::vector<double>>> get_weightGradients() const;
+
+    std::vector<std::vector<double>> get_biasGradients() const;
+
+    void set_weights(const std::vector<std::vector<double>>& newWeights);
+
+    void set_biases(const std::vector<double>& newBiases);
+
+    void add_weightGradients(const std::vector<std::vector<double>>& newWeightGradients);
+
+    void add_biasGradients(const std::vector<double>& newBiasGradients);
+
+    void clear_weightGradients();
+
+    void clear_biasGradients();
+
+    void print() const;
+};
+
+// Neural Network class
+class NeuralNetwork {
+private:
+    std::vector<Layer> layers;
+
+public:
+    NeuralNetwork(const std::vector<Layer>& layers);
+    ~NeuralNetwork();
+
+    std::vector<double> forwardPass(const std::vector<double>& input);
+
+    std::vector<double> computeLossGradient(const std::vector<double>& output, const std::vector<double>& target) const;
+
+    std::vector<std::vector<double>> computeWeightGradients(const std::vector<double>& delta, const Layer& layer) const;
+
+    std::vector<double> computeBiasGradients(const std::vector<double>& delta) const;
+
+    void updateWeightsAndBiases(Layer& layer, const std::vector<std::vector<double>>& weightGradients, const std::vector<double>& biasGradients, double learningRate);
+
+    std::vector<double> computeDelta(const std::vector<double>& delta, const Layer& layer) const;
+
+    double backpropagation(const std::vector<std::vector<double>>& input, const std::vector<std::vector<double>>& target, double learningRate);
+
+    void print() const;
+};
+
+#endif // NEURALNETWORK_H

@@ -1,0 +1,3 @@
+/home/jd18380/Documents/compass_yr1/SC2/portfolio_1/build/CMakeFiles/runTests.dir
+/home/jd18380/Documents/compass_yr1/SC2/portfolio_1/build/CMakeFiles/edit_cache.dir
+/home/jd18380/Documents/compass_yr1/SC2/portfolio_1/build/CMakeFiles/rebuild_cache.dir
